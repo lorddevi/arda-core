@@ -1,0 +1,122 @@
+# generated: 2025-11-14
+# project: clan-core
+# project_key: [NOT_SET]
+# tracking_system: file-system
+# story_location: bmad-docs/sprint-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Epic tech context created (required before drafting stories)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - review: Under SM review (via code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be 'contexted' before stories can be 'drafted'
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically drafts next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', SM reviews, then Dev moves to 'done'
+
+generated: 2025-11-14
+project: clan-core
+project_key: "[NOT_SET]"
+tracking_system: file-system
+story_location: bmad-docs/sprint-artifacts
+
+development_status:
+  # All epics, stories, and retrospectives in order
+
+  # Epic 1: Foundation & Development Environment
+  epic-1: contexted
+  1-1-project-setup-and-repository-initialization: review
+  1-2-development-shell-configuration: backlog
+  1-3-branch-management-workflow-setup: backlog
+  1-4-flake-configuration-and-lock-management: backlog
+  1-5-testing-framework-setup: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Installation & Bootstrap
+  epic-2: backlog
+  2-1-age-key-generation-setup: backlog
+  2-2-single-command-installation-workflow: backlog
+  2-3-github-repository-template-creation: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Machine Lifecycle Management
+  epic-3: backlog
+  3-1-machine-configuration-creation: backlog
+  3-2-machine-deployment-workflow: backlog
+  3-3-machine-status-monitoring: backlog
+  3-4-machine-removal-process: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Service/Feature/Role Architecture
+  epic-4: backlog
+  4-1-service-definition-system: backlog
+  4-2-feature-composition-system: backlog
+  4-3-role-assignment-system: backlog
+  4-4-role-composition-preview: backlog
+  4-5-machine-role-assignment: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Template System
+  epic-5: backlog
+  5-1-built-in-template-library: backlog
+  5-2-template-variable-customization: backlog
+  5-3-custom-template-creation: backlog
+  5-4-template-documentation-and-listing: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Secret Management (Priority Focus)
+  epic-6: backlog
+  6-1-age-key-generation-and-distribution: backlog
+  6-2-automatic-secret-encryption: backlog
+  6-3-role-based-secret-access: backlog
+  6-4-secret-rotation-workflow: backlog
+  6-5-secret-operation-security: backlog
+  epic-6-retrospective: optional
+
+  # Epic 7: Configuration Abstraction Layer
+  epic-7: backlog
+  7-1-core-library-structure: backlog
+  7-2-automatic-nixosconfigurations-generation: backlog
+  7-3-machine-configuration-overrides: backlog
+  7-4-configuration-validation-system: backlog
+  7-5-clan-migration-compatibility: backlog
+  epic-7-retrospective: optional
+
+  # Epic 8: Update & Maintenance Framework
+  epic-8: backlog
+  8-1-conflict-free-update-workflow: backlog
+  8-2-customization-preservation: backlog
+  8-3-version-rollback-capability: backlog
+  8-4-update-compatibility-validation: backlog
+  epic-8-retrospective: optional
+
+  # Epic 9: Status & Diagnostics
+  epic-9: backlog
+  9-1-machine-status-overview: backlog
+  9-2-configuration-drift-detection: backlog
+  9-3-automatic-rollback-on-failure: backlog
+  9-4-clear-error-messages-and-recovery: backlog
+  epic-9-retrospective: optional
+
+  # Epic 10: Deployment & Operations
+  epic-10: backlog
+  10-1-parallel-multi-machine-deployment: backlog
+  10-2-idempotent-operations: backlog
+  10-3-deployment-preview: backlog
+  10-4-comprehensive-deployment-logging: backlog
+  epic-10-retrospective: optional

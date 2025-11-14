@@ -1,6 +1,6 @@
 # Story 1.1: Project Setup and Repository Initialization
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
