@@ -6,6 +6,8 @@ result-*
 .nix-channels
 .nix-hash
 .nix-*
+.devShells/
+.flake.lock
 
 # Secrets and encryption
 .sops.yaml
@@ -78,3 +80,7 @@ tmp/
 temp/
 *.tmp
 *.log
+
+# direnv
+.direnv/
+.envrc-local

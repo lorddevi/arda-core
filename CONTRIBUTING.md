@@ -26,8 +26,6 @@ This project adheres to the principles of open collaboration, respect, and const
 - NixOS or Nix-enabled Linux distribution
 - Git
 - Age encryption tool (for secrets management development)
-- Python 3.13+ (for CLI development)
-- Node.js 18+ (for pre-commit hooks)
 
 ### Development Environment Setup
 
@@ -36,14 +34,14 @@ This project adheres to the principles of open collaboration, respect, and const
 git clone https://github.com/lorddevi/arda-core.git
 cd arda-core
 
-# Install development dependencies
+# Enter development environment (all tools auto-installed via Nix)
 nix develop
-
-# Install pre-commit hooks (REQUIRED for all commits)
-pre-commit install
 
 # Verify the setup
 nix flake check
+
+# Format code before committing
+nix fmt
 ```
 
 ## Development Workflow
@@ -70,7 +68,7 @@ git checkout -b experiment/your-experiment
 - Follow the coding standards (see [Code Style](#code-style))
 - Write tests for new functionality
 - Update documentation as needed
-- Run pre-commit hooks before committing
+- Format code with `nix fmt` before committing
 
 ### 3. Commit Changes
 
@@ -249,37 +247,38 @@ Closes #issue-number
 
 ### Python (arda-cli)
 
-We use standard Python tools with specific configurations:
+We use Nix-provided Python tools via treefmt-nix:
 
 ```bash
-# Formatting
-black . --line-length 88
+# Format and lint everything (Python, Nix, shell, etc.)
+nix fmt
 
-# Linting
-flake8 . --max-line-length 88 --extend-ignore E203,W503
-
-# Type checking (optional but recommended)
-mypy pkgs/arda-cli/
+# Format only specific files
+nix fmt --config treefmt.programs.ruff.includes 'pkgs/arda-cli/**/*.py'
 ```
+
+**Tools used:**
+
+- `ruff` - Python formatter and linter (faster alternative to black + flake8)
+- `mypy` - Type checking
+- `nixfmt` - Nix file formatting
+
+All tools are automatically available in `nix develop` environment.
 
 Configuration files:
 
-- `.flake8`: Flake8 configuration
-- `pyproject.toml`: Black and project metadata
+- `pyproject.toml`: ruff, mypy, and project metadata
+- `formatter.nix`: treefmt-nix configuration
 
 ### Nix
 
-We use `nixpkgs-fmt` for formatting:
+Nix files are formatted automatically via treefmt-nix:
 
 ```bash
 nix fmt
 ```
 
-Or manually:
-
-```bash
-nixpkgs-fmt .
-```
+No manual formatting needed!
 
 ### General Guidelines
 
@@ -326,14 +325,16 @@ pytest --cov=pkgs/arda-cli tests/
 
 ### Secret Detection
 
-This project uses `detect-secrets` to prevent accidental secret commits:
+Nix-based projects rely on proper `.gitignore` patterns and repository hygiene:
 
 ```bash
-# Install pre-commit hooks (runs detect-secrets automatically)
-pre-commit install
+# Follow the .gitignore patterns for secrets
+# - Do not commit .sops.yaml files
+# - Do not commit *.age key files
+# - Do not commit secrets/ directory
 
-# Manual scan
-detect-secrets scan --baseline .secrets.baseline
+# Review changes before committing
+git diff --staged
 ```
 
 ### Reporting Security Issues

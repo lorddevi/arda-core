@@ -4,7 +4,7 @@
 
 [![NixOS](https://img.shields.io/badge/NixOS-23.11-blue.svg)](https://nixos.org)
 [![Nix](https://img.shields.io/badge/Nix-2.28-green.svg)](https://nixos.org/nix/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Flakes](https://img.shields.io/badge/Flakes-Enabled-blue)](https://nixos.wiki/wiki/Flakes)
 
 ## Overview
 
@@ -98,20 +98,27 @@ arda secrets init
 ### Development
 
 ```bash
-# Install pre-commit hooks (for code quality)
-pre-commit install
+# Enter development environment (all tools auto-installed)
+nix develop
+
+# Format code
+nix fmt
 
 # Run tests
 nix flake check
 
-# Format code
-nix fmt
-black .
-flake8 .
-
-# Build the CLI
+# Build the CLI package
 nix build .#arda-cli
+
+# Install globally (optional)
+nix-env -iA arda-cli
+
+# Set up direnv for automatic environment activation
+echo "use nix" >> .envrc
+direnv allow
 ```
+
+**Note:** The development environment includes all necessary tools (ruff, mypy, nixfmt, etc.) automatically via Nix. No manual installation required!
 
 ## Documentation
 
