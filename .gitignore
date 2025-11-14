@@ -54,3 +54,8 @@ pkgs/clan-app/ui/.fonts
 *.mkv
 
 .jj
+
+# BMAD Documentation (untracked, persistent across branches)
+.bmad/
+.claude/
+bmad-docs/
