@@ -1,0 +1,4 @@
+# BMAD Documentation (untracked, persistent across branches)
+.bmad/
+.claude/
+bmad-docs/
