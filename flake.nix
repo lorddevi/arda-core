@@ -18,18 +18,12 @@
   };
 
   outputs =
-    inputs@{ nixpkgs
-    , systems
-    , flake-parts
-    , ...
+    inputs@{
+      nixpkgs,
+      systems,
+      flake-parts,
+      ...
     }:
-    let
-      inherit (nixpkgs.lib)
-        filter
-        optional
-        pathExists
-        ;
-    in
     flake-parts.lib.mkFlake
       {
         inherit inputs;
@@ -44,8 +38,6 @@
             ./formatter.nix
             ./pkgs/flake-module.nix
           ];
-
-          # Optional: import additional modules if they exist
         }
       );
 }

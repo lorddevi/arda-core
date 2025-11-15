@@ -16,6 +16,10 @@ pythonRuntime.pkgs.buildPythonApplication {
   src = ./.;
   format = "pyproject";
 
+  nativeBuildInputs = [
+    (pythonRuntime.withPackages (ps: [ ps.hatchling ]))
+  ];
+
   propagatedBuildInputs = [ pythonRuntimeWithDeps ];
 
   meta = {

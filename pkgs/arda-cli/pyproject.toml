@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "arda-cli"
 version = "0.1.0"
 description = "Arda - minimal infrastructure management for NixOS"
-readme = "README.md"
 license = {text = "MIT"}
 authors = [
   {name = "Lord", email = "lord@devi.email"}
