@@ -84,3 +84,6 @@ temp/
 # direnv
 .direnv/
 .envrc-local
+
+# BMAD Method assets (consistent across branches)
+/bmad-docs/
