@@ -1,0 +1,15 @@
+info: deep_sky_blue1
+success: spring_green1
+warning: turquoise
+error: red1
+command: bold deep_sky_blue1
+accent: turquoise
+muted: dim deep_sky_blue1
+title: bold deep_sky_blue1
+border: deep_sky_blue1
+hostname_brackets: dim deep_sky_blue1
+hostname_name: turquoise
+hostname_colon: dim deep_sky_blue1
+timestamp: dim deep_sky_blue1
+output: deep_sky_blue1
+debug: dim deep_sky_blue1

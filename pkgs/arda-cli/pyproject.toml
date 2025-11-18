@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "arda-cli"
@@ -15,11 +15,22 @@ dependencies = [
   "click",
   "pyyaml",
   "rich",
-  "pydantic"
+  "pydantic",
+  "rich-click"
 ]
 
 [project.scripts]
 arda = "arda_cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["arda_cli*"]
+
+[tool.setuptools.package-data]
+arda_cli = [
+    "py.typed",
+    "themes/*.yaml",
+    "themes/*.yml",
+]
 
 [tool.ruff]
 line-length = 88

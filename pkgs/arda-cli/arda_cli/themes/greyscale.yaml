@@ -1,0 +1,15 @@
+info: white
+success: white
+warning: white
+error: bold white
+command: bold white
+accent: white
+muted: dim white
+title: bold white
+border: white
+hostname_brackets: dim white
+hostname_name: white
+hostname_colon: dim white
+timestamp: dim white
+output: white
+debug: dim white

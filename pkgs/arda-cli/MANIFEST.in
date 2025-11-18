@@ -1,0 +1,3 @@
+include arda_cli/theme.py
+recursive-include arda_cli/styling *.py
+recursive-include arda_cli/themes *.yaml *.yml

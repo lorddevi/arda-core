@@ -8,6 +8,7 @@ let
       pyyaml
       rich
       pydantic
+      rich-click
     ];
   pythonRuntimeWithDeps = pythonRuntime.withPackages pyDeps;
 in
@@ -17,7 +18,7 @@ pythonRuntime.pkgs.buildPythonApplication {
   format = "pyproject";
 
   nativeBuildInputs = [
-    (pythonRuntime.withPackages (ps: [ ps.hatchling ]))
+    (pythonRuntime.withPackages (ps: [ ps.setuptools ]))
   ];
 
   propagatedBuildInputs = [ pythonRuntimeWithDeps ];
