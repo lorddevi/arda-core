@@ -55,7 +55,7 @@ def invoke_help_if_no_options(ctx: click.Context) -> None:
     ctx.get_help()
 
 
-@click.group()
+@click.group(no_args_is_help=True)
 @click.option(
     '--theme',
     type=click.Choice(theme_manager.list_themes(), case_sensitive=False),
@@ -122,8 +122,6 @@ def host(ctx: click.Context, verbose: bool) -> None:
     """
     console = ctx.obj['console']
     theme = ctx.obj['theme']
-
-    # Show help if no options (callback will handle this)
 
     # Display header with consistent styling
     show_header(console, "HOST MANAGEMENT", "🖥️")
