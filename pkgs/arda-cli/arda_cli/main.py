@@ -14,6 +14,8 @@ from rich.text import Text
 from .theme import ThemeManager
 from .styling import gradient_text, gradient_horizontal_line
 
+# Patch Click to use rich-click for help text
+rclick.patch()
 
 # Initialize theme manager
 THEMES_DIR = Path(__file__).parent / "themes"
@@ -55,7 +57,7 @@ def invoke_help_if_no_options(ctx: click.Context) -> None:
     ctx.get_help()
 
 
-@click.group(no_args_is_help=True)
+@rclick.group(no_args_is_help=True)
 @click.option(
     '--theme',
     type=click.Choice(theme_manager.list_themes(), case_sensitive=False),
@@ -112,7 +114,7 @@ def show_welcome(console: Console, theme: str) -> None:
     console.print()
 
 
-@main.command()
+@rclick.command()
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
 @click.pass_context
 def host(ctx: click.Context, verbose: bool) -> None:
@@ -137,7 +139,7 @@ def host(ctx: click.Context, verbose: bool) -> None:
     console.print("[muted]ℹ[/muted] Total hosts: 5")
 
 
-@main.command()
+@rclick.command()
 @click.pass_context
 def roles(ctx: click.Context) -> None:
     """Role management commands"""
@@ -147,7 +149,7 @@ def roles(ctx: click.Context) -> None:
     console.print("[info]Role management - coming soon![/info]")
 
 
-@main.command()
+@rclick.command()
 @click.pass_context
 def secrets(ctx: click.Context) -> None:
     """Secret management commands"""
@@ -157,7 +159,7 @@ def secrets(ctx: click.Context) -> None:
     console.print("[info]Secret management - coming soon![/info]")
 
 
-@main.command()
+@rclick.command()
 @click.pass_context
 def templates(ctx: click.Context) -> None:
     """Template management commands"""
@@ -167,7 +169,7 @@ def templates(ctx: click.Context) -> None:
     console.print("[info]Template management - coming soon![/info]")
 
 
-@main.command()
+@rclick.command()
 @click.option(
     '--list',
     '-l',
