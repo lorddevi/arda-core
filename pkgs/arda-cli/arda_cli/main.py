@@ -14,9 +14,6 @@ from rich.text import Text
 from .theme import ThemeManager
 from .styling import gradient_text, gradient_horizontal_line
 
-# Configure rich-click
-rclick.use_rich_markup()
-
 
 # Initialize theme manager
 THEMES_DIR = Path(__file__).parent / "themes"
@@ -58,6 +55,7 @@ def invoke_help_if_no_options(ctx: click.Context) -> None:
     ctx.get_help()
 
 
+@rclick.rich_group()
 @click.group()
 @click.option(
     '--theme',
