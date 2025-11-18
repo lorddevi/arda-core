@@ -55,7 +55,6 @@ def invoke_help_if_no_options(ctx: click.Context) -> None:
     ctx.get_help()
 
 
-@rclick.rich_group()
 @click.group()
 @click.option(
     '--theme',
@@ -115,7 +114,6 @@ def show_welcome(console: Console, theme: str) -> None:
 
 @main.command()
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-@click.callback(invoke_help_if_no_options)
 @click.pass_context
 def host(ctx: click.Context, verbose: bool) -> None:
     """Host management commands
@@ -142,7 +140,6 @@ def host(ctx: click.Context, verbose: bool) -> None:
 
 
 @main.command()
-@click.callback(invoke_help_if_no_options)
 @click.pass_context
 def roles(ctx: click.Context) -> None:
     """Role management commands"""
@@ -153,7 +150,6 @@ def roles(ctx: click.Context) -> None:
 
 
 @main.command()
-@click.callback(invoke_help_if_no_options)
 @click.pass_context
 def secrets(ctx: click.Context) -> None:
     """Secret management commands"""
@@ -164,7 +160,6 @@ def secrets(ctx: click.Context) -> None:
 
 
 @main.command()
-@click.callback(invoke_help_if_no_options)
 @click.pass_context
 def templates(ctx: click.Context) -> None:
     """Template management commands"""
