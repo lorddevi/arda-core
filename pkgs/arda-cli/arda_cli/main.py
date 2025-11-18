@@ -10,12 +10,13 @@ import rich_click as rclick
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
+from rich_click.patch import patch
 
 from .theme import ThemeManager
 from .styling import gradient_text, gradient_horizontal_line
 
 # Patch Click to use rich-click for help text
-rclick.patch()
+patch()
 
 # Initialize theme manager
 THEMES_DIR = Path(__file__).parent / "themes"
