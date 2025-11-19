@@ -8,7 +8,10 @@
     {
       packages = {
         # Uses pkgs with our overlay (rich-click 1.9.4)
-        arda-cli = pythonPkgs.callPackage ./arda-cli/default.nix { };
+        # Explicitly pass python from overlaid packages to ensure rich-click 1.9.4 is used
+        arda-cli = pythonPkgs.callPackage ./arda-cli/default.nix {
+          python = pkgs.python313;
+        };
       };
     };
 }
