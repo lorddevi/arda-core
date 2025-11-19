@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   perSystem =
-    { config, ... }:
+    { ... }:
     {
       devShells.default = pkgs.mkShell {
         name = "arda";
@@ -11,7 +11,6 @@
           pkgs.git
           pkgs.gh
           pkgs.age
-          config.treefmt.build.wrapper
 
           # Include overlaid Python packages with rich-click 1.9.4
           pkgs.python313
