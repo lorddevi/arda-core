@@ -110,6 +110,20 @@ arda_cli/
        ...
    ```
 
+### Pre-commit Hooks (Optional)
+
+For automated linting, install pre-commit:
+
+```bash
+# In devShell
+pip install pre-commit
+pre-commit install
+
+# Now linting runs automatically on git commit!
+```
+
+Or use Nix to set up hooks (configured in `pyproject.toml`):
+
 ### Rich and Click Patterns
 
 #### Using Rich for Output
@@ -306,20 +320,72 @@ def check(ctx: click.Context, name: str):
     console.print(f"[success]✓ Host {name} is online[/success]")
 ```
 
-## Testing
+## Testing and Linting
 
-### Building and Testing
+### Development Tools
+
+We use a comprehensive Python linting and testing suite:
+
+- **Ruff**: Fast linter, formatter, and import sorter
+- **mypy**: Static type checker
+- **pytest**: Testing framework with coverage
+- **Bandit**: Security linter
+- **pre-commit**: Git hook framework (optional)
+
+All tools are configured in `pyproject.toml` and available in the Nix devShell.
+
+### Running Linters and Tests
 
 ```bash
-# Build the package
+# Enter development environment
+nix develop
+
+# Run all linters (Ruff checks everything)
+ruff check .
+
+# Auto-fix issues where possible
+ruff check --fix .
+
+# Format code
+ruff format .
+
+# Run type checking
+mypy .
+
+# Run security checks
+bandit -r arda_cli/
+
+# Run tests with coverage
+pytest --cov=arda_cli --cov-report=term-missing
+
+# Run a specific test
+pytest tests/test_main.py -v
+```
+
+### Testing Workflow
+
+Before submitting changes:
+
+```bash
+# 1. Check code style and linting
+ruff check .
+ruff format --check .
+
+# 2. Run type checker
+mypy .
+
+# 3. Run tests
+pytest
+
+# 4. Security check
+bandit -r arda_cli/
+
+# 5. Build package
 nix build .#arda-cli
 
-# Test the binary
+# 6. Test built binary
 ./result/bin/arda --help
-./result/bin/arda --theme matrix host
-
-# Test theme listing
-./result/bin/arda theme --list
+./result/bin/arda --theme forest host --help
 ```
 
 ### Manual Testing Checklist
@@ -327,11 +393,12 @@ nix build .#arda-cli
 When adding features, manually test:
 
 1. ✅ Build succeeds without errors
-2. ✅ `--help` shows styled help text (rich-click)
-3. ✅ `--theme` option works with all themes
-4. ✅ Theme previews display correctly
-5. ✅ All commands use themed output
-6. ✅ Gradient text renders properly
+2. ✅ All linters pass (`ruff check .`, `mypy .`)
+3. ✅ Tests pass (`pytest`)
+4. ✅ `--help` shows styled help text (rich-click)
+5. ✅ `--theme` option works with all 24 rich-click themes
+6. ✅ Theme commands (`theme --list`, `theme`) work correctly
+7. ✅ All commands use themed output
 
 ## Submitting Changes
 

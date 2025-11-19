@@ -25,6 +25,14 @@
           pkgs.python313Packages.rich
           pkgs.python313Packages.pydantic
           pkgs.python313Packages.rich-click
+
+          # Python development and testing tools
+          pkgs.python313Packages.pytest
+          pkgs.python313Packages.pytest-cov
+          pkgs.python313Packages.ruff
+          pkgs.python313Packages.mypy
+          pkgs.python313Packages.bandit
+          pkgs.python313Packages.pre-commit
         ];
       };
     };

@@ -1,11 +1,12 @@
-{ lib
-, buildPythonApplication
-, setuptools
-, click
-, pyyaml
-, rich
-, pydantic
-, rich-click
+{
+  lib,
+  buildPythonApplication,
+  setuptools,
+  click,
+  pyyaml,
+  rich,
+  pydantic,
+  rich-click,
 }:
 
 buildPythonApplication {
