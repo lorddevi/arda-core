@@ -12,11 +12,12 @@ buildPythonApplication {
   pname = "arda-cli";
   version = "0.1.0";
   src = ./.;
-  pyproject = true;
 
-  build-system = [ setuptools ];
+  format = "pyproject";
 
-  dependencies = [
+  nativeBuildInputs = [ setuptools ];
+
+  propagatedBuildInputs = [
     click
     pyyaml
     rich
