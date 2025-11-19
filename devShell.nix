@@ -21,19 +21,6 @@
           pkgs.python3Packages.pydantic
           pkgs.python3Packages.rich-click
         ];
-        shellHook = ''
-          echo "Welcome to Arda development environment"
-          echo "Type 'nix fmt' to format code"
-          echo "Type 'nix build' to build packages"
-          echo "See README.md for more information"
-          echo ""
-          # Upgrade rich-click to version 1.9.4 for theming support
-          # Install to user site and add to PYTHONPATH
-          python3 -m pip install --upgrade --no-input --user rich-click==1.9.4 --quiet 2>&1 || true
-          # Export PYTHONPATH to include user site packages
-          export PYTHONPATH="$HOME/.local/lib/python3.13/site-packages:$PYTHONPATH"
-          echo "Upgraded rich-click to version 1.9.4"
-        '';
       };
     };
 }
