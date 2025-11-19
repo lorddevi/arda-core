@@ -33,8 +33,15 @@ from rich_click.patch import patch
 from rich_click import RichHelpConfiguration
 
 # Patch click with the theme configuration
-# This must happen AFTER rich_click is imported and AFTER env var is set
-patch(rich_config=RichHelpConfiguration(theme=_GLOBAL_THEME, enable_theme_env_var=True))
+# RichHelpConfiguration theme parameter requires rich-click >= 1.9.0
+try:
+    # Try with theme parameter (rich-click >= 1.9.0)
+    config = RichHelpConfiguration(theme=_GLOBAL_THEME, enable_theme_env_var=True)
+    patch(rich_config=config)
+except TypeError:
+    # Fallback for rich-click < 1.9.0 (uses env var only)
+    # The RICH_CLICK_THEME env var will still be respected
+    patch()
 
 
 # Get available rich-click themes
