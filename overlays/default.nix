@@ -1,5 +1,4 @@
-# Custom Nix Overlay for Arda CLI
-# This overlay overrides packages from nixpkgs with newer versions
+{ lib, ... }:
 
 final: prev:
 {
@@ -14,8 +13,8 @@ final: prev:
           owner = "hamstergene";
           repo = "rich-click";
           rev = "v1.9.4";
-          # Hash will be provided by Nix during first build
-          hash = "sha256-0000000000000000000000000000000000000000000000000000=";
+          # Use fakeHash to get the correct hash from Nix
+          hash = lib.fakeHash;
         };
       });
     };

@@ -26,12 +26,12 @@
     }:
     let
       # Import our custom overlay that upgrades rich-click to 1.9.4
-      # customOverlay = import ./overlays/default.nix;
+      customOverlay = import ./overlays/default.nix;
 
       # Apply the overlay to nixpkgs
       pkgs = import nixpkgs {
         system = "x86_64-linux";
-        overlays = [ ];
+        overlays = [ customOverlay ];
       };
     in
     flake-parts.lib.mkFlake
