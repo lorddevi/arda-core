@@ -21,6 +21,12 @@
       url = "github:ewels/rich-click/v1.9.4";
       flake = false;
     };
+
+    # Include nix-direnv for better direnv + nix integration
+    nix-direnv = {
+      url = "github:nix-community/nix-direnv";
+      inputs = { flake-compat.follows = "flake-compat"; };
+    };
   };
 
   outputs =
