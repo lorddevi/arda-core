@@ -11,15 +11,6 @@
           pkgs.git
           pkgs.gh
           pkgs.age
-
-          # Include Python packages
-          pkgs.python3
-          pkgs.python3Packages.pip
-          pkgs.python3Packages.click
-          pkgs.python3Packages.pyyaml
-          pkgs.python3Packages.rich
-          pkgs.python3Packages.pydantic
-          pkgs.python3Packages.rich-click
         ];
       };
     };
