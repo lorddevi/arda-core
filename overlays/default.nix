@@ -1,3 +1,5 @@
+{ inputs, ... }:
+
 final: prev:
 {
   # Override Python packages
@@ -7,7 +9,7 @@ final: prev:
       # Theming was added in 1.9.0, but Nixpkgs has 1.8.9
       rich-click = super.rich-click.overrideAttrs (old: {
         version = "1.9.4";
-        src = final.inputs.rich-click;
+        src = inputs.rich-click;
       });
     };
   };
