@@ -11,7 +11,6 @@
           pkgs.git
           pkgs.gh
           pkgs.age
-          pkgs.pip
 
           # Include Python packages
           pkgs.python3
