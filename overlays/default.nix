@@ -8,7 +8,7 @@ final: prev:
       rich-click = super.rich-click.overrideAttrs (old: {
         version = "1.9.4";
         src = final.fetchFromGitHub {
-          owner = "hamstergene";
+          owner = "ewels";
           repo = "rich-click";
           rev = "v1.9.4";
           # Use fakeHash to get the correct hash from Nix
