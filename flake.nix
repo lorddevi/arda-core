@@ -32,7 +32,8 @@
     }:
     let
       # Import our custom overlay that upgrades rich-click to 1.9.4
-      customOverlay = import ./overlays/default.nix;
+      # Pass inputs to the overlay
+      customOverlay = import ./overlays/default.nix { inherit inputs; };
 
       # Apply the overlay to nixpkgs
       pkgs = import nixpkgs {
