@@ -11,8 +11,8 @@ final: prev:
           owner = "ewels";
           repo = "rich-click";
           rev = "v1.9.4";
-          # Use fakeHash to get the correct hash from Nix
-          hash = "sha256-0000000000000000000000000000000000000000000000000000=";
+          # Correct hash for v1.9.4 from Nix
+          hash = "sha256-0fhxbzyn6gi8miqhjd57dy2g4852dh66x0fshvpvvp165zrnyf4h";
         };
       });
     };
