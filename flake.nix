@@ -5,7 +5,6 @@
     nixpkgs.url = "https://nixos.org/channels/nixpkgs-unstable/nixexprs.tar.xz";
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-parts.inputs.nixpkgs.follows = "nixpkgs";
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -23,10 +22,7 @@
     };
 
     # Include nix-direnv for better direnv + nix integration
-    nix-direnv = {
-      url = "github:nix-community/nix-direnv";
-      inputs = { flake-compat.follows = "flake-compat"; };
-    };
+    nix-direnv.url = "github:nix-community/nix-direnv";
   };
 
   outputs =
