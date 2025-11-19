@@ -15,6 +15,12 @@
     # Include sops-nix for secret management (critical for Epic 6)
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Pin rich-click to 1.9.4 for theming support
+    rich-click = {
+      url = "github:ewels/rich-click/v1.9.4";
+      flake = false;
+    };
   };
 
   outputs =
