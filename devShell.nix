@@ -28,8 +28,10 @@
           echo "See README.md for more information"
           echo ""
           # Upgrade rich-click to version 1.9.4 for theming support
-          # Using --break-system-packages as devShell is ephemeral
-          python3 -m pip install --upgrade --no-input --break-system-packages rich-click==1.9.4 --quiet
+          # Install to user site and add to PYTHONPATH
+          python3 -m pip install --upgrade --no-input --user rich-click==1.9.4 --quiet 2>&1 || true
+          # Export PYTHONPATH to include user site packages
+          export PYTHONPATH="$HOME/.local/lib/python3.13/site-packages:$PYTHONPATH"
           echo "Upgraded rich-click to version 1.9.4"
         '';
       };
