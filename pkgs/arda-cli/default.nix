@@ -15,7 +15,8 @@ in
 pythonRuntime.pkgs.buildPythonApplication {
   name = "arda-cli";
   src = ./.;
-  format = "pyproject";
+  pyproject = true;
+  build-system = [ pythonRuntime.pkgs.setuptools ];
 
   nativeBuildInputs = [
     (pythonRuntime.withPackages (ps: [ ps.setuptools ]))

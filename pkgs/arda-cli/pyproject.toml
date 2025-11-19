@@ -28,8 +28,6 @@ include = ["arda_cli*"]
 [tool.setuptools.package-data]
 arda_cli = [
     "py.typed",
-    "themes/*.yaml",
-    "themes/*.yml",
 ]
 
 [tool.ruff]

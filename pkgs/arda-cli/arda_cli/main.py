@@ -1,69 +1,81 @@
 """Arda CLI main entry point
 
-Arda is a minimal infrastructure management tool for NixOS with support
-for theming, gradients, and beautiful terminal output.
+Arda uses rich-click's built-in themes for unified styling across
+all help text and command output.
 """
 
-from pathlib import Path
+import sys
+import os
+
+# IMPORTANT: Parse theme from command-line BEFORE importing rich_click
+# This ensures the environment variable is set before rich_click reads it
+if '--theme' in sys.argv:
+    try:
+        theme_index = sys.argv.index('--theme')
+        if theme_index + 1 < len(sys.argv):
+            theme = sys.argv[theme_index + 1]
+            os.environ['RICH_CLICK_THEME'] = theme
+            # Store in a global variable for later use
+            _GLOBAL_THEME = theme
+    except (ValueError, IndexError):
+        _GLOBAL_THEME = "dracula"
+else:
+    _GLOBAL_THEME = "dracula"
+
+# Now import rich_click AFTER setting the environment variable
 import click
 import rich_click as rclick
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
+from rich import get_console
 from rich_click.patch import patch
+from rich_click import RichHelpConfiguration
 
-from .theme import ThemeManager
-from .styling import gradient_text, gradient_horizontal_line
-
-# Patch Click to use rich-click for help text
-patch()
-
-# Initialize theme manager
-THEMES_DIR = Path(__file__).parent / "themes"
-theme_manager = ThemeManager(THEMES_DIR)
+# Patch click with the theme configuration
+# This must happen AFTER rich_click is imported and AFTER env var is set
+patch(rich_config=RichHelpConfiguration(theme=_GLOBAL_THEME, enable_theme_env_var=True))
 
 
-def show_header(console: Console, title: str, icon: str = "") -> None:
-    """Display a consistently styled header with gradient text and horizontal line
+# Get available rich-click themes
+def get_rich_click_themes():
+    """Get list of available rich-click themes"""
+    # Hardcoded list of built-in rich-click themes
+    return [
+        "dracula", "dracula-dark", "dracula-slim", "dracula-modern",
+        "forest", "forest-dark", "forest-slim", "forest-modern",
+        "solarized", "solarized-dark", "solarized-slim", "solarized-modern",
+        "nord", "nord-dark", "nord-slim", "nord-modern",
+        "quartz", "quartz-dark", "quartz-slim", "quartz-modern",
+        "monokai", "monokai-dark", "monokai-slim", "monokai-modern"
+    ]
 
-    Args:
-        console: The themed console to print to
-        title: The title text to display
-        icon: Optional emoji icon to prepend
+
+def check_and_show_help(ctx: click.Context) -> bool:
+    """Check if any options were provided, return True if help should be shown
+
+    Returns:
+        True if help should be shown, False if command should continue
     """
-    # Create styled header with icon if provided
-    if icon:
-        header_text = f"{icon}  {title}"
-    else:
-        header_text = title
-
-    # Print gradient header and horizontal line
-    console.print(gradient_text(header_text, "cyan", "bright_cyan"))
-    console.print(gradient_horizontal_line(60, "cyan"))
-    console.print()
-
-
-def invoke_help_if_no_options(ctx: click.Context) -> None:
-    """Callback to show help if no options are provided to a subcommand
-
-    This ensures that commands like 'arda host' show help by default,
-    similar to how 'arda' shows help.
-    """
-    # Check if any options were provided
-    if ctx.params and any(v is not None for v in ctx.params.values()):
+    # Check if any options were provided (excluding False for flags)
+    if ctx.params and any(v is not None and v is not False for v in ctx.params.values()):
         # Options were provided, don't show help
-        return
+        return False
 
     # No options provided, show help
     ctx.get_help()
+    return True
 
 
-@rclick.group(no_args_is_help=True)
+@rclick.group(
+    no_args_is_help=True,
+    context_settings={'help_option_names': ['-h', '--help']}
+)
 @click.option(
     '--theme',
-    type=click.Choice(theme_manager.list_themes(), case_sensitive=False),
-    default='greyscale',
-    help='Color theme to use'
+    type=click.Choice(get_rich_click_themes(), case_sensitive=False),
+    default='dracula',
+    help='Rich-click theme to use (color + format)'
 )
 @click.option(
     '--timestamp',
@@ -74,7 +86,8 @@ def invoke_help_if_no_options(ctx: click.Context) -> None:
 def main(ctx: click.Context, theme: str, timestamp: bool) -> None:
     """Arda - minimal infrastructure management for NixOS
 
-    A modern CLI tool with rich theming, gradient support, and beautiful output.
+    A modern CLI tool with rich theming and beautiful output.
+    Uses rich-click's built-in themes for unified styling.
     """
     # Ensure context object exists
     ctx.ensure_object(dict)
@@ -84,11 +97,8 @@ def main(ctx: click.Context, theme: str, timestamp: bool) -> None:
     ctx.obj['timestamp'] = timestamp
 
     # Get themed console
-    console = theme_manager.get_console(theme)
+    console = get_console()
     ctx.obj['console'] = console
-
-    # Store theme colors for styling functions
-    ctx.obj['theme_colors'] = theme_manager.get_colors(theme)
 
     # Show welcome message with theme
     if ctx.invoked_subcommand is None:
@@ -98,15 +108,15 @@ def main(ctx: click.Context, theme: str, timestamp: bool) -> None:
 
 def show_welcome(console: Console, theme: str) -> None:
     """Show welcome message with theme styling"""
-    # Create gradient title
-    title = gradient_text("ARDA CLI", "white", "bright_white" if theme == "greyscale" else "cyan")
+    # Create title with rich text
+    title = f"ARDA CLI"
 
     # Create welcome panel
     panel = Panel(
-        f"{title}\n\n"
-        f"[muted]Theme:[/muted] [accent]{theme.upper()}[/accent]\n"
-        f"[muted]Welcome to Arda - Infrastructure Management for NixOS[/muted]\n\n"
-        f"[info]Use [command]arda --help[/command] for available commands[/info]",
+        f"[bold]{title}[/bold]\n\n"
+        f"Theme: [accent]{theme.upper()}[/accent]\n"
+        f"Welcome to Arda - Infrastructure Management for NixOS\n\n"
+        f"Use [command]arda --help[/command] for available commands",
         border_style="border",
         padding=(1, 2)
     )
@@ -123,51 +133,61 @@ def host(ctx: click.Context, verbose: bool) -> None:
 
     Manage your NixOS hosts with beautiful, themed output.
     """
+    # Show help if no options provided
+    if check_and_show_help(ctx):
+        return
+
     console = ctx.obj['console']
     theme = ctx.obj['theme']
 
-    # Display header with consistent styling
-    show_header(console, "HOST MANAGEMENT", "🖥️")
-
     if verbose:
-        console.print("\n[info]Verbose mode enabled[/info]")
+        console.print("\nVerbose mode enabled")
 
-    console.print("\n[info]Host management - coming soon![/info]")
+    console.print("\nHost management - coming soon!")
 
     # Show example of themed output
-    console.print("\n[success]✓[/success] System checks passed")
-    console.print("[warning]⚠[/warning] 1 host needs attention")
-    console.print("[muted]ℹ[/muted] Total hosts: 5")
+    console.print("\n✓ System checks passed")
+    console.print("⚠  1 host needs attention")
+    console.print("ℹ  Total hosts: 5")
 
 
 @rclick.command()
 @click.pass_context
 def roles(ctx: click.Context) -> None:
     """Role management commands"""
+    # Show help if no options provided
+    if check_and_show_help(ctx):
+        return
+
     console = ctx.obj['console']
 
-    show_header(console, "ROLE MANAGEMENT", "⚙️")
-    console.print("[info]Role management - coming soon![/info]")
+    console.print("Role management - coming soon!")
 
 
 @rclick.command()
 @click.pass_context
 def secrets(ctx: click.Context) -> None:
     """Secret management commands"""
+    # Show help if no options provided
+    if check_and_show_help(ctx):
+        return
+
     console = ctx.obj['console']
 
-    show_header(console, "SECRET MANAGEMENT", "🔐")
-    console.print("[info]Secret management - coming soon![/info]")
+    console.print("Secret management - coming soon!")
 
 
 @rclick.command()
 @click.pass_context
 def templates(ctx: click.Context) -> None:
     """Template management commands"""
+    # Show help if no options provided
+    if check_and_show_help(ctx):
+        return
+
     console = ctx.obj['console']
 
-    show_header(console, "TEMPLATE MANAGEMENT", "📦")
-    console.print("[info]Template management - coming soon![/info]")
+    console.print("Template management - coming soon!")
 
 
 @rclick.command()
@@ -175,48 +195,43 @@ def templates(ctx: click.Context) -> None:
     '--list',
     '-l',
     is_flag=True,
-    help='List all available themes'
+    help='List all available rich-click themes'
 )
 @click.pass_context
 def theme(ctx: click.Context, list: bool) -> None:
     """Theme management and preview
 
-    View available themes or preview the current theme.
+    View available rich-click themes or preview the current theme.
     """
     console = ctx.obj['console']
 
     if list:
-        console.print("[title]Available Themes[/title]\n")
+        console.print("Available Rich-Click Themes\n")
 
-        for theme_name in theme_manager.list_themes():
-            # Get theme colors
-            colors = theme_manager.get_colors(theme_name)
+        for theme_name in get_rich_click_themes():
+            console.print(f"  [accent]{theme_name}[/accent]")
 
-            # Show theme name with example colors
-            example = Text()
-            example.append("  ", style="none")
-            example.append("●", style=colors.get('info', 'white'))
-            example.append(" ●", style=colors.get('success', 'green'))
-            example.append(" ●", style=colors.get('warning', 'yellow'))
-            example.append(" ●", style=colors.get('error', 'red'))
-
-            console.print(f"[accent]{theme_name.upper()}[/accent]")
-            console.print(example)
-            console.print()
+        console.print("\nNote: Themes can be combined with formats (slim, modern)")
+        console.print("Example: 'dracula-modern', 'forest-slim', 'nord-dark'")
     else:
         # Preview current theme
         theme = ctx.obj['theme']
-        console.print(f"[title]Current Theme: {theme.upper()}[/title]\n")
+        console.print(f"Current Theme: {theme.upper()}\n")
 
-        colors = theme_manager.get_colors(theme)
+        console.print("ℹ  Information")
+        console.print("✓ Success message")
+        console.print("⚠ Warning message")
+        console.print("✗ Error message")
+        console.print("> Command output")
+        console.print("Muted text")
 
-        console.print(f"[info]ℹ Information[/info]")
-        console.print(f"[success]✓ Success message[/success]")
-        console.print(f"[warning]⚠ Warning message[/warning]")
-        console.print(f"[error]✗ Error message[/error]")
-        console.print(f"[command]> Command output[/command]")
-        console.print(f"[muted]Muted text[/muted]")
-        console.print(f"[accent]Accented text[/accent]")
+
+# Register commands with the main group
+main.add_command(host)
+main.add_command(roles)
+main.add_command(secrets)
+main.add_command(templates)
+main.add_command(theme)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@
     nixpkgs.url = "https://nixos.org/channels/nixpkgs-unstable/nixexprs.tar.xz";
 
     flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
+    flake-parts.inputs.nixpkgs.follows = "nixpkgs";
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -24,9 +24,21 @@
       flake-parts,
       ...
     }:
+    let
+      # Import our custom overlay that upgrades rich-click to 1.9.4
+      customOverlay = import ./overlays/default.nix;
+
+      # Apply the overlay to nixpkgs
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [ customOverlay ];
+      };
+    in
     flake-parts.lib.mkFlake
       {
         inherit inputs;
+        # Pass the modified pkgs with our overlay to all modules
+        specialArgs = { inherit pkgs; };
       }
       (
         { ... }:
