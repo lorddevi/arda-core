@@ -1,5 +1,3 @@
-{ lib, ... }:
-
 final: prev:
 {
   # Override Python packages
@@ -14,7 +12,7 @@ final: prev:
           repo = "rich-click";
           rev = "v1.9.4";
           # Use fakeHash to get the correct hash from Nix
-          hash = lib.fakeHash;
+          hash = "sha256-0000000000000000000000000000000000000000000000000000=";
         };
       });
     };
