@@ -28,7 +28,7 @@
           echo "See README.md for more information"
           echo ""
           # Upgrade rich-click to version 1.9.4 for theming support
-          python3 -m pip install --upgrade --no-input rich-click==1.9.4 --quiet
+          python3 -m pip install --upgrade --no-input --user rich-click==1.9.4 --quiet
           echo "Upgraded rich-click to version 1.9.4"
         '';
       };
