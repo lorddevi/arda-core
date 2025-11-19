@@ -27,7 +27,6 @@ import click
 import rich_click as rclick
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 from rich import get_console
 from rich_click.patch import patch
 from rich_click import RichHelpConfiguration
@@ -116,7 +115,7 @@ def main(ctx: click.Context, theme: str, timestamp: bool) -> None:
 def show_welcome(console: Console, theme: str) -> None:
     """Show welcome message with theme styling"""
     # Create title with rich text
-    title = f"ARDA CLI"
+    title = "ARDA CLI"
 
     # Create welcome panel
     panel = Panel(
@@ -145,7 +144,6 @@ def host(ctx: click.Context, verbose: bool) -> None:
         return
 
     console = ctx.obj['console']
-    theme = ctx.obj['theme']
 
     if verbose:
         console.print("\nVerbose mode enabled")
