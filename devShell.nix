@@ -11,6 +11,8 @@
           pkgs.gh
           pkgs.age
           pkgs.direnv
+	  pkgs.coreutils
+	  pkgs.which
 
           # Include Python packages from overlaid python313Packages
           # This ensures rich-click 1.9.4 from our overlay is used
