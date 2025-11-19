@@ -1,16 +1,10 @@
 { inputs, ... }:
 
-final: prev:
-{
+final: prev: {
   # Override Python packages
   python313Packages = prev.python313Packages.override {
-    overrides = self: super: {
-      # Override rich-click to version 1.9.4 (has theming support)
-      # Theming was added in 1.9.0, but Nixpkgs has 1.8.9
-      rich-click = super.rich-click.overrideAttrs (old: {
-        version = "1.9.4";
-        src = inputs.rich-click;
-      });
-    };
+    # Import all Python 3 overlays via the central hub
+    # python3/default.nix merges all overlays into one function
+    overrides = (import ./python3/default.nix { inherit inputs; });
   };
 }
