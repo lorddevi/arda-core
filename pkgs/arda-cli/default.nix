@@ -1,28 +1,28 @@
-{ lib, python, ... }:
-let
-  # Python dependencies for arda-cli
-  pythonRuntime = python;
-  pyDeps =
-    ps: with ps; [
-      click
-      pyyaml
-      rich
-      pydantic
-      rich-click
-    ];
-  pythonRuntimeWithDeps = pythonRuntime.withPackages pyDeps;
-in
-pythonRuntime.pkgs.buildPythonApplication {
-  name = "arda-cli";
+{ lib
+, buildPythonApplication
+, setuptools
+, click
+, pyyaml
+, rich
+, pydantic
+, rich-click
+}:
+
+buildPythonApplication {
+  pname = "arda-cli";
+  version = "0.1.0";
   src = ./.;
   pyproject = true;
-  build-system = [ pythonRuntime.pkgs.setuptools ];
 
-  nativeBuildInputs = [
-    (pythonRuntime.withPackages (ps: [ ps.setuptools ]))
+  build-system = [ setuptools ];
+
+  dependencies = [
+    click
+    pyyaml
+    rich
+    pydantic
+    rich-click
   ];
-
-  propagatedBuildInputs = [ pythonRuntimeWithDeps ];
 
   meta = {
     description = "Arda - minimal infrastructure management for NixOS";
