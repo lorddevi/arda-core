@@ -26,9 +26,6 @@
           echo "Type 'nix fmt' to format code"
           echo "Type 'nix build' to build packages"
           echo "See README.md for more information"
-          echo ""
-          echo "Python available: $(which python)"
-          echo "Python version: $(python --version)"
         '';
       };
     };
