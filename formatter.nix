@@ -26,6 +26,7 @@
         "**/node_modules/*"
         "**/.mypy_cache/*"
         ".direnv/*"
+        ".envrc"
         "result"
         "result-*"
       ];
