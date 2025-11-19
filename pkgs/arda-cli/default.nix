@@ -1,7 +1,7 @@
-{ lib, python3, ... }:
+{ lib, python, ... }:
 let
   # Python dependencies for arda-cli
-  pythonRuntime = python3;
+  pythonRuntime = python;
   pyDeps =
     ps: with ps; [
       click
