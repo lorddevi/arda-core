@@ -38,7 +38,7 @@ def print_info(text: str, console: Console) -> None:
         console: Console instance to use for output
 
     """
-    console.print(f"[cyan]i {text}[/cyan]")
+    console.print(f"[bold blue]i[/bold blue] {text}")
 
 
 def print_success(text: str, console: Console) -> None:
@@ -49,7 +49,7 @@ def print_success(text: str, console: Console) -> None:
         console: Console instance to use for output
 
     """
-    console.print(f"[green]✓ {text}[/green]")
+    console.print(f"[bold green]✓[/bold green] {text}")
 
 
 def print_warning(text: str, console: Console) -> None:
@@ -60,15 +60,40 @@ def print_warning(text: str, console: Console) -> None:
         console: Console instance to use for output
 
     """
-    console.print(f"[yellow]⚠ {text}[/yellow]")
+    console.print(f"[bold yellow]⚠[/bold yellow] {text}")
 
 
 def print_error(text: str, console: Console) -> None:
-    """Print an error message.
+    """Print an error message with border.
 
     Args:
         text: Error message text
         console: Console instance to use for output
 
     """
-    console.print(f"[red]✗ {text}[/red]")
+    # Use a Panel to create a bordered error box (like Click's error display)
+    panel = Panel(
+        f"[bold red]{text}[/bold red]",
+        title="[bold red]Error[/bold red]",
+        border_style="red",
+        padding=(1, 2),
+    )
+    console.print(panel)
+
+
+def print_preview_section(title: str, content: str, console: Console) -> None:
+    """Print a preview section with a border (like help output).
+
+    Args:
+        title: Section title
+        content: Section content
+        console: Console instance to use for output
+
+    """
+    panel = Panel(
+        content,
+        title=f"[bold]{title}[/bold]",
+        border_style="blue",
+        padding=(1, 2),
+    )
+    console.print(panel)

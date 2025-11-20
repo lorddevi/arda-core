@@ -6,6 +6,7 @@ import rich_click as rclick
 from arda_cli.lib.console import (
     print_error,
     print_info,
+    print_preview_section,
     print_success,
     print_warning,
 )
@@ -63,6 +64,22 @@ def preview(ctx: click.Context, theme_name: str | None) -> None:
     print_warning("Warning message", console)
     print_error("Error message", console)
 
+    # Show examples in bordered panels (like help output)
+    console.print()
+    options_content = (
+        "[cyan]--theme[/cyan] [dim]TEXT[/dim]\n"
+        "[cyan]--verbose[/cyan]\n"
+        "[cyan]--timestamp[/cyan]/[cyan]--no-timestamp[/cyan]"
+    )
+    print_preview_section("Options", options_content, console)
+
+    commands_content = (
+        "[cyan]host[/cyan]     [dim]Host management commands[/dim]\n"
+        "[cyan]roles[/cyan]    [dim]Role management commands[/dim]\n"
+        "[cyan]secrets[/cyan]  [dim]Secret management commands[/dim]"
+    )
+    print_preview_section("Commands", commands_content, console)
+
     # Show plain output example
-    console.print("> Command output")
+    console.print("\n> Command output")
     console.print("[dim]Muted text[/dim]")
