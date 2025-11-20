@@ -32,7 +32,6 @@
           pkgs.python313Packages.ruff
           pkgs.python313Packages.mypy
           pkgs.python313Packages.bandit
-          pkgs.python313Packages.pre-commit
         ];
       };
     };
