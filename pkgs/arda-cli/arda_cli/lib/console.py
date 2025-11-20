@@ -38,7 +38,7 @@ def print_info(text: str, console: Console) -> None:
         console: Console instance to use for output
 
     """
-    console.print(f"[info]i {text}[/info]")
+    console.print(f"[cyan]i {text}[/cyan]")
 
 
 def print_success(text: str, console: Console) -> None:
@@ -49,7 +49,7 @@ def print_success(text: str, console: Console) -> None:
         console: Console instance to use for output
 
     """
-    console.print(f"[success]✓ {text}[/success]")
+    console.print(f"[green]✓ {text}[/green]")
 
 
 def print_warning(text: str, console: Console) -> None:
@@ -60,7 +60,7 @@ def print_warning(text: str, console: Console) -> None:
         console: Console instance to use for output
 
     """
-    console.print(f"[warning]⚠ {text}[/warning]")
+    console.print(f"[yellow]⚠ {text}[/yellow]")
 
 
 def print_error(text: str, console: Console) -> None:
@@ -71,4 +71,4 @@ def print_error(text: str, console: Console) -> None:
         console: Console instance to use for output
 
     """
-    console.print(f"[error]✗ {text}[/error]")
+    console.print(f"[red]✗ {text}[/red]")
