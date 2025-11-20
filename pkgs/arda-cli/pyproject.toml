@@ -43,6 +43,7 @@ include = ["arda_cli*"]
 [tool.setuptools.package-data]
 arda_cli = [
     "py.typed",
+    "arda.toml",
 ]
 
 [tool.ruff]
