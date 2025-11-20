@@ -62,30 +62,36 @@ arda_cli/
 ├── main.py                  # CLI entry point (minimal)
 ├── commands/                # All command implementations
 │   ├── __init__.py
-│   ├── main.py             # Root: arda
 │   ├── host/               # arda host commands
 │   │   ├── __init__.py
-│   │   ├── main.py         # arda host
-│   │   └── deploy/         # arda host deploy commands
+│   │   └── main.py         # arda host
+│   │   └── deploy/         # Future: arda host deploy commands
 │   │       ├── __init__.py
-│   │       ├── main.py     # arda host deploy
-│   │       ├── day0.py     # arda host deploy day0
-│   │       └── update.py   # arda host deploy update
+│   │       ├── main.py     # Future: arda host deploy
+│   │       ├── day0.py     # Future: arda host deploy day0
+│   │       └── update.py   # Future: arda host deploy update
 │   ├── roles/              # arda roles commands
+│   │   ├── __init__.py
+│   │   └── main.py         # arda roles
 │   ├── secrets/            # arda secrets commands
+│   │   ├── __init__.py
+│   │   └── main.py         # arda secrets
 │   ├── templates/          # arda templates commands
-│   └── theme/              # arda theme commands
+│   │   ├── __init__.py
+│   │   └── main.py         # arda templates
+│   └── theme.py            # arda theme (leaf command, no subcommands)
 └── lib/                    # Shared helpers (DRY principle)
     ├── __init__.py
-    ├── console.py          # Console creation, theming
-    ├── styling.py          # Rich styling helpers
-    ├── ssh.py              # SSH utilities
-    ├── host.py             # Host operations
-    ├── nix.py              # Nix operations
-    ├── config.py           # Config file I/O
-    ├── network.py          # Network utilities
-    ├── logging.py          # Logging helpers
-    └── exceptions.py       # Custom exceptions
+    ├── theme.py            # Theme handling and rich-click patching
+    ├── console.py          # Console styling helpers (print_header, print_info, etc.)
+    ├── helpers.py          # General CLI helpers (check_and_show_help, etc.)
+    └── future/             # Future helper modules (planned)
+        ├── ssh.py          # SSH utilities
+        ├── host.py         # Host operations
+        ├── nix.py          # Nix operations
+        ├── config.py       # Config file I/O
+        ├── network.py      # Network utilities
+        └── exceptions.py   # Custom exceptions
 ```
 
 ### Key Principles
@@ -232,15 +238,16 @@ Each `lib/` file focuses on one purpose:
 
 ```
 lib/
-├── console.py      # Console creation and theming
-├── styling.py      # Rich styling helpers (panels, colors)
-├── ssh.py          # SSH connection and remote execution
-├── host.py         # Host management operations
-├── nix.py          # Nix operations (build, eval)
-├── config.py       # Configuration file I/O
-├── network.py      # Network utilities
-├── logging.py      # Logging helpers
-└── exceptions.py   # Custom exception classes
+├── theme.py        # Theme handling and rich-click patching
+├── console.py      # Console styling helpers (print_header, print_success, etc.)
+├── helpers.py      # General CLI helpers (check_and_show_help, get_console_from_ctx, etc.)
+└── future/         # Planned helper modules
+    ├── ssh.py      # SSH utilities
+    ├── host.py     # Host management operations
+    ├── nix.py      # Nix operations (build, eval)
+    ├── config.py   # Configuration file I/O
+    ├── network.py  # Network utilities
+    └── exceptions.py   # Custom exception classes
 ```
 
 ### Example lib/ File
@@ -294,27 +301,31 @@ def run_remote_command(host: str, command: str, port: int = 22) -> tuple[int, st
 ### Using lib/ in Commands
 
 ```python
-# commands/host/deploy/day0.py
+# commands/host/main.py
 import click
-from arda_cli.lib.styling import print_header, print_success, print_error
-from arda_cli.lib.ssh import test_ssh_connection
-from arda_cli.lib.host import load_hosts_config
+import rich_click as rclick
+from arda_cli.lib.console import print_header, print_success, print_error
+from arda_cli.lib.helpers import get_console_from_ctx
 
-@click.command()
-@click.argument('hostname')
-@click.option('--ip', help='Target IP address')
+@rclick.command()
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.pass_context
-def day0(ctx, hostname, ip):
-    """Deploy day0 configuration to a host."""
-    console = ctx.obj['console']
+def host(ctx: click.Context, verbose: bool) -> None:
+    """Host management commands.
 
-    print_header(f"Day0 Deploy: {hostname}", console)
+    Manage your NixOS hosts with beautiful, themed output.
+    """
+    # Show help if no options provided
+    if check_and_show_help(ctx):
+        return
 
-    # Use shared helpers
-    if test_ssh_connection(hostname, 22):
-        print_success("SSH connection successful", console)
-    else:
-        print_error("SSH connection failed", console)
+    console = get_console_from_ctx(ctx)
+
+    if verbose:
+        console.print("\nVerbose mode enabled")
+
+    print_header("Host Management", console)
+    print_success("Host management ready!", console)
 ```
 
 ## Code Style
@@ -398,13 +409,15 @@ Decide where the command belongs in the hierarchy:
 # File: commands/host/install.py
 
 import click
+import rich_click as rclick
+from arda_cli.lib.helpers import get_console_from_ctx
 
-@click.command()
+@rclick.command()
 @click.argument('package')
 @click.pass_context
-def install(ctx, package):
+def install(ctx: click.Context, package: str) -> None:
     """Install a package on a host."""
-    console = ctx.obj['console']
+    console = get_console_from_ctx(ctx)
     console.print(f"Installing {package}...")
 ```
 
@@ -423,27 +436,29 @@ host.add_command(install)      # Register it
 If the command uses logic that might be useful elsewhere:
 
 ```python
-# lib/package.py
+# lib/package.py (create if needed)
 """Package management helpers."""
 def install_package(package: str, host: str) -> bool:
     """Install a package on a host via SSH."""
-    ...
+    # Implementation here
+    return True
 ```
 
 ```python
 # commands/host/install.py
 from arda_cli.lib.package import install_package
+from arda_cli.lib.console import print_success, print_error
 
-@click.command()
+@rclick.command()
 @click.argument('package')
 @click.pass_context
-def install(ctx, package):
+def install(ctx: click.Context, package: str) -> None:
     """Install a package on a host."""
-    console = ctx.obj['console']
-    if install_package(package, ctx.obj['host']):
-        console.print("[success]✓ Package installed[/success]")
+    console = get_console_from_ctx(ctx)
+    if install_package(package, ctx.obj.get('host', '')):
+        print_success("Package installed", console)
     else:
-        console.print("[error]✗ Installation failed[/error]")
+        print_error("Installation failed", console)
 ```
 
 ### Step 4: Add Tests
@@ -453,7 +468,7 @@ Create test file matching command location:
 ```python
 # tests/commands/host/test_install.py
 from click.testing import CliRunner
-from commands.host.install import install
+from arda_cli.commands.host.install import install
 
 def test_install_package():
     """Test package installation command."""
@@ -469,35 +484,41 @@ All commands should use shared helpers from `lib/` instead of duplicating logic.
 
 ### Common Helper Modules
 
-**lib/console.py** - Console and theming:
+**lib/theme.py** - Theme handling and rich-click:
 ```python
-from arda_cli.lib.console import get_console_from_ctx
+from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click, get_current_theme
 
-console = get_console_from_ctx(ctx)
+# Get available themes
+themes = get_rich_click_themes()
+
+# Get current theme
+current = get_current_theme()
 ```
 
-**lib/styling.py** - Rich output helpers:
+**lib/console.py** - Console styling helpers:
 ```python
-from arda_cli.lib.styling import print_header, print_success, print_error
+from arda_cli.lib.console import print_header, print_success, print_info, print_warning, print_error
 
 print_header("Operation", console)
 print_success("Success!", console)
+print_info("Information", console)
+print_warning("Warning", console)
 print_error("Failed!", console)
 ```
 
-**lib/ssh.py** - SSH operations:
+**lib/helpers.py** - General CLI helpers:
 ```python
-from arda_cli.lib.ssh import test_ssh_connection, run_remote_command
+from arda_cli.lib.helpers import get_console_from_ctx, get_theme_from_ctx, check_and_show_help
 
-if test_ssh_connection(hostname):
-    exit_code, stdout, stderr = run_remote_command(hostname, "nixos-rebuild switch")
-```
+# Get console from context
+console = get_console_from_ctx(ctx)
 
-**lib/nix.py** - Nix operations:
-```python
-from arda_cli.lib.nix import build_host_config, eval_flake
+# Get theme from context
+theme = get_theme_from_ctx(ctx)
 
-system_path = build_host_config(hostname)
+# Check if help should be shown
+if check_and_show_help(ctx):
+    return
 ```
 
 ### When to Create a New lib/ Module
@@ -610,33 +631,34 @@ tests/
     └── host/
         ├── test_host_main.py   # Test arda host
         └── deploy/
-            ├── test_deploy_main.py  # Test arda host deploy
-            └── test_day0.py         # Test arda host deploy day0
+            ├── test_deploy_main.py  # Future: Test arda host deploy
+            └── test_day0.py         # Future: Test arda host deploy day0
 
 lib/
-└── test_ssh.py                 # Test lib/ssh.py helpers
+└── test_helpers.py             # Test lib/helpers.py functions
+    └── test_theme.py           # Test lib/theme.py functions
 ```
 
 ### Test Guidelines
 
 1. **Test commands in isolation**:
    ```python
-   from commands.host.deploy.day0 import day0
-   result = runner.invoke(day0, ['hostname'])
+   from arda_cli.commands.host.main import host
+   result = runner.invoke(host, ['--verbose'])
    ```
 
 2. **Test lib/ helpers without CLI context**:
    ```python
-   from arda_cli.lib.ssh import test_ssh_connection
-   assert test_ssh_connection('localhost') == True
+   from arda_cli.lib.helpers import check_and_show_help
+   # Test helper functions directly
    ```
 
-3. **Mock external dependencies** (SSH, network, etc.):
+3. **Mock external dependencies** (when adding new helpers):
    ```python
    @patch('subprocess.run')
-   def test_ssh_connection(mock_run):
+   def test_ssh_operation(mock_run):
        mock_run.return_value.returncode = 0
-       assert test_ssh_connection('test-host') == True
+       # Test SSH helper functions
    ```
 
 ## Development Workflow
