@@ -23,8 +23,10 @@ def theme(ctx: click.Context, list: bool) -> None:
         for theme_name in get_rich_click_themes():
             console.print(f"  [accent]{theme_name}[/accent]")
 
-        console.print("\nNote: Themes can be combined with formats (slim, modern)")
-        console.print("Example: 'dracula-modern', 'forest-slim', 'nord-dark'")
+        console.print(
+            "\nNote: Themes can be combined with formats (slim, modern, nu, robo)"
+        )
+        console.print("Example: 'dracula-modern', 'forest-slim', 'nord-nu'")
     else:
         # Preview current theme
         theme = ctx.obj["theme"]

@@ -29,9 +29,12 @@ patch_rich_click()
 )
 @click.option(
     "--theme",
-    type=click.Choice(get_rich_click_themes(), case_sensitive=False),
+    type=str,
     default="dracula",
-    help="Rich-click theme to use (color + format)",
+    help=(
+        "Rich-click theme to use (see 'theme --list' for all options, "
+        "e.g., dracula, forest, solarized)"
+    ),
 )
 @click.option("--timestamp", is_flag=True, help="Add timestamps to output")
 @click.pass_context
@@ -43,6 +46,16 @@ def main(ctx: click.Context, theme: str, timestamp: bool) -> None:
     """
     # Ensure context object exists
     ctx.ensure_object(dict)
+
+    # Validate theme
+    available_themes = get_rich_click_themes()
+    if theme.lower() not in [t.lower() for t in available_themes]:
+        console = get_console()
+        console.print(f"[error]Error:[/error] Theme '{theme}' not found.")
+        console.print(
+            "Use [command]arda theme --list[/command] to see all available themes."
+        )
+        ctx.exit(1)
 
     # Store theme settings
     ctx.obj["theme"] = theme.lower()

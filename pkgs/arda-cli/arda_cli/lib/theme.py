@@ -23,33 +23,58 @@ else:
 
 def get_rich_click_themes() -> list[str]:
     """Get list of available rich-click themes."""
-    # Hardcoded list of built-in rich-click themes
-    return [
+    # All available rich-click color palettes
+    palettes = [
+        "default",
         "dracula",
-        "dracula-dark",
-        "dracula-slim",
-        "dracula-modern",
         "forest",
-        "forest-dark",
-        "forest-slim",
-        "forest-modern",
         "solarized",
-        "solarized-dark",
-        "solarized-slim",
-        "solarized-modern",
         "nord",
-        "nord-dark",
-        "nord-slim",
-        "nord-modern",
         "quartz",
-        "quartz-dark",
-        "quartz-slim",
-        "quartz-modern",
-        "monokai",
-        "monokai-dark",
-        "monokai-slim",
-        "monokai-modern",
+        "star",
+        "quartz2",
+        "cargo",
+        "red1",
+        "green1",
+        "yellow1",
+        "blue1",
+        "magenta1",
+        "cyan1",
+        "red2",
+        "green2",
+        "yellow2",
+        "blue2",
+        "magenta2",
+        "cyan2",
+        "mono",
+        "plain",
     ]
+
+    # Main palettes that get format variants
+    main_palettes = [
+        "default",
+        "dracula",
+        "forest",
+        "solarized",
+        "nord",
+        "quartz",
+        "star",
+        "quartz2",
+        "cargo",
+    ]
+
+    # Generate all combinations: palette-format (skip box since it's default)
+    themes = []
+    for palette in palettes:
+        # Include the base palette (box format) for all palettes
+        themes.append(palette)
+
+        # Add variants for main palettes (those without numbers in the name)
+        if palette in main_palettes:
+            for fmt in ["slim", "modern", "nu", "robo"]:
+                themes.append(f"{palette}-{fmt}")
+
+    return themes
 
 
 def patch_rich_click() -> None:
