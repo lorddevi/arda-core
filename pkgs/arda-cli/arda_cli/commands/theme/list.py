@@ -3,7 +3,7 @@
 import click
 import rich_click as rclick
 
-from arda_cli.lib.helpers import get_console_from_ctx
+from arda_cli.lib.helpers import get_clean_console
 from arda_cli.lib.theme import get_rich_click_themes
 
 
@@ -11,7 +11,9 @@ from arda_cli.lib.theme import get_rich_click_themes
 @click.pass_context
 def list(ctx: click.Context) -> None:
     """List all available rich-click themes."""
-    console = get_console_from_ctx(ctx)
+    # Use clean console to avoid timestamp wrapping
+    # This makes the output suitable for scripting
+    console = get_clean_console(ctx)
 
     # Check verbose setting from global config
     verbose = ctx.obj.get("verbose", False)

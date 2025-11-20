@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, cast
 
 import click
+from rich.console import Console
 
 if TYPE_CHECKING:
     from rich.console import Console
@@ -60,3 +61,19 @@ def get_theme_from_ctx(ctx: click.Context) -> str:
 
     """
     return cast(str, ctx.obj.get("theme", "dracula"))
+
+
+def get_clean_console(ctx: click.Context) -> "Console":
+    """Get a clean console without timestamp wrapping.
+
+    Args:
+        ctx: Click context object
+
+    Returns:
+        Fresh Console instance without timestamp wrapping
+
+    """
+    # Create a fresh console for clean output
+    # This is useful for commands that output data meant for scripting
+    # or commands where timestamps would be undesirable
+    return Console()
