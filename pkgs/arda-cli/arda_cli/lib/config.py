@@ -74,15 +74,14 @@ def load_default_config() -> dict:
     default_config_path = package_dir / DEFAULT_CONFIG_NAME
 
     if default_config_path.exists():
-        try:
-            with open(default_config_path, "rb") as f:
-                return tomllib.load(f)
-        except Exception:
-            # Silently fall back to hardcoded default
-            pass  # noqa: S110
+        with open(default_config_path, "rb") as f:
+            return tomllib.load(f)
 
     # Return hardcoded default if file doesn't exist
-    return {"theme": {"default": "dracula"}, "output": {}}
+    return {
+        "theme": {"default": "dracula"},
+        "output": {"verbose": False, "timestamp": True},
+    }
 
 
 def get_theme_from_config() -> str:
@@ -101,3 +100,39 @@ def get_theme_from_config() -> str:
             return str(theme_config["default"])
 
     return "dracula"
+
+
+def get_verbose_from_config() -> bool:
+    """Get the verbose setting from config file.
+
+    Returns:
+        Verbose setting (default: False)
+
+    """
+    config = load_config()
+
+    # Try to get verbose from config
+    if "output" in config:
+        output_config = config["output"]
+        if "verbose" in output_config:
+            return bool(output_config["verbose"])
+
+    return False
+
+
+def get_timestamp_from_config() -> bool:
+    """Get the timestamp setting from config file.
+
+    Returns:
+        Timestamp setting (default: True)
+
+    """
+    config = load_config()
+
+    # Try to get timestamp from config
+    if "output" in config:
+        output_config = config["output"]
+        if "timestamp" in output_config:
+            return bool(output_config["timestamp"])
+
+    return True

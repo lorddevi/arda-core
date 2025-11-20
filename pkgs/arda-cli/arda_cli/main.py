@@ -4,6 +4,8 @@ Arda uses rich-click's built-in themes for unified styling across
 all help text and command output.
 """
 
+from typing import Any
+
 import click
 import rich_click as rclick
 from rich import get_console
@@ -16,7 +18,11 @@ from arda_cli.commands.roles.main import roles
 from arda_cli.commands.secrets.main import secrets
 from arda_cli.commands.templates.main import templates
 from arda_cli.commands.theme import theme
-from arda_cli.lib.config import get_theme_from_config
+from arda_cli.lib.config import (
+    get_theme_from_config,
+    get_timestamp_from_config,
+    get_verbose_from_config,
+)
 
 # Import theme handling from lib
 from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click
@@ -24,8 +30,10 @@ from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click
 # Patch click with theme configuration
 patch_rich_click()
 
-# Get default theme from config
+# Get default settings from config
 DEFAULT_THEME = get_theme_from_config()
+DEFAULT_VERBOSE = get_verbose_from_config()
+DEFAULT_TIMESTAMP = get_timestamp_from_config()
 
 
 @rclick.group(
@@ -40,9 +48,20 @@ DEFAULT_THEME = get_theme_from_config()
         "e.g., dracula, forest, solarized)"
     ),
 )
-@click.option("--timestamp", is_flag=True, help="Add timestamps to output")
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=DEFAULT_VERBOSE,
+    help="Enable verbose output (see config for default)",
+)
+@click.option(
+    "--timestamp/--no-timestamp",
+    default=DEFAULT_TIMESTAMP,
+    help="Add timestamps to output (see config for default)",
+)
 @click.pass_context
-def main(ctx: click.Context, theme: str, timestamp: bool) -> None:
+def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None:
     """Arda - minimal infrastructure management for NixOS.
 
     A modern CLI tool with rich theming and beautiful output.
@@ -61,12 +80,32 @@ def main(ctx: click.Context, theme: str, timestamp: bool) -> None:
         )
         ctx.exit(1)
 
-    # Store theme settings
+    # Store settings in context
     ctx.obj["theme"] = theme.lower()
+    ctx.obj["verbose"] = verbose
     ctx.obj["timestamp"] = timestamp
 
-    # Get themed console
-    console = get_console()
+    # Get themed console with timestamp if enabled
+    console_kwargs = {}
+    if timestamp:
+        from datetime import datetime
+
+        console_kwargs["markup"] = True
+        console = get_console()
+        # Add timestamp to output by wrapping print
+
+        original_print = console.print
+
+        def timestamped_print(*args: Any, **kwargs: Any) -> None:
+            """Print with timestamp prefix."""
+            timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            original_print(f"[dim][{timestamp_str}][/dim] ", end="")
+            original_print(*args, **kwargs)
+
+        console.print = timestamped_print  # type: ignore
+    else:
+        console = get_console()
+
     ctx.obj["console"] = console
 
     # Show welcome message with theme

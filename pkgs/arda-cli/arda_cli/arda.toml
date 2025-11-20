@@ -7,9 +7,13 @@
 # Default theme to use for the CLI
 # Options: dracula, forest, solarized, nord, quartz, star, cargo, etc.
 # You can also use variants: -slim, -modern, -nu, -robo
-default = "dracula"
+default = "forest"
 
 [output]
-# Additional output settings can be added here in the future
-# verbose = false
-# timestamp = false
+# Enable verbose output for commands
+# When true, commands will show additional details and debug info
+verbose = false
+
+# Add timestamps to console output
+# When true, all output will include timestamps
+timestamp = true

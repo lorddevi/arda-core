@@ -7,8 +7,15 @@ from arda_cli.lib.helpers import check_and_show_help, get_console_from_ctx
 
 
 @rclick.command()
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=None,
+    help="Enable verbose output (overrides config default)",
+)
 @click.pass_context
-def templates(ctx: click.Context) -> None:
+def templates(ctx: click.Context, verbose: bool | None) -> None:
     """Template management commands."""
     # Show help if no options provided
     if check_and_show_help(ctx):
@@ -16,4 +23,18 @@ def templates(ctx: click.Context) -> None:
 
     console = get_console_from_ctx(ctx)
 
+    # Use --verbose flag if provided, otherwise use config default
+    if verbose is None:
+        verbose = ctx.obj.get("verbose", False)
+
+    if verbose:
+        console.print("\n[info]i Verbose mode enabled[/info]")
+
     console.print("Template management - coming soon!")
+
+    if verbose:
+        console.print("\n[dim]Available operations:[/dim]")
+        console.print("  [dim]• List all templates[/dim]")
+        console.print("  [dim]• Create new template[/dim]")
+        console.print("  [dim]• Apply template to host[/dim]")
+        console.print("  [dim]• Update template definition[/dim]")
