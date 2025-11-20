@@ -66,6 +66,9 @@ lint.ignore = [
     "D100", # Missing docstring in public module
     "D104", # Missing docstring in public package
     "D107", # Missing docstring in __init__
+    # Ignore conflicting pydocstyle rules
+    "D203", # conflicting with D211
+    "D213", # conflicting with D212
     "S101", # Use of assert detected (we use it in tests)
 ]
 exclude = [
