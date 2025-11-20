@@ -17,7 +17,7 @@ from arda_cli.commands.host.main import host
 from arda_cli.commands.roles.main import roles
 from arda_cli.commands.secrets.main import secrets
 from arda_cli.commands.templates.main import templates
-from arda_cli.commands.theme import theme
+from arda_cli.commands.theme.main import theme
 from arda_cli.lib.config import (
     get_theme_from_config,
     get_timestamp_from_config,
@@ -44,7 +44,7 @@ DEFAULT_TIMESTAMP = get_timestamp_from_config()
     type=str,
     default=DEFAULT_THEME,
     help=(
-        "Rich-click theme to use (see 'theme --list' for all options, "
+        "Rich-click theme to use (see 'theme list' for all options, "
         "e.g., dracula, forest, solarized)"
     ),
 )
@@ -76,7 +76,7 @@ def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None
         console = get_console()
         console.print(f"[error]Error:[/error] Theme '{theme}' not found.")
         console.print(
-            "Use [command]arda theme --list[/command] to see all available themes."
+            "Use [command]arda theme list[/command] to see all available themes."
         )
         ctx.exit(1)
 
