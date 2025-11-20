@@ -16,12 +16,16 @@ from arda_cli.commands.roles.main import roles
 from arda_cli.commands.secrets.main import secrets
 from arda_cli.commands.templates.main import templates
 from arda_cli.commands.theme import theme
+from arda_cli.lib.config import get_theme_from_config
 
 # Import theme handling from lib
 from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click
 
 # Patch click with theme configuration
 patch_rich_click()
+
+# Get default theme from config
+DEFAULT_THEME = get_theme_from_config()
 
 
 @rclick.group(
@@ -30,7 +34,7 @@ patch_rich_click()
 @click.option(
     "--theme",
     type=str,
-    default="dracula",
+    default=DEFAULT_THEME,
     help=(
         "Rich-click theme to use (see 'theme --list' for all options, "
         "e.g., dracula, forest, solarized)"

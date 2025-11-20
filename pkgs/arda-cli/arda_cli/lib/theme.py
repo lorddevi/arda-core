@@ -5,8 +5,10 @@ import sys
 
 # IMPORTANT: Parse theme from command-line BEFORE importing rich_click
 # This ensures the environment variable is set before rich_click reads it
+from arda_cli.lib.config import get_theme_from_config
+
 global _GLOBAL_THEME
-_GLOBAL_THEME = "dracula"
+_GLOBAL_THEME = "dracula"  # Will be updated from config below
 
 if "--theme" in sys.argv:
     try:
@@ -15,10 +17,14 @@ if "--theme" in sys.argv:
             theme_value = sys.argv[theme_index + 1]
             os.environ["RICH_CLICK_THEME"] = theme_value
             _GLOBAL_THEME = theme_value
+        else:
+            # --theme specified but no value, use config default
+            _GLOBAL_THEME = get_theme_from_config()
     except (ValueError, IndexError):
-        _GLOBAL_THEME = "dracula"
+        _GLOBAL_THEME = get_theme_from_config()
 else:
-    _GLOBAL_THEME = "dracula"
+    # No --theme specified, use config default
+    _GLOBAL_THEME = get_theme_from_config()
 
 
 def get_rich_click_themes() -> list[str]:
