@@ -11,10 +11,10 @@ from rich.console import Console
 from rich.panel import Panel
 
 # Import commands from commands/ directory
-from arda_cli.commands.host import host
-from arda_cli.commands.roles import roles
-from arda_cli.commands.secrets import secrets
-from arda_cli.commands.templates import templates
+from arda_cli.commands.host.main import host
+from arda_cli.commands.roles.main import roles
+from arda_cli.commands.secrets.main import secrets
+from arda_cli.commands.templates.main import templates
 from arda_cli.commands.theme import theme
 
 # Import theme handling from lib
