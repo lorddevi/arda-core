@@ -6,10 +6,15 @@ Thank you for your interest in contributing to Arda CLI! This document provides 
 
 - [Development Setup](#development-setup)
 - [Project Structure](#project-structure)
+- [Architecture Philosophy](#architecture-philosophy)
+- [Commands Directory](#commands-directory)
+- [Library (lib/) Directory](#library-lib-directory)
 - [Code Style](#code-style)
+- [Adding New Commands](#adding-new-commands)
+- [Using Shared Helpers](#using-shared-helpers)
 - [Theme System](#theme-system)
-- [Adding New Features](#adding-new-features)
 - [Testing](#testing)
+- [Development Workflow](#development-workflow)
 - [Submitting Changes](#submitting-changes)
 
 ## Development Setup
@@ -49,27 +54,268 @@ nix build .#arda-cli
 
 ## Project Structure
 
+Arda CLI follows a **modular architecture** designed for maintainability, scalability, and learning.
+
 ```
 arda_cli/
 ├── __init__.py              # Package initialization
-├── main.py                  # CLI entry point with rich-click
-├── theme.py                 # ThemeManager for YAML themes
-├── themes/                  # YAML theme files (auto-generated)
-│   ├── greyscale.yaml       # Default theme
-│   ├── matrix.yaml          # Green theme
-│   └── ocean.yaml           # Blue theme
-├── styling/                 # Styling utilities
+├── main.py                  # CLI entry point (minimal)
+├── commands/                # All command implementations
 │   ├── __init__.py
-│   ├── gradients.py         # Gradient text helpers
-│   └── prefixes.py          # Hostname/timestamp prefixers
+│   ├── main.py             # Root: arda
+│   ├── host/               # arda host commands
+│   │   ├── __init__.py
+│   │   ├── main.py         # arda host
+│   │   └── deploy/         # arda host deploy commands
+│   │       ├── __init__.py
+│   │       ├── main.py     # arda host deploy
+│   │       ├── day0.py     # arda host deploy day0
+│   │       └── update.py   # arda host deploy update
+│   ├── roles/              # arda roles commands
+│   ├── secrets/            # arda secrets commands
+│   ├── templates/          # arda templates commands
+│   └── theme/              # arda theme commands
+└── lib/                    # Shared helpers (DRY principle)
+    ├── __init__.py
+    ├── console.py          # Console creation, theming
+    ├── styling.py          # Rich styling helpers
+    ├── ssh.py              # SSH utilities
+    ├── host.py             # Host operations
+    ├── nix.py              # Nix operations
+    ├── config.py           # Config file I/O
+    ├── network.py          # Network utilities
+    ├── logging.py          # Logging helpers
+    └── exceptions.py       # Custom exceptions
 ```
 
-### Key Components
+### Key Principles
 
-- **`main.py`**: Click CLI with rich-click integration
-- **`theme.py`**: ThemeManager loads YAML themes
-- **`styling/gradients.py`**: Gradient text rendering
-- **`styling/prefixes.py`**: Hostname and timestamp prefixes
+- **`commands/`**: "What the CLI does" - user-facing command implementations
+- **`lib/`**: "How it does it" - reusable helper functions and utilities
+- **DRY**: Don't Repeat Yourself - extract common logic to `lib/`
+- **Modularity**: Each command = its own file or directory
+- **Discoverability**: File structure mirrors command structure
+
+## Architecture Philosophy
+
+### Why This Structure?
+
+1. **Learnable**: Code structure matches command structure
+   - `commands/host/deploy/day0.py` → `arda host deploy day0`
+
+2. **Maintainable**: Each command is self-contained
+   - Changes to one command don't affect others
+   - Easy to test individual commands
+
+3. **Extensible**: Add new commands by adding files
+   - No need to modify existing code
+   - Just import and register the new command
+
+4. **Testable**: Test helpers independently
+   - `lib/ssh.py` tests don't need CLI context
+   - `commands/host/` tests can focus on command logic
+
+5. **DRY Principle**: Reuse code through `lib/`
+   - Shared utilities live in `lib/`
+   - All commands use the same helpers
+   - Updates in one place affect all commands
+
+### Command Hierarchy Pattern
+
+Commands follow a consistent pattern:
+
+```
+<command> <subcommand> <action> [arguments] [options]
+
+Examples:
+arda host deploy day0 hostname --ip 192.168.1.1
+arda host deploy update hostname --port 22
+arda theme --list
+```
+
+Each level in the command hierarchy maps to a directory level in `commands/`.
+
+## Commands Directory
+
+The `commands/` directory contains all CLI command implementations. It mirrors the command hierarchy exactly.
+
+### Command File Pattern
+
+Each command file defines one or more Click commands:
+
+```python
+# commands/host/main.py
+import click
+from rich.console import Console
+
+@click.group()
+@click.pass_context
+def host(ctx):
+    """Host management commands."""
+    ctx.ensure_object(dict)
+
+@host.command()
+@click.option('--verbose', '-v', is_flag=True)
+@click.pass_context
+def list(ctx, verbose):
+    """List all hosts."""
+    console = ctx.obj['console']
+    if verbose:
+        console.print("Verbose mode enabled")
+    console.print("Listing hosts...")
+```
+
+### Command Registration
+
+Commands are registered with their parent groups:
+
+```python
+# In commands/host/main.py
+from .deploy.main import deploy  # Import deploy group
+host.add_command(deploy)          # Register it
+
+# In commands/host/deploy/main.py
+from .day0 import day0
+from .update import update
+deploy.add_command(day0)
+deploy.add_command(update)
+```
+
+This creates the hierarchy:
+- `arda host list` → from `commands/host/main.py`
+- `arda host deploy day0` → from `commands/host/deploy/day0.py`
+- `arda host deploy update` → from `commands/host/deploy/update.py`
+
+### Single Command Per File
+
+For leaf commands (commands with no subcommands), use one file per command:
+
+```python
+# commands/host/deploy/day0.py
+@click.command()
+@click.argument('hostname')
+@click.option('--ip', default='192.168.1.1')
+@click.pass_context
+def day0(ctx, hostname, ip):
+    """Deploy day0 configuration to a host."""
+    ...
+```
+
+### Group Commands Per Directory
+
+For commands with subcommands, create a `main.py` in the directory:
+
+```
+commands/host/
+├── main.py         # Defines the 'host' group
+├── list.py         # arda host list
+└── deploy/         # arda host deploy
+    ├── main.py     # Defines the 'deploy' group
+    ├── day0.py     # arda host deploy day0
+    └── update.py   # arda host deploy update
+```
+
+## Library (lib/) Directory
+
+The `lib/` directory contains shared helper functions - the **DRY principle** in action.
+
+### Why lib/?
+
+1. **Avoid Code Duplication**: Write logic once, use everywhere
+2. **Test Independently**: Test helpers without CLI context
+3. **Update in One Place**: Fix a bug, it fixes all uses
+4. **Clear Dependencies**: Commands depend on lib, not vice versa
+
+### lib/ File Organization
+
+Each `lib/` file focuses on one purpose:
+
+```
+lib/
+├── console.py      # Console creation and theming
+├── styling.py      # Rich styling helpers (panels, colors)
+├── ssh.py          # SSH connection and remote execution
+├── host.py         # Host management operations
+├── nix.py          # Nix operations (build, eval)
+├── config.py       # Configuration file I/O
+├── network.py      # Network utilities
+├── logging.py      # Logging helpers
+└── exceptions.py   # Custom exception classes
+```
+
+### Example lib/ File
+
+```python
+# lib/ssh.py
+"""SSH and remote execution helpers."""
+import subprocess
+from typing import Optional
+
+def test_ssh_connection(host: str, port: int = 22, timeout: int = 5) -> bool:
+    """Test SSH connection to host.
+
+    Args:
+        host: Hostname or IP address
+        port: SSH port (default: 22)
+        timeout: Connection timeout in seconds
+
+    Returns:
+        True if connection successful, False otherwise
+    """
+    try:
+        result = subprocess.run(
+            ["ssh", "-p", str(port), host, "echo 'connected'"],
+            capture_output=True,
+            timeout=timeout
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+        return False
+
+def run_remote_command(host: str, command: str, port: int = 22) -> tuple[int, str, str]:
+    """Run a command on remote host via SSH.
+
+    Args:
+        host: Hostname or IP address
+        command: Command to run
+        port: SSH port
+
+    Returns:
+        Tuple of (exit_code, stdout, stderr)
+    """
+    result = subprocess.run(
+        ["ssh", "-p", str(port), host, command],
+        capture_output=True,
+        text=True
+    )
+    return result.returncode, result.stdout, result.stderr
+```
+
+### Using lib/ in Commands
+
+```python
+# commands/host/deploy/day0.py
+import click
+from arda_cli.lib.styling import print_header, print_success, print_error
+from arda_cli.lib.ssh import test_ssh_connection
+from arda_cli.lib.host import load_hosts_config
+
+@click.command()
+@click.argument('hostname')
+@click.option('--ip', help='Target IP address')
+@click.pass_context
+def day0(ctx, hostname, ip):
+    """Deploy day0 configuration to a host."""
+    console = ctx.obj['console']
+
+    print_header(f"Day0 Deploy: {hostname}", console)
+
+    # Use shared helpers
+    if test_ssh_connection(hostname, 22):
+        print_success("SSH connection successful", console)
+    else:
+        print_error("SSH connection failed", console)
+```
 
 ## Code Style
 
@@ -78,7 +324,7 @@ arda_cli/
 - **Python Version**: 3.11+
 - **Type Hints**: Required for all functions
 - **Line Length**: 88 characters (configured in pyproject.toml)
-- **Formatter**: `ruff` (configured via Nix)
+- **Formatter**: `ruff` (configured via pyproject.toml)
 
 ### Code Style Requirements
 
@@ -97,227 +343,219 @@ arda_cli/
 3. **Use descriptive names**:
    ```python
    # Good
-   theme_manager = ThemeManager(themes_dir)
+   hosts_config = load_hosts_config(config_path)
 
    # Bad
-   tm = ThemeManager(td)
+   h = load_hosts_config(c)
    ```
 
 4. **Document public APIs**:
    ```python
-   def get_console(theme_name: str) -> Console:
-       """Get a Console instance with the specified theme."""
+   def create_console(theme_name: str) -> Console:
+       """Create a themed Console instance.
+
+       Args:
+           theme_name: Name of the rich-click theme to use
+
+       Returns:
+           Configured Console instance with theme
+       """
        ...
+   ```
+
+5. **One function = one responsibility**:
+   ```python
+   # Good: Separate functions for separate concerns
+   def test_ssh_connection(host: str, port: int) -> bool: ...
+   def run_remote_command(host: str, command: str) -> tuple[int, str, str]: ...
+
+   # Bad: Mixed concerns
+   def ssh_operation(host, port, command, verbose): ...
    ```
 
 ### Pre-commit Hooks (Optional)
 
-For automated linting, install pre-commit:
+For automated linting, use the tools in devShell:
 
 ```bash
 # In devShell
-pip install pre-commit
-pre-commit install
-
-# Now linting runs automatically on git commit!
+ruff check .          # Lint code
+ruff format .         # Format code
+mypy .                # Type check
+bandit -r arda_cli/   # Security check
 ```
 
-Or use Nix to set up hooks (configured in `pyproject.toml`):
+## Adding New Commands
 
-### Rich and Click Patterns
+To add a new command to Arda CLI:
 
-#### Using Rich for Output
+### Step 1: Create the Command File
 
-```python
-from rich.console import Console
-from rich.panel import Panel
+Decide where the command belongs in the hierarchy:
 
-console = Console()
+```bash
+# New command: arda host install PACKAGE
+# File: commands/host/install.py
 
-# Use panels for structured output
-panel = Panel(
-    "[bold]Header[/bold]\n\nContent here",
-    border_style="cyan"
-)
-console.print(panel)
-
-# Use styled text
-console.print("[info]ℹ Information[/info]")
-console.print("[success]✓ Success[/success]")
-console.print("[warning]⚠ Warning[/warning]")
-console.print("[error]✗ Error[/error]")
-```
-
-#### Using Click for CLI
-
-```python
 import click
 
 @click.command()
-@click.option('--verbose', '-v', is_flag=True)
+@click.argument('package')
 @click.pass_context
-def command(ctx: click.Context, verbose: bool):
-    """Command description."""
+def install(ctx, package):
+    """Install a package on a host."""
     console = ctx.obj['console']
+    console.print(f"Installing {package}...")
+```
 
-    if verbose:
-        console.print("[info]Verbose mode enabled[/info]")
+### Step 2: Register the Command
+
+In the parent command file:
+
+```python
+# commands/host/main.py
+from .install import install  # Import the new command
+host.add_command(install)      # Register it
+```
+
+### Step 3: Extract Shared Logic to lib/
+
+If the command uses logic that might be useful elsewhere:
+
+```python
+# lib/package.py
+"""Package management helpers."""
+def install_package(package: str, host: str) -> bool:
+    """Install a package on a host via SSH."""
+    ...
+```
+
+```python
+# commands/host/install.py
+from arda_cli.lib.package import install_package
+
+@click.command()
+@click.argument('package')
+@click.pass_context
+def install(ctx, package):
+    """Install a package on a host."""
+    console = ctx.obj['console']
+    if install_package(package, ctx.obj['host']):
+        console.print("[success]✓ Package installed[/success]")
+    else:
+        console.print("[error]✗ Installation failed[/error]")
+```
+
+### Step 4: Add Tests
+
+Create test file matching command location:
+
+```python
+# tests/commands/host/test_install.py
+from click.testing import CliRunner
+from commands.host.install import install
+
+def test_install_package():
+    """Test package installation command."""
+    runner = CliRunner()
+    result = runner.invoke(install, ['vim'])
+    assert result.exit_code == 0
+    assert 'Installing vim' in result.output
+```
+
+## Using Shared Helpers
+
+All commands should use shared helpers from `lib/` instead of duplicating logic.
+
+### Common Helper Modules
+
+**lib/console.py** - Console and theming:
+```python
+from arda_cli.lib.console import get_console_from_ctx
+
+console = get_console_from_ctx(ctx)
+```
+
+**lib/styling.py** - Rich output helpers:
+```python
+from arda_cli.lib.styling import print_header, print_success, print_error
+
+print_header("Operation", console)
+print_success("Success!", console)
+print_error("Failed!", console)
+```
+
+**lib/ssh.py** - SSH operations:
+```python
+from arda_cli.lib.ssh import test_ssh_connection, run_remote_command
+
+if test_ssh_connection(hostname):
+    exit_code, stdout, stderr = run_remote_command(hostname, "nixos-rebuild switch")
+```
+
+**lib/nix.py** - Nix operations:
+```python
+from arda_cli.lib.nix import build_host_config, eval_flake
+
+system_path = build_host_config(hostname)
+```
+
+### When to Create a New lib/ Module
+
+Create a new `lib/` module when:
+1. You need functionality not provided by existing modules
+2. The functionality is used by multiple commands
+3. It's a cohesive set of utilities (e.g., all SSH-related helpers)
+
+```python
+# lib/vm.py - New module for VM operations
+"""VM management helpers."""
+
+def create_vm(name: str, memory: int) -> str:
+    """Create a VM with specified memory."""
+    ...
+
+def start_vm(name: str) -> bool:
+    """Start a VM."""
+    ...
 ```
 
 ## Theme System
 
-### Understanding Themes
+Arda CLI uses **rich-click's built-in theming** system (version 1.9.0+).
 
-Themes are defined in YAML files and loaded by `ThemeManager`.
+### Available Themes
 
-### Theme File Format
+24 built-in themes from rich-click:
+- Dracula variants: `dracula`, `dracula-dark`, `dracula-slim`, `dracula-modern`
+- Forest variants: `forest`, `forest-dark`, `forest-slim`, `forest-modern`
+- Solarized variants: `solarized`, `solarized-dark`, `solarized-slim`, `solarized-modern`
+- Nord variants: `nord`, `nord-dark`, `nord-slim`, `nord-modern`
+- Quartz variants: `quartz`, `quartz-dark`, `quartz-slim`, `quartz-modern`
+- Monokai variants: `monokai`, `monokai-dark`, `monokai-slim`, `monokai-modern`
 
-```yaml
-# themes/example.yaml
-info: cyan              # Information messages
-success: green          # Success states
-warning: yellow         # Warnings
-error: bold red         # Errors
-command: bold blue      # Commands being run
-accent: magenta         # Highlights
-muted: dim white        # Secondary text
-title: bold cyan        # Section headers
-border: cyan            # Panel borders
+### Using Themes in Commands
 
-# Prefix colors (future use)
-hostname_brackets: dim white
-hostname_name: cyan
-hostname_colon: dim white
-timestamp: dim white
-output: white
-debug: dim white
-```
-
-### Using Themes in Code
+Themes are automatically inherited from the parent command. Just use the console:
 
 ```python
-from .theme import ThemeManager
-from .styling import gradient_text
-
-# Get themed console
-console = theme_manager.get_console('greyscale')
-
-# Get theme colors
-colors = theme_manager.get_colors('matrix')
-
-# Create gradient text
-gradient = gradient_text("TEXT", "green", "bright_green")
-console.print(gradient)
-```
-
-### Creating a New Theme
-
-1. Create YAML file in `themes/`:
-   ```yaml
-   info: blue
-   success: green
-   warning: yellow
-   error: red
-   # ... other colors
-   ```
-
-2. Use in code:
-   ```python
-   console = theme_manager.get_console('my_theme')
-   ```
-
-3. Test:
-   ```bash
-   arda --theme my_theme host
-   ```
-
-### Adding New Theme Colors
-
-When adding new color categories:
-
-1. Update all theme YAML files
-2. Update `ThemeManager._create_default_themes()` in `theme.py`
-3. Document in this file
-
-### Gradient System
-
-Gradients are created using Rich's `Text` objects with character-by-character styling.
-
-```python
-from .styling import gradient_text, multi_color_gradient
-
-# Simple gradient
-gradient = gradient_text("HELLO", "red", "blue")
-
-# Multi-color gradient
-rainbow = multi_color_gradient("RAINBOW", "red", "yellow", "green", "cyan", "blue")
-```
-
-### Prefix System
-
-Hostname and timestamp prefixes provide context for operations:
-
-```python
-from .styling import with_host_prefix, with_timestamp, with_full_context
-
-# Hostname prefix
-text = with_host_prefix("nixos-01", "Installing...", colors)
-console.print(text)
-# Output: [nixos-01]: Installing...
-
-# Timestamp prefix
-text = with_timestamp("Starting", colors, timestamp=True)
-console.print(text)
-# Output: [14:23:45] Starting
-
-# Combined
-text = with_full_context("web-01", "Updating...", colors, timestamp=True)
-console.print(text)
-# Output: [14:23:45] [web-01]: Updating...
-```
-
-## Adding New Features
-
-### Command Structure
-
-Commands follow this pattern:
-
-```python
-@main.command()
-@click.option('--option', help='Option description')
+@click.command()
 @click.pass_context
-def command_name(ctx: click.Context, option):
-    """Command description."""
+def my_command(ctx):
+    """My command with automatic theming."""
     console = ctx.obj['console']
-
-    # Use themed output
-    console.print("[info]Message[/info]")
+    console.print("[info]ℹ Information")
+    console.print("[success]✓ Success")
+    console.print("[warning]⚠ Warning")
+    console.print("[error]✗ Error")
 ```
 
-### Theme Integration
+### Theme Configuration
 
-All commands should:
-
-1. Accept `ctx` parameter with `@click.pass_context`
-2. Use `ctx.obj['console']` for output
-3. Use theme-based styles (info, success, warning, error, etc.)
-4. Support the `--theme` option automatically
-
-### Example: Adding a New Command
+The `--theme` option is automatically added to the main command and passed through context. Commands access it via:
 
 ```python
-@main.command()
-@click.option('--name', required=True, help='Host name')
-@click.pass_context
-def check(ctx: click.Context, name: str):
-    """Check host status."""
-    console = ctx.obj['console']
-
-    console.print(f"[title]Checking {name}[/title]")
-
-    # Use styled output
-    console.print(f"[info]ℹ Checking host: {name}[/info]")
-    console.print(f"[success]✓ Host {name} is online[/success]")
+theme = ctx.obj['theme']  # e.g., 'dracula', 'forest', 'nord'
 ```
 
 ## Testing and Linting
@@ -330,7 +568,6 @@ We use a comprehensive Python linting and testing suite:
 - **mypy**: Static type checker
 - **pytest**: Testing framework with coverage
 - **Bandit**: Security linter
-- **pre-commit**: Git hook framework (optional)
 
 All tools are configured in `pyproject.toml` and available in the Nix devShell.
 
@@ -361,6 +598,90 @@ pytest --cov=arda_cli --cov-report=term-missing
 # Run a specific test
 pytest tests/test_main.py -v
 ```
+
+### Testing Structure
+
+Tests mirror the source code structure:
+
+```
+tests/
+└── commands/
+    ├── test_main.py            # Test root command
+    └── host/
+        ├── test_host_main.py   # Test arda host
+        └── deploy/
+            ├── test_deploy_main.py  # Test arda host deploy
+            └── test_day0.py         # Test arda host deploy day0
+
+lib/
+└── test_ssh.py                 # Test lib/ssh.py helpers
+```
+
+### Test Guidelines
+
+1. **Test commands in isolation**:
+   ```python
+   from commands.host.deploy.day0 import day0
+   result = runner.invoke(day0, ['hostname'])
+   ```
+
+2. **Test lib/ helpers without CLI context**:
+   ```python
+   from arda_cli.lib.ssh import test_ssh_connection
+   assert test_ssh_connection('localhost') == True
+   ```
+
+3. **Mock external dependencies** (SSH, network, etc.):
+   ```python
+   @patch('subprocess.run')
+   def test_ssh_connection(mock_run):
+       mock_run.return_value.returncode = 0
+       assert test_ssh_connection('test-host') == True
+   ```
+
+## Development Workflow
+
+### Typical Workflow
+
+1. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/my-new-feature
+   ```
+
+2. **Write tests first** (TDD approach):
+   ```bash
+   # Create test file
+   touch tests/commands/host/test_new_command.py
+   # Write failing test
+   pytest tests/commands/host/test_new_command.py  # Should fail
+   ```
+
+3. **Implement the feature**:
+   - Create command in `commands/`
+   - Extract shared logic to `lib/`
+   - Run tests: `pytest tests/commands/host/test_new_command.py`
+
+4. **Run all checks**:
+   ```bash
+   ruff check .
+   ruff format .
+   mypy .
+   pytest
+   nix build .#arda-cli
+   ```
+
+5. **Build and test the CLI**:
+   ```bash
+   nix build .#arda-cli
+   ./result/bin/arda my-command --help
+   ```
+
+6. **Commit and push**:
+   ```bash
+   git add .
+   git commit -m "feat: add new command"
+   git push origin feature/my-new-feature
+   ```
 
 ### Testing Workflow
 
@@ -407,72 +728,57 @@ When adding features, manually test:
 Use conventional commits:
 
 ```
-feat: add network-based theme support
-fix: resolve hostname prefix color issue
-docs: update theme system documentation
+feat: add arda host deploy day0 command
+fix: resolve SSH connection timeout issue
+docs: update CONTRIBUTING.md with new lib/ structure
 style: format code with ruff
-refactor: simplify gradient text implementation
-test: add tests for theme switching
+refactor: extract SSH logic to lib/ssh.py
+test: add tests for host deployment workflow
 ```
 
 ### Pull Request Process
 
 1. **Ensure code follows style guidelines** (type hints, 88-char lines)
-2. **Test all themes** work correctly
-3. **Update documentation** if needed
-4. **Build succeeds** with `nix build .#arda-cli`
-5. **Submit PR** with clear description
+2. **All commands use lib/ helpers** (DRY principle)
+3. **Tests for new features** (both commands and lib/ helpers)
+4. **All linters pass** (`ruff check .`, `mypy .`)
+5. **All tests pass** (`pytest`)
+6. **Build succeeds** with `nix build .#arda-cli`
+7. **Submit PR** with clear description
 
-## Theme Color Reference
+### Pull Request Description Template
 
-| Style | Usage |
-|-------|-------|
-| `info` | General information messages |
-| `success` | Successful operations |
-| `warning` | Warnings that need attention |
-| `error` | Error messages and failures |
-| `command` | Commands being executed |
-| `output` | Command output |
-| `accent` | Highlights and emphasis |
-| `muted` | Secondary/descriptive text |
-| `title` | Section headers and titles |
-| `border` | Panel and box borders |
-| `hostname_*` | Hostname prefix components |
-| `timestamp` | Timestamp prefixes |
-| `debug` | Debug output |
+```markdown
+## Summary
+Brief description of changes
 
-## Common Tasks
+## Testing
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
 
-### Updating Dependencies
-
-Edit `pyproject.toml` and rebuild:
-
-```bash
-# Edit dependencies
-vim pyproject.toml
-
-# Rebuild
-nix build .#arda-cli
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Type hints added
+- [ ] Shared logic extracted to lib/
+- [ ] Documentation updated
 ```
-
-### Modifying Themes
-
-Edit YAML files in `themes/` directory. Changes take effect on next build.
-
-### Adding New Styling Utilities
-
-1. Create function in appropriate `styling/` module
-2. Export in `styling/__init__.py`
-3. Document with docstring
-4. Add example to this file
 
 ## Resources
 
 - [Rich Documentation](https://rich.readthedocs.io/)
 - [Click Documentation](https://click.palletsprojects.com/)
+- [Rich-Click Documentation](https://github.com/ewels/rich-click)
 - [Nixpkgs](https://nixos.org/nixpkgs/)
 - [Ruff Linter](https://beta.ruff.rs/docs/)
+- [Python Type Hints Guide](https://docs.python.org/3/library/typing.html)
 
 ## Questions?
 
-Feel free to open an issue for questions about contributing!
+Feel free to open an issue for questions about:
+- Project structure
+- Adding new commands
+- Using shared helpers
+- Testing approach
+- Architecture decisions
+
