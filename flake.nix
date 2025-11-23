@@ -1,5 +1,6 @@
 {
   description = "arda - minimal infrastructure management for NixOS";
+  # Updated: Added config command support
 
   inputs = {
     nixpkgs.url = "https://nixos.org/channels/nixpkgs-unstable/nixexprs.tar.xz";

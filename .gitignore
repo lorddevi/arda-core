@@ -8,6 +8,7 @@ result-*
 .nix-*
 .devShells/
 .flake.lock
+results/*
 
 # Secrets and encryption
 .sops.yaml

@@ -3,6 +3,8 @@
 import tomllib
 from pathlib import Path
 
+import tomli_w  # type: ignore
+
 DEFAULT_CONFIG_NAME = "arda.toml"
 
 
@@ -13,19 +15,16 @@ def get_config_path() -> Path | None:
         Path to the config file, or None if not found
 
     Search order:
-    1. ~/.config/arda/arda.toml (XDG standard)
-    2. /etc/arda/arda.toml (system-wide)
-    3. ./etc/arda.toml (project-level)
-    4. ./arda.toml (current directory)
-    5. ./arda_cli/arda.toml (default/fallback)
+    1. ~/.config/arda/arda.toml (XDG user config)
+    2. ./etc/arda.toml (project-level config)
+    3. ./arda.toml (current directory)
+    4. ./arda_cli/arda.toml (package default/fallback)
 
     """
     # Define search paths
     search_paths = [
-        # XDG config directory
+        # XDG config directory (user-level)
         Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME,
-        # System-wide config
-        Path("/etc/arda") / DEFAULT_CONFIG_NAME,
         # Project-level config
         Path.cwd() / "etc" / DEFAULT_CONFIG_NAME,
         # Current directory
@@ -136,3 +135,150 @@ def get_timestamp_from_config() -> bool:
             return bool(output_config["timestamp"])
 
     return True
+
+
+def get_config_for_viewing() -> dict:
+    """Get configuration with priority order for viewing.
+
+    Reads config from highest priority to lowest:
+    1. XDG user config (~/.config/arda/arda.toml)
+    2. Project config (etc/arda.toml)
+    3. Package defaults
+
+    Returns:
+        Merged configuration dictionary with values from highest priority source
+        that contains each setting
+
+    """
+    search_paths = [
+        # XDG config directory (user-level) - highest priority
+        Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME,
+        # Project-level config
+        Path.cwd() / "etc" / DEFAULT_CONFIG_NAME,
+        # Package default config - lowest priority
+        Path(__file__).parent.parent / DEFAULT_CONFIG_NAME,
+    ]
+
+    # Merge configs in reverse order (lowest to highest priority)
+    merged_config: dict = {}
+
+    for config_path in reversed(search_paths):
+        if config_path.exists():
+            try:
+                with open(config_path, "rb") as f:
+                    config_data = tomllib.load(f)
+                    # Merge with higher priority overriding lower
+                    merged_config = _deep_merge(merged_config, config_data)
+            except OSError:
+                # Skip invalid or unreadable config files
+                pass
+
+    # If no configs found, return defaults
+    if not merged_config:
+        return {
+            "theme": {"default": "dracula"},
+            "output": {"verbose": False, "timestamp": True},
+        }
+
+    return merged_config
+
+
+def get_config_for_writing() -> Path:
+    """Get config file path for writing configuration changes.
+
+    Priority order:
+    1. XDG user config (if it exists) - prefer this for user changes
+    2. Project config (created if needed)
+
+    Returns:
+        Path to the config file that should be modified
+
+    """
+    # Check if XDG user config exists
+    xdg_config = Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME
+    if xdg_config.exists():
+        return xdg_config
+
+    # Otherwise, use project config (create if needed)
+    project_config = Path.cwd() / "etc" / DEFAULT_CONFIG_NAME
+
+    # Create etc directory if it doesn't exist
+    project_config.parent.mkdir(parents=True, exist_ok=True)
+
+    return project_config
+
+
+def set_config_value(
+    config_path: Path,
+    section: str,
+    setting: str,
+    value: str | bool,
+) -> None:
+    """Set a configuration value in the specified config file.
+
+    Args:
+        config_path: Path to the config file to modify
+        section: Configuration section (e.g., 'theme', 'output')
+        setting: Setting name (e.g., 'default', 'verbose')
+        value: Value to set (will be converted to appropriate type)
+
+    """
+    # Load existing config or start with defaults
+    if config_path.exists():
+        try:
+            with open(config_path, "rb") as f:
+                config_data = tomllib.load(f)
+        except Exception:
+            # If file exists but can't be read, start fresh
+            config_data = {}
+    else:
+        # If file doesn't exist, start with package defaults
+        config_data = load_default_config()
+
+    # Ensure section exists
+    if section not in config_data:
+        config_data[section] = {}
+    elif not isinstance(config_data[section], dict):
+        # Replace non-dict section with dict
+        config_data[section] = {}
+
+    # Set the value
+    config_data[section][setting] = value
+
+    # Write back to file
+    with open(config_path, "wb") as f:
+        tomli_w.dump(config_data, f)
+
+
+def get_valid_config_keys() -> list[tuple[str, str]]:
+    """Get list of all valid configuration keys.
+
+    Returns:
+        List of (section, setting) tuples representing valid configuration keys
+
+    """
+    return [
+        ("theme", "default"),
+        ("output", "verbose"),
+        ("output", "timestamp"),
+    ]
+
+
+def _deep_merge(base: dict, update: dict) -> dict:
+    """Recursively merge two dictionaries.
+
+    Args:
+        base: Base dictionary
+        update: Dictionary to merge into base
+
+    Returns:
+        Merged dictionary
+
+    """
+    result = base.copy()
+    for key, value in update.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result

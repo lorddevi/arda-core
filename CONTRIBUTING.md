@@ -422,7 +422,11 @@ with output.timer("Host deployment"):
 
 Settings are sourced from (priority order):
 1. Command-line flags
-2. Config file (`~/.config/arda/arda.toml`)
+2. Config file locations (checked in this order):
+   - `~/.config/arda/arda.toml` (XDG user config)
+   - `etc/arda.toml` (project-level config)
+   - `./arda.toml` (current directory)
+   - Package default fallback
 3. Default values
 
 **Config file example:**

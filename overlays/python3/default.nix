@@ -8,5 +8,4 @@ let
   rich-click = import ./rich-click.nix { inherit inputs; };
 in
 # Merge all overlays together using the self: super: pattern
-self: super:
-  rich-click self super
+self: super: rich-click self super

@@ -3,6 +3,7 @@
 from typing import Any
 
 import click
+import rich_click as rclick
 
 from arda_cli.lib.config import (
     get_config_for_viewing,
@@ -17,7 +18,7 @@ ALLOWED_KEYS = {
 }
 
 
-@click.group(invoke_without_command=True)
+@rclick.group()
 @click.pass_context
 def config(ctx: click.Context) -> None:
     """View and modify Arda configuration.
@@ -32,10 +33,14 @@ def config(ctx: click.Context) -> None:
     The 'set' command writes to:
     1. XDG user config (if it exists)
     2. Project config (created if needed)
+
+    Examples:
+        arda config view              # View all settings
+        arda config view theme.default  # View specific setting
+        arda config set theme.default nord  # Set a value
+
     """
-    if ctx.invoked_subcommand is None:
-        # Show help if no subcommand is provided
-        click.echo(ctx.get_help())
+    pass
 
 
 @config.command(name="view")
@@ -54,6 +59,8 @@ def view_config(ctx: click.Context, key: str | None) -> None:
         from arda_cli.lib.output import get_output_manager
 
         output: Any = get_output_manager(ctx)
+        # Use console directly for clean output
+        console = output.console
     except Exception:
         # Fallback if output manager can't be created
         from rich.console import Console
@@ -81,15 +88,19 @@ def view_config(ctx: click.Context, key: str | None) -> None:
     config_data = get_config_for_viewing()
 
     if not key:
-        # Show all settings
+        # Show all settings with clean, color-coded output
         output.section("Configuration")
+
         theme_val = config_data.get("theme", {}).get("default", "dracula")
         verbose_val = config_data.get("output", {}).get("verbose", False)
         timestamp_val = config_data.get("output", {}).get("timestamp", True)
 
-        output.info(f"Theme: {theme_val}")
-        output.info(f"Verbose: {verbose_val}")
-        output.info(f"Timestamp: {timestamp_val}")
+        # Color-coded output: setting name | hyphen | value
+        console.print(f"[cyan]Theme[/cyan] [dim]-[/dim] [white]{theme_val}[/white]")
+        console.print(f"[cyan]Verbose[/cyan] [dim]-[/dim] [white]{verbose_val}[/white]")
+        console.print(
+            f"[cyan]Timestamp[/cyan] [dim]-[/dim] [white]{timestamp_val}[/white]"
+        )
     else:
         # Show specific key
         key_parts = key.split(".")
@@ -115,7 +126,10 @@ def view_config(ctx: click.Context, key: str | None) -> None:
         if value is None:
             output.warning(f"Setting not found: {key}")
         else:
-            output.info(f"{key} = {value!r}")
+            # Clean color-coded output: key = value
+            console.print(
+                f"[cyan]{setting}[/cyan] [dim]=[/dim] [white]{value!r}[/white]"
+            )
 
 
 @config.command(name="set")
@@ -125,18 +139,27 @@ def view_config(ctx: click.Context, key: str | None) -> None:
 def set_config(ctx: click.Context, key: str, value: str) -> None:
     """Set a configuration value.
 
-    KEY should be in format 'section.key' (e.g., 'theme.default').
+    KEY can be in either format:
+    - Full: 'section.key' (e.g., 'theme.default')
+    - Shorthand: just 'setting' (e.g., 'theme', 'verbose', 'timestamp')
 
     VALUE should be the appropriate type:
-    - theme.default: string (e.g., 'nord', 'dracula')
-    - output.verbose: boolean ('true' or 'false')
-    - output.timestamp: boolean ('true' or 'false')
+    - theme: string (e.g., 'nord', 'dracula', 'forest')
+    - verbose: boolean ('true' or 'false')
+    - timestamp: boolean ('true' or 'false')
+
+    Examples:
+        arda config set theme nord
+        arda config set theme.default forest
+        arda config set verbose true
+        arda config set output.timestamp false
 
     The value will be written to the highest-priority config file:
     1. XDG user config (if it exists)
     2. Project config (created if needed)
 
     Never modifies the package default configuration.
+
     """
     # Get or create output manager
     try:
@@ -173,19 +196,40 @@ def set_config(ctx: click.Context, key: str, value: str) -> None:
         output = SimpleOutput()
 
     # Parse and validate key
-    key_parts = key.split(".")
-    if len(key_parts) != 2:
-        output.error("Invalid key format. Use 'section.key' (e.g., 'theme.default')")
-        return
+    # Support both shorthand (theme) and full (theme.default) formats
+    key = key.lower()
+    if "." in key:
+        # Full format: theme.default
+        key_parts = key.split(".")
+        if len(key_parts) != 2:
+            output.error(
+                "Invalid key format. Use 'section.key' (e.g., 'theme.default') "
+                "or shorthand (e.g., 'theme')"
+            )
+            return
+        key_tuple = tuple(key_parts)
+        if key_tuple not in ALLOWED_KEYS:
+            valid_keys = ", ".join(f"{k[0]}.{k[1]}" for k in sorted(ALLOWED_KEYS))
+            output.error(f"Invalid configuration key: {key}")
+            output.info(f"Valid keys: {valid_keys}")
+            return
+        section, setting = key_parts
+    else:
+        # Shorthand format: theme, verbose, timestamp
+        # Map shorthand to full key
+        shorthand_map = {
+            "theme": ("theme", "default"),
+            "verbose": ("output", "verbose"),
+            "timestamp": ("output", "timestamp"),
+        }
 
-    key_tuple = tuple(key_parts)
-    if key_tuple not in ALLOWED_KEYS:
-        valid_keys = ", ".join(f"{k[0]}.{k[1]}" for k in sorted(ALLOWED_KEYS))
-        output.error(f"Invalid configuration key: {key}")
-        output.info(f"Valid keys: {valid_keys}")
-        return
+        if key not in shorthand_map:
+            valid_keys = ", ".join(f"{k[0]}.{k[1]}" for k in sorted(ALLOWED_KEYS))
+            output.error(f"Invalid configuration key: {key}")
+            output.info(f"Valid keys: {valid_keys}")
+            return
 
-    section, setting = key_parts
+        section, setting = shorthand_map[key]
 
     # Parse and validate value
     try:
