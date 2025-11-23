@@ -1,6 +1,7 @@
 """Configuration management commands."""
 
-from typing import Any
+from pathlib import Path
+from typing import Any, Literal
 
 import click
 import rich_click as rclick
@@ -9,6 +10,8 @@ from arda_cli.lib.config import (
     get_config_for_viewing,
     get_config_for_writing,
     set_config_value,
+    get_active_config_path,
+    load_default_config,
 )
 
 ALLOWED_KEYS = {
@@ -19,28 +22,52 @@ ALLOWED_KEYS = {
 
 
 @rclick.group()
+@click.option(
+    "--global",
+    "force_global",
+    is_flag=True,
+    help="Use global XDG config (~/.config/arda/arda.toml)",
+)
+@click.option(
+    "--local",
+    "force_local",
+    is_flag=True,
+    help="Use local project config (etc/arda.toml)",
+)
 @click.pass_context
-def config(ctx: click.Context) -> None:
+def config(ctx: click.Context, force_global: bool, force_local: bool) -> None:
     """View and modify Arda configuration.
 
     The 'view' command shows current settings, while 'set' modifies configuration.
 
     Settings are read in priority order:
-    1. XDG user config (~/.config/arda/arda.toml)
-    2. Project config (etc/arda.toml)
+    1. Project config (etc/arda.toml)
+    2. XDG user config (~/.config/arda/arda.toml)
     3. Package defaults
 
-    The 'set' command writes to:
-    1. XDG user config (if it exists)
-    2. Project config (created if needed)
+    Use --global to force using the XDG config location.
+    Use --local to force using the project config location.
+
+
 
     Examples:
+
         arda config view              # View all settings
         arda config view theme.default  # View specific setting
         arda config set theme.default nord  # Set a value
+        arda config --local set theme nord  # Set in project config
+        arda config --global set theme nord  # Set in XDG config
 
     """
-    pass
+    # Store the force flags in context
+    ctx.ensure_object(dict)
+    ctx.obj["force_global"] = force_global
+    ctx.obj["force_local"] = force_local
+
+    # Validate that both flags aren't used together
+    if force_global and force_local:
+        click.echo("Error: Cannot use both --global and --local together", err=True)
+        ctx.exit(1)
 
 
 @config.command(name="view")
@@ -84,8 +111,14 @@ def view_config(ctx: click.Context, key: str | None) -> None:
 
         output = SimpleOutput()
 
-    # Get the full config with priority
-    config_data = get_config_for_viewing()
+    # Get the force flags from context
+    force_global = ctx.obj.get("force_global", False) if ctx.obj else False
+    force_local = ctx.obj.get("force_local", False) if ctx.obj else False
+
+    # Get the full config with priority, respecting force flags
+    config_data = get_config_for_viewing(
+        force_global=force_global, force_local=force_local
+    )
 
     if not key:
         # Show all settings with clean, color-coded output
@@ -153,10 +186,14 @@ def set_config(ctx: click.Context, key: str, value: str) -> None:
         arda config set theme.default forest
         arda config set verbose true
         arda config set output.timestamp false
+        arda config --local set theme nord  # Write to project config
+        arda config --global set theme nord  # Write to XDG config
 
-    The value will be written to the highest-priority config file:
-    1. XDG user config (if it exists)
-    2. Project config (created if needed)
+    The value will be written to the config file:
+    - Use --local to write to project config (etc/arda.toml)
+    - Use --global to write to XDG config (~/.config/arda/arda.toml)
+
+    Without flags, writes to the highest-priority config file (see 'arda config --help').
 
     Never modifies the package default configuration.
 
@@ -194,6 +231,10 @@ def set_config(ctx: click.Context, key: str, value: str) -> None:
                 console.print(f"[red]✗[/red] {message}")
 
         output = SimpleOutput()
+
+    # Get the force flags from context
+    force_global = ctx.obj.get("force_global", False) if ctx.obj else False
+    force_local = ctx.obj.get("force_local", False) if ctx.obj else False
 
     # Parse and validate key
     # Support both shorthand (theme) and full (theme.default) formats
@@ -240,12 +281,111 @@ def set_config(ctx: click.Context, key: str, value: str) -> None:
 
     # Set the value
     try:
-        config_path = get_config_for_writing()
+        config_path = get_config_for_writing(
+            force_global=force_global, force_local=force_local
+        )
         set_config_value(config_path, section, setting, parsed_value)
         output.success(f"Updated {key} = {parsed_value!r}")
         output.debug(f"Configuration written to: {config_path}")
     except Exception as e:
         output.error(f"Failed to update configuration: {e}")
+
+
+@config.command(name="init")
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Overwrite existing configuration without prompting",
+)
+@click.pass_context
+def init_config(ctx: click.Context, force: bool) -> None:
+    """Initialize a configuration file.
+
+    Copies the default configuration to the specified location.
+
+    Without flags, initializes the project config (etc/arda.toml).
+    Use --local to explicitly initialize the project config.
+    Use --global to initialize the XDG config (~/.config/arda/arda.toml).
+
+    Examples:
+        arda config init                      # Initialize project config
+        arda config --local init             # Initialize project config
+        arda config --global init            # Initialize XDG config
+        arda config init --force             # Overwrite existing
+
+    """
+    # Get the force flags from parent context
+    force_global = ctx.parent.obj.get("force_global", False) if ctx.parent.obj else False
+    force_local = ctx.parent.obj.get("force_local", False) if ctx.parent.obj else False
+
+    # Get or create output manager
+    try:
+        from arda_cli.lib.output import get_output_manager
+
+        output: Any = get_output_manager(ctx)
+    except Exception:
+        # Fallback if output manager can't be created
+        from rich.console import Console
+
+        console = Console()
+
+        # Simple print helper
+        class SimpleOutput:
+            def section(self, title: str) -> None:
+                console.print(f"\n[bold]{title}[/bold]")
+                console.print("─" * 50)
+
+            def info(self, message: str) -> None:
+                console.print("[cyan]i[/cyan] " + message)
+
+            def success(self, message: str) -> None:
+                console.print(f"[green]✓[/green] {message}")
+
+            def warning(self, message: str) -> None:
+                console.print(f"[yellow]⚠[/yellow] {message}")
+
+            def error(self, message: str) -> None:
+                console.print(f"[red]✗[/red] {message}")
+
+        output = SimpleOutput()
+
+    # Determine target config path
+    from arda_cli.lib.config import get_config_for_writing
+
+    target_path = get_config_for_writing(
+        force_global=force_global, force_local=force_local
+    )
+
+    # Check if file already exists
+    if target_path.exists():
+        if not force:
+            if not click.confirm(
+                f"Configuration file already exists at {target_path}\n"
+                "Overwrite?"
+            ):
+                output.info("Initialization cancelled")
+                return
+        output.warning(f"Overwriting existing configuration at {target_path}")
+
+    # Create the config file with defaults
+    try:
+        # Ensure parent directory exists
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Load default config
+        default_config = load_default_config()
+
+        # Write to file
+        import tomli_w
+
+        with open(target_path, "wb") as f:
+            tomli_w.dump(default_config, f)
+
+        output.success(
+            f"Configuration initialized at {target_path}"
+        )
+    except Exception as e:
+        output.error(f"Failed to initialize configuration: {e}")
 
 
 def parse_config_value(setting: str, value: str) -> str | bool:

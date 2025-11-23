@@ -8,6 +8,34 @@ import tomli_w  # type: ignore
 DEFAULT_CONFIG_NAME = "arda.toml"
 
 
+def get_active_config_path() -> tuple[Path | None, str]:
+    """Get the path to the active configuration file.
+
+    Returns:
+        Tuple of (config_path, source) where:
+        - config_path: Path to the active config file, or None
+        - source: Description of where the config was found
+
+    Priority order:
+    1. Project config (etc/arda.toml) - highest priority
+    2. XDG user config (~/.config/arda/arda.toml) - medium priority
+    3. None (will use package defaults) - lowest priority
+
+    """
+    # Project-level config (highest priority)
+    project_config = Path.cwd() / "etc" / DEFAULT_CONFIG_NAME
+    if project_config.exists():
+        return (project_config, str(project_config))
+
+    # XDG user config (medium priority)
+    xdg_config = Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME
+    if xdg_config.exists():
+        return (xdg_config, str(xdg_config))
+
+    # No config file found - will use package defaults
+    return (None, "package defaults")
+
+
 def get_config_path() -> Path | None:
     """Find the first existing config file in search paths.
 
@@ -21,12 +49,12 @@ def get_config_path() -> Path | None:
     4. ./arda_cli/arda.toml (package default/fallback)
 
     """
-    # Define search paths
+    # Define search paths in priority order (highest to lowest)
     search_paths = [
-        # XDG config directory (user-level)
-        Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME,
-        # Project-level config
+        # Project-level config - highest priority
         Path.cwd() / "etc" / DEFAULT_CONFIG_NAME,
+        # XDG config directory (user-level) - medium priority
+        Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME,
         # Current directory
         Path.cwd() / DEFAULT_CONFIG_NAME,
     ]
@@ -137,32 +165,51 @@ def get_timestamp_from_config() -> bool:
     return True
 
 
-def get_config_for_viewing() -> dict:
+def get_config_for_viewing(
+    force_global: bool = False, force_local: bool = False
+) -> dict:
     """Get configuration with priority order for viewing.
 
     Reads config from highest priority to lowest:
-    1. XDG user config (~/.config/arda/arda.toml)
-    2. Project config (etc/arda.toml)
-    3. Package defaults
+    1. Project config (etc/arda.toml) - highest priority
+    2. XDG user config (~/.config/arda/arda.toml) - medium priority
+    3. Package defaults - lowest priority (NEVER read directly, only used as fallback)
+
+    Args:
+        force_global: If True, only read from XDG config
+        force_local: If True, only read from project config
 
     Returns:
         Merged configuration dictionary with values from highest priority source
         that contains each setting
 
     """
-    search_paths = [
-        # XDG config directory (user-level) - highest priority
-        Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME,
-        # Project-level config
-        Path.cwd() / "etc" / DEFAULT_CONFIG_NAME,
-        # Package default config - lowest priority
-        Path(__file__).parent.parent / DEFAULT_CONFIG_NAME,
-    ]
+    # Define search paths in reverse priority order (lowest to highest)
+    # Package defaults is handled separately and not included in search paths
+    search_paths: list[Path] = []
+
+    # Add paths based on force flags
+    if force_local:
+        # Only read from project config
+        project_config = Path.cwd() / "etc" / DEFAULT_CONFIG_NAME
+        search_paths.append(project_config)
+    elif force_global:
+        # Only read from XDG config
+        xdg_config = Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME
+        search_paths.append(xdg_config)
+    else:
+        # Normal priority order (project → XDG → package defaults)
+        search_paths = [
+            # XDG config directory (user-level) - medium priority
+            Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME,
+            # Project-level config - highest priority
+            Path.cwd() / "etc" / DEFAULT_CONFIG_NAME,
+        ]
 
     # Merge configs in reverse order (lowest to highest priority)
     merged_config: dict = {}
 
-    for config_path in reversed(search_paths):
+    for config_path in search_paths:
         if config_path.exists():
             try:
                 with open(config_path, "rb") as f:
@@ -173,39 +220,62 @@ def get_config_for_viewing() -> dict:
                 # Skip invalid or unreadable config files
                 pass
 
-    # If no configs found, return defaults
+    # If no configs found, return package defaults (never read package config directly)
     if not merged_config:
-        return {
-            "theme": {"default": "dracula"},
-            "output": {"verbose": False, "timestamp": True},
-        }
+        return load_default_config()
 
     return merged_config
 
 
-def get_config_for_writing() -> Path:
+def get_config_for_writing(
+    force_global: bool = False, force_local: bool = False
+) -> Path:
     """Get config file path for writing configuration changes.
 
-    Priority order:
-    1. XDG user config (if it exists) - prefer this for user changes
-    2. Project config (created if needed)
+    Priority order (when no force flags):
+    1. Project config (etc/arda.toml) - highest priority (created if needed)
+    2. XDG user config (~/.config/arda/arda.toml) - if project doesn't exist
+
+    With force flags:
+    - force_local: Always use project config (create if needed)
+    - force_global: Always use XDG user config (create if needed)
+
+    Args:
+        force_global: If True, force writing to XDG config
+        force_local: If True, force writing to project config
 
     Returns:
         Path to the config file that should be modified
 
     """
-    # Check if XDG user config exists
-    xdg_config = Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME
-    if xdg_config.exists():
+    # Determine which config to use based on force flags
+    if force_local:
+        # Force project config
+        project_config = Path.cwd() / "etc" / DEFAULT_CONFIG_NAME
+        project_config.parent.mkdir(parents=True, exist_ok=True)
+        return project_config
+
+    elif force_global:
+        # Force XDG config
+        xdg_config = Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME
+        xdg_config.parent.mkdir(parents=True, exist_ok=True)
         return xdg_config
 
-    # Otherwise, use project config (create if needed)
-    project_config = Path.cwd() / "etc" / DEFAULT_CONFIG_NAME
+    else:
+        # Default priority: project config takes precedence
+        project_config = Path.cwd() / "etc" / DEFAULT_CONFIG_NAME
 
-    # Create etc directory if it doesn't exist
-    project_config.parent.mkdir(parents=True, exist_ok=True)
+        # If project config exists, use it
+        if project_config.exists():
+            return project_config
 
-    return project_config
+        # Otherwise, fall back to XDG config
+        xdg_config = Path.home() / ".config" / "arda" / DEFAULT_CONFIG_NAME
+
+        # Create XDG directory if it doesn't exist
+        xdg_config.parent.mkdir(parents=True, exist_ok=True)
+
+        return xdg_config
 
 
 def set_config_value(

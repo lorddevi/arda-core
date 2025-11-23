@@ -4,11 +4,18 @@ Arda uses rich-click's built-in themes for unified styling across
 all help text and command output.
 """
 
+import warnings
+
+# Suppress rich_click warnings about invalid themes (we handle this ourselves)
+warnings.filterwarnings("ignore", message="RichClickTheme.*not found")
+
 import click
+from click.exceptions import UsageError
 import rich_click as rclick
 from rich import get_console
 from rich.console import Console
 from rich.panel import Panel
+from rich.text import Text
 
 # Import commands from commands/ directory
 from arda_cli.commands.config.main import config
@@ -18,10 +25,12 @@ from arda_cli.commands.secrets.main import secrets
 from arda_cli.commands.templates.main import templates
 from arda_cli.commands.theme.main import theme
 from arda_cli.lib.config import (
+    get_active_config_path,
     get_theme_from_config,
     get_timestamp_from_config,
     get_verbose_from_config,
 )
+from arda_cli.lib.output import create_error_panel
 
 # Import theme handling from lib
 from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click
@@ -35,13 +44,231 @@ DEFAULT_VERBOSE = get_verbose_from_config()
 DEFAULT_TIMESTAMP = get_timestamp_from_config()
 
 
+def ensure_config_exists() -> None:
+    """Ensure a configuration file exists.
+
+    If no configuration file is found, automatically creates a project-level
+    configuration file with default settings. Reports when creating a new config.
+    """
+    from pathlib import Path
+
+    # Check if any config file exists
+    config_path, config_source = get_active_config_path()
+
+    if config_path is None:
+        # No config found - create project-level config
+        import tomli_w
+
+        project_config = Path.cwd() / "etc" / "arda.toml"
+
+        # Ensure etc directory exists
+        project_config.parent.mkdir(parents=True, exist_ok=True)
+
+        # Create config with defaults
+        from arda_cli.lib.config import load_default_config
+
+        default_config = load_default_config()
+
+        with open(project_config, "wb") as f:
+            tomli_w.dump(default_config, f)
+
+        # Report creation
+        console = Console()
+        console.print(
+            f"[yellow]⚠[/yellow] "
+            f"Configuration file not found. "
+            f"Created default configuration at {project_config}"
+        )
+        console.print()
+
+
+def show_active_config(console: Console) -> None:
+    """Show the active configuration file path."""
+    config_path, config_source = get_active_config_path()
+    console.print(
+        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
+    )
+
+
+def custom_format_help(ctx: click.Context, cmd: click.Command, formatter: click.HelpFormatter) -> None:
+    """Custom help formatter that shows active config file."""
+    # Get the original help text
+    formatter.write(cmd.get_help(ctx))
+    formatter.write("\n")
+
+    # Get the active config file
+    config_path, config_source = get_active_config_path()
+
+    # Show active configuration
+    console = get_console()
+    console.print(
+        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
+    )
+
+
+
+def get_theme_color(theme_name: str) -> str:
+    """Map theme names to appropriate colors for configuration path.
+
+    Args:
+        theme_name: The name of the theme (e.g., 'dracula', 'nord', 'forest')
+
+    Returns:
+        Rich color tag appropriate for the theme
+    """
+    theme_lower = theme_name.lower()
+
+    # Define theme-appropriate colors (using standard Rich colors)
+    theme_colors = {
+        # Dark themes with cyan accents
+        "dracula": "cyan",
+        "night": "cyan",
+        "solarized-dark": "cyan",
+        "nord": "bright_cyan",
+        "one-dark": "cyan",
+
+        # Light themes
+        "solarized-light": "blue",
+        "github": "blue",
+        "monokai": "cyan",
+
+        # Colorful themes
+        "forest": "green",
+        "gruvbox": "green",
+        "quartz": "magenta",
+        "rose_pine": "pink",
+        "ayu": "orange",
+        "tokyo-night": "blue",
+
+        # Default fallback
+        "default": "blue",
+    }
+
+    # Find matching theme (try exact match first, then partial)
+    if theme_lower in theme_colors:
+        return theme_colors[theme_lower]
+    elif "dracula" in theme_lower or "dark" in theme_lower:
+        return "cyan"
+    elif "light" in theme_lower:
+        return "blue"
+    elif "forest" in theme_lower or "green" in theme_lower:
+        return "green"
+    elif "quartz" in theme_lower or "pink" in theme_lower:
+        return "magenta"
+    elif "nord" in theme_lower or "bright" in theme_lower:
+        return "bright_cyan"
+    elif "blue" in theme_lower or "ocean" in theme_lower:
+        return "blue"
+    else:
+        return "cyan"
+
+
+def validate_theme(ctx: click.Context, param: click.Parameter, value: str) -> str:
+    """Validate that the theme is available before proceeding."""
+    if value is None:
+        return value
+
+    available_themes = get_rich_click_themes()
+    if value.lower() not in [t.lower() for t in available_themes]:
+        # Create custom error with rich Text markup
+        from rich.console import Console
+        from rich.text import Text
+        from rich_click.rich_help_configuration import RichHelpConfiguration
+
+        console = Console(stderr=True, force_terminal=True)
+
+        # Get the theme from config to use for colors
+        theme = get_theme_from_config()
+
+        # Load theme colors for message styling
+        config = RichHelpConfiguration(theme=theme, enable_theme_env_var=True)
+
+        # Use theme-appropriate colors
+        error_text_color = str(config.style_option or "cyan")
+        command_color = str(config.style_command or "cyan")
+
+        # Create message with theme-aware colors
+        message = Text()
+        message.append("Theme '")
+        message.append(value, style=f"bold {error_text_color}")
+        message.append("' not found.\n\n")
+        message.append("Use '")
+        message.append("arda theme list", style=f"bold {command_color}")
+        message.append("' to see all available themes.")
+
+        # Use helper function with theme-aware error border color
+        panel = create_error_panel(message, theme=theme)
+        console.print(panel)
+        ctx.exit(2)
+
+    return value
+
+
+def show_help_with_config(ctx: click.Context, param: click.Parameter, value: bool) -> None:
+    """Callback to show help with active config information."""
+    if not value:
+        return
+
+    # Get theme from command-line arguments (before context is populated)
+    # Since this is eager, we need to get theme from params
+    theme = "dracula"  # default
+    if ctx.params and "theme" in ctx.params and ctx.params["theme"]:
+        theme = ctx.params["theme"]
+    elif ctx.obj and "theme" in ctx.obj:
+        theme = ctx.obj["theme"]
+    else:
+        # Fallback: try to parse from command line args
+        import sys
+        if "--theme" in sys.argv:
+            theme_idx = sys.argv.index("--theme")
+            if theme_idx + 1 < len(sys.argv):
+                theme = sys.argv[theme_idx + 1]
+
+    # Validate theme before showing help
+    available_themes = get_rich_click_themes()
+    if theme.lower() not in [t.lower() for t in available_themes]:
+        # Create custom error with rich Text markup
+        from rich.text import Text
+
+        console = Console(stderr=True, force_terminal=True)
+
+        # Create message with rich Text
+        message = Text()
+        message.append("Theme '")
+        message.append(theme, style="bold yellow")
+        message.append("' not found.\n\n")
+        message.append("Use '")
+        message.append("arda theme list", style="bold cyan")
+        message.append("' to see all available themes.")
+
+        # Use helper function with theme-aware error border color
+        panel = create_error_panel(message, theme=theme)
+        console.print(panel)
+        ctx.exit(2)
+
+    # Show the normal help first
+    click.echo(ctx.get_help())
+
+    # Map theme to appropriate color
+    path_color = get_theme_color(theme)
+
+    # Then show active configuration
+    config_path, config_source = get_active_config_path()
+    console = Console()
+    console.print(
+        f"\n[dim]Active configuration:[/dim] [{path_color}]{config_source}[/{path_color}]\n"
+    )
+    ctx.exit()
+
+
 @rclick.group(
-    no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]}
+    no_args_is_help=True,
 )
 @click.option(
     "--theme",
     type=str,
     default=DEFAULT_THEME,
+    callback=validate_theme,
     help=(
         "Rich-click theme to use (see 'theme list' for all options, "
         "e.g., dracula, forest, solarized)"
@@ -59,6 +286,15 @@ DEFAULT_TIMESTAMP = get_timestamp_from_config()
     default=DEFAULT_TIMESTAMP,
     help="Add timestamps to output (see config for default)",
 )
+@click.option(
+    "--help",
+    "-h",
+    is_flag=True,
+    is_eager=True,
+    callback=show_help_with_config,
+    expose_value=False,
+    help="Show this help message and exit.",
+)
 @click.pass_context
 def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None:
     """Arda - minimal infrastructure management for NixOS.
@@ -66,23 +302,21 @@ def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None
     A modern CLI tool with rich theming and beautiful output.
     Uses rich-click's built-in themes for unified styling.
     """
+    # Ensure configuration file exists (auto-create if needed)
+    ensure_config_exists()
+
     # Ensure context object exists
     ctx.ensure_object(dict)
-
-    # Validate theme
-    available_themes = get_rich_click_themes()
-    if theme.lower() not in [t.lower() for t in available_themes]:
-        console = get_console()
-        console.print(f"[error]Error:[/error] Theme '{theme}' not found.")
-        console.print(
-            "Use [command]arda theme list[/command] to see all available themes."
-        )
-        ctx.exit(1)
 
     # Store settings in context (used by OutputManager)
     ctx.obj["theme"] = theme.lower()
     ctx.obj["verbose"] = verbose
     ctx.obj["timestamp"] = timestamp
+
+    # Show active config file when running without subcommand
+    if ctx.invoked_subcommand is None:
+        console = get_console()
+        show_active_config(console)
 
     # Show welcome message with theme
     if ctx.invoked_subcommand is None:
@@ -96,6 +330,9 @@ def show_welcome(console: Console, theme: str) -> None:
     # Create title with rich text
     title = "ARDA CLI"
 
+    # Show active config
+    show_active_config(console)
+
     # Create welcome panel
     panel = Panel(
         f"[bold]{title}[/bold]\n\n"
@@ -108,6 +345,23 @@ def show_welcome(console: Console, theme: str) -> None:
 
     console.print(panel)
     console.print()
+
+
+def custom_format_help(ctx: click.Context, cmd: click.Command, formatter: click.HelpFormatter) -> None:
+    """Custom help formatter that shows active config file."""
+    # Get the original help text
+    formatter.write(cmd.get_help(ctx))
+    formatter.write("\n")
+
+    # Get the active config file
+    config_path, config_source = get_active_config_path()
+
+    # Show active configuration
+    from rich import get_console
+    console = get_console()
+    console.print(
+        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
+    )
 
 
 # Register commands with the main group

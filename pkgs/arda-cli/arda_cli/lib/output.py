@@ -476,3 +476,52 @@ def get_output_manager(
         verbose=verbose,
         timestamps=timestamps,
     )
+
+
+# ============================================================================
+# ERROR PANEL HELPER
+# ============================================================================
+
+
+def create_error_panel(message: str | "Text", title: str = "Error", theme: str | None = None) -> Panel:
+    """Create a consistent error panel with standard styling.
+
+    Args:
+        message: Error message as string or rich Text object
+        title: Panel title (default: "Error")
+        theme: Theme name to get error border color (default: dracula)
+
+    Returns:
+        Panel widget with consistent error styling (theme-specific red border, left-aligned title)
+
+    Example:
+        panel = create_error_panel("Something went wrong", theme="nord")
+        console.print(panel)
+
+        # With rich Text for colors
+        from rich.text import Text
+        msg = Text("Error message with ")
+        msg.append("colored text", style="bold yellow")
+        panel = create_error_panel(msg, theme="dracula")
+    """
+    # Use default theme if not specified
+    if theme is None:
+        theme = "dracula"
+
+    # Get the theme's error border color
+    # Handle invalid themes by falling back to dracula
+    try:
+        config = RichHelpConfiguration(theme=theme, enable_theme_env_var=True)
+        error_border_color = str(config.style_errors_panel_border or "red")
+    except Exception:
+        # Invalid theme - fall back to dracula's error color
+        config = RichHelpConfiguration(theme="dracula", enable_theme_env_var=True)
+        error_border_color = str(config.style_errors_panel_border or "red")
+
+    return Panel(
+        message,
+        title=title,
+        border_style=error_border_color,
+        padding=(0, 1),
+        title_align="left",
+    )

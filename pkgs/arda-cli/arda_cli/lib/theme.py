@@ -15,8 +15,39 @@ if "--theme" in sys.argv:
         theme_index = sys.argv.index("--theme")
         if theme_index + 1 < len(sys.argv):
             theme_value = sys.argv[theme_index + 1]
-            os.environ["RICH_CLICK_THEME"] = theme_value
-            _GLOBAL_THEME = theme_value
+            # Only set environment variable if theme is valid
+            # This prevents rich-click from raising an error on invalid themes
+            valid_themes = [
+                "default",
+                "dracula",
+                "forest",
+                "solarized",
+                "nord",
+                "quartz",
+                "star",
+                "quartz2",
+                "cargo",
+                "red1",
+                "green1",
+                "yellow1",
+                "blue1",
+                "magenta1",
+                "cyan1",
+                "red2",
+                "green2",
+                "yellow2",
+                "blue2",
+                "magenta2",
+                "cyan2",
+                "mono",
+                "plain",
+            ]
+            if theme_value.lower() in [t.lower() for t in valid_themes]:
+                os.environ["RICH_CLICK_THEME"] = theme_value
+                _GLOBAL_THEME = theme_value
+            else:
+                # Invalid theme - fall back to config default
+                _GLOBAL_THEME = get_theme_from_config()
         else:
             # --theme specified but no value, use config default
             _GLOBAL_THEME = get_theme_from_config()
@@ -94,7 +125,11 @@ def patch_rich_click() -> None:
     # Patch click with the theme configuration
     try:
         # Try with theme parameter (rich-click >= 1.9.0)
-        config = RichHelpConfiguration(theme=_GLOBAL_THEME, enable_theme_env_var=True)
+        config = RichHelpConfiguration(
+            theme=_GLOBAL_THEME,
+            enable_theme_env_var=True,
+            # Note: Don't override style_errors_panel_border - let each theme use its own error color
+        )
         patch(rich_config=config)
     except TypeError:
         # Fallback for rich-click < 1.9.0 (uses env var only)

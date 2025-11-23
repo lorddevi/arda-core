@@ -1,5 +1,5 @@
 [theme]
-default = "nord"
+default = "dracula"
 
 [output]
 verbose = false
