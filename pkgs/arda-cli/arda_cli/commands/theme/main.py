@@ -14,7 +14,7 @@ def theme(ctx: click.Context) -> None:
 
     View available rich-click themes or preview the current theme.
 
-    To preview a different theme, use: arda --theme <name> preview
+    To preview a different theme, use: [bold]arda --theme <name> preview[/bold]
 
 
 
