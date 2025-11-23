@@ -1,3 +1,17 @@
-include arda_cli/theme.py
-recursive-include arda_cli/styling *.py
-recursive-include arda_cli/themes *.yaml *.yml
+# Include all Python files in arda_cli package
+recursive-include arda_cli *.py
+
+# Include configuration files
+include arda_cli/arda.toml
+
+# Include package metadata
+include arda_cli/py.typed
+
+# Include all subdirectories
+recursive-include arda_cli *
+
+# Exclude build artifacts and cache
+prune build
+prune dist
+prune *.egg-info
+exclude .gitignore

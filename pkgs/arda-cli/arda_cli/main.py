@@ -4,8 +4,6 @@ Arda uses rich-click's built-in themes for unified styling across
 all help text and command output.
 """
 
-from typing import Any
-
 import click
 import rich_click as rclick
 from rich import get_console
@@ -13,6 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 # Import commands from commands/ directory
+from arda_cli.commands.config.main import config
 from arda_cli.commands.host.main import host
 from arda_cli.commands.roles.main import roles
 from arda_cli.commands.secrets.main import secrets
@@ -80,37 +79,15 @@ def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None
         )
         ctx.exit(1)
 
-    # Store settings in context
+    # Store settings in context (used by OutputManager)
     ctx.obj["theme"] = theme.lower()
     ctx.obj["verbose"] = verbose
     ctx.obj["timestamp"] = timestamp
 
-    # Get themed console with timestamp if enabled
-    console_kwargs = {}
-    if timestamp:
-        from datetime import datetime
-
-        console_kwargs["markup"] = True
-        console = get_console()
-        # Add timestamp to output by wrapping print
-
-        original_print = console.print
-
-        def timestamped_print(*args: Any, **kwargs: Any) -> None:
-            """Print with timestamp prefix."""
-            timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            original_print(f"[dim][{timestamp_str}][/dim] ", end="")
-            original_print(*args, **kwargs)
-
-        console.print = timestamped_print  # type: ignore
-    else:
-        console = get_console()
-
-    ctx.obj["console"] = console
-
     # Show welcome message with theme
     if ctx.invoked_subcommand is None:
         # Only show if running arda without subcommand
+        console = get_console()
         show_welcome(console, theme)
 
 
@@ -134,6 +111,7 @@ def show_welcome(console: Console, theme: str) -> None:
 
 
 # Register commands with the main group
+main.add_command(config)
 main.add_command(host)
 main.add_command(roles)
 main.add_command(secrets)

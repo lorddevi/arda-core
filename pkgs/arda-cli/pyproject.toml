@@ -3,8 +3,8 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "arda-cli"
-version = "0.1.0"
+name = "arda_cli"
+version = "0.1.3"
 description = "Arda - minimal infrastructure management for NixOS"
 license = {text = "MIT"}
 authors = [

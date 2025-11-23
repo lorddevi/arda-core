@@ -1,20 +1,19 @@
-{
-  lib,
-  buildPythonApplication,
-  setuptools,
-  click,
-  pyyaml,
-  rich,
-  pydantic,
-  rich-click,
+{ lib
+, python
+, setuptools
+, click
+, pyyaml
+, rich
+, pydantic
+, rich-click
 }:
 
-buildPythonApplication {
-  pname = "arda-cli";
-  version = "0.1.0";
+python.pkgs.buildPythonApplication {
+  pname = "arda_cli";
+  version = "0.1.3";
   src = ./.;
-
   format = "pyproject";
+
 
   nativeBuildInputs = [ setuptools ];
 

@@ -3,26 +3,20 @@
 import click
 import rich_click as rclick
 
-from arda_cli.lib.helpers import get_console_from_ctx
+from arda_cli.lib.output import get_output_manager
 
 
-@rclick.command()
+@rclick.command(no_args_is_help=True)
 @click.pass_context
 def templates(ctx: click.Context) -> None:
     """Template management commands."""
-    console = get_console_from_ctx(ctx)
+    output = get_output_manager(ctx)
 
-    # Check verbose setting from global config
-    verbose = ctx.obj.get("verbose", False)
+    output.info("Template management - coming soon!")
 
-    if verbose:
-        console.print("\n[info]i Verbose mode enabled[/info]")
-
-    console.print("Template management - coming soon!")
-
-    if verbose:
-        console.print("\n[dim]Available operations:[/dim]")
-        console.print("  [dim]• List all templates[/dim]")
-        console.print("  [dim]• Create new template[/dim]")
-        console.print("  [dim]• Apply template to host[/dim]")
-        console.print("  [dim]• Update template definition[/dim]")
+    # Verbose operations list (only shown with --verbose)
+    output.section("Available operations")
+    output.debug("• List all templates")
+    output.debug("• Create new template")
+    output.debug("• Apply template to host")
+    output.debug("• Update template definition")

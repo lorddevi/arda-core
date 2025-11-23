@@ -289,6 +289,346 @@ No manual formatting needed!
 - Prefer composition over inheritance
 - Write tests for new functionality
 
+## Console Output System
+
+Arda uses a centralized console output system that provides consistent, themed, and debuggable output across all commands. This system is implemented in `pkgs/arda-cli/arda_cli/lib/output.py` through the `OutputManager` class.
+
+### Why This System?
+
+The console output system ensures:
+- **Consistency** - All commands use the same output style
+- **User Experience** - Beautiful, themed output with helpful tags and metadata
+- **Debuggability** - Verbosity levels help troubleshoot issues
+- **Maintainability** - Single source of truth for all output logic
+
+### Core Concepts
+
+#### Message Types
+
+Each output message has a specific type with a distinct tag and color:
+
+| Message Type | Tag Format | Color | Usage Example |
+|-------------|-----------|-------|---------------|
+| Information | `[i INFO]` | Blue | General status updates |
+| Success | `[✓ SUCCESS]` | Green | Successful operations |
+| Warning | `[⚠ WARNING]` | Yellow | Non-critical issues |
+| Error | `[✗ ERROR]` | Red | Critical failures |
+| Debug | `[→ DEBUG]` | Dim | Detailed info (with `--verbose`) |
+| Trace | `[⋙ TRACE]` | Dim | Execution traces (debug mode) |
+
+**Example output:**
+```
+[i INFO] Starting deployment
+[✓ SUCCESS] Configuration validated
+[⚠ WARNING] 2 hosts need attention
+[✗ ERROR] Connection failed to host3
+```
+
+#### Verbosity Levels
+
+Use verbosity to control output detail:
+
+1. **NORMAL** (default) - Standard user-facing messages
+2. **VERBOSE** (`--verbose` flag) - Adds debug information for troubleshooting
+3. **DEBUG** (future) - Full execution traces
+
+**Examples:**
+```bash
+arda host                    # Shows only info/success/warning/error
+arda --verbose host          # Also shows debug messages
+arda --verbose --debug host  # Shows all debug and trace info
+```
+
+#### Themes
+
+Arda uses rich-click's built-in themes for unified styling:
+- Available: `dracula`, `forest`, `nord`, `quartz`, `solarized`, etc.
+- Theme variants: `slim`, `modern`, `nu`, `robo` (e.g., `dracula-modern`)
+- Default: `dracula`
+
+**Examples:**
+```bash
+arda --theme nord host
+arda --theme forest list
+```
+
+#### Timestamps
+
+Optional timestamp prefix for tracking when messages were generated:
+
+```bash
+[2025-11-22 17:14:04] [INFO] Starting operation
+```
+
+Controlled via flags: `--timestamp` / `--no-timestamp`
+
+### Using the Output System
+
+#### Basic Usage in Commands
+
+Every command should follow this pattern:
+
+```python
+@rclick.command(no_args_is_help=True)
+@click.pass_context
+def host(ctx: click.Context) -> None:
+    """Host management commands."""
+    output = get_output_manager(ctx)
+
+    # Show user-facing messages
+    output.info("Loading hosts...")
+    output.success("Found 5 hosts")
+
+    # Show warnings when needed
+    if attention_needed:
+        output.warning("2 hosts need attention")
+
+    # Show debug info (only with --verbose)
+    output.section("Available operations")
+    output.debug("• List all hosts")
+    output.debug("• Deploy configuration")
+    output.debug("• Update host settings")
+```
+
+#### Available Methods
+
+**Message Output:**
+- `output.info(message)` - Information messages
+- `output.success(message)` - Success confirmations
+- `output.warning(message)` - Warnings
+- `output.error(message)` - Errors
+- `output.debug(message)` - Debug info (with `--verbose`)
+
+**Layout Helpers:**
+- `output.section(title)` - Create section headers with separators
+- `output.spacer(count=1)` - Add empty lines
+- `output.print_panel(content, title, border_style)` - Display in bordered panel
+
+**Debugging Helpers:**
+- `output.timer("operation")` - Context manager to time operations
+- `output.trace_function_entry(name, **kwargs)` - Log function entry
+- `output.trace_function_exit(name, result)` - Log function exit
+- `output.step(message)` - Numbered execution steps
+
+**Example with timing:**
+```python
+with output.timer("Host deployment"):
+    deploy_hosts()
+    # Output: "⏱ Starting Host deployment" (with --verbose)
+    #        "✓ Host deployment complete (2.345s)" (with --verbose)
+```
+
+#### Configuration
+
+Settings are sourced from (priority order):
+1. Command-line flags
+2. Config file (`~/.config/arda/arda.toml`)
+3. Default values
+
+**Config file example:**
+```toml
+[theme]
+default = "nord"
+
+[output]
+verbose = false
+timestamp = true
+```
+
+### When to Use Each Message Type
+
+#### Use `info()` for:
+- General status updates
+- Progress indicators
+- Informational messages
+- Command descriptions
+
+#### Use `success()` for:
+- Successful operations
+- Validations passed
+- Configuration checks
+- Completion confirmations
+
+#### Use `warning()` for:
+- Non-critical issues
+- Missing optional dependencies
+- Degraded functionality warnings
+- Actions that need user attention
+
+#### Use `error()` for:
+- Critical failures
+- Failed validations
+- Configuration errors
+- Operations that cannot proceed
+
+#### Use `debug()` for:
+- Detailed operation info
+- Internal state
+- Non-essential troubleshooting info
+- Available operations lists
+
+**Example guidance:**
+```python
+# Good
+output.info("Reading configuration file")
+output.success("Configuration valid")
+output.warning("Optional dependency 'age' not found")
+output.error("Configuration file not found")
+
+# Avoid these anti-patterns:
+output.info("Successfully opened file")  # Success, not info
+output.error("Warning: disk space low")  # Warning, not error
+output.debug("Starting function")        # Too verbose for debug
+```
+
+### Best Practices for Development
+
+#### 1. Use `no_args_is_help=True`
+
+All commands should show help by default when no arguments are provided:
+
+```python
+@rclick.command(no_args_is_help=True)
+@click.pass_context
+def host(ctx: click.Context) -> None:
+```
+
+This gives users immediate feedback on command usage.
+
+#### 2. Think About Verbosity When Adding Features
+
+When implementing new features, consider:
+- What would users need to debug issues?
+- What internal steps might be helpful with `--verbose`?
+- What errors might occur and how should they be communicated?
+
+**Example:**
+```python
+# Show progress to all users
+output.info("Validating configuration")
+
+# Show detailed checks with --verbose
+if verbose:
+    output.debug("Checking syntax...")
+    output.debug("Validating schema...")
+    output.debug("Verifying dependencies...")
+
+# Show results to all users
+if validation_passed:
+    output.success("Configuration is valid")
+else:
+    output.error("Configuration validation failed")
+```
+
+#### 3. Group Related Information with `section()`
+
+Use section headers to organize output:
+
+```python
+output.section("Configuration")
+output.info(f"Theme: {theme}")
+output.info(f"Verbose: {verbose}")
+
+output.section("Results")
+output.success("Operation completed")
+```
+
+#### 4. Use Timesters for Performance Debugging
+
+When investigating performance issues:
+
+```python
+with output.timer("Host discovery"):
+    hosts = discover_hosts()
+# Shows: "⏱ Starting Host discovery" and "✓ Host discovery complete (1.234s)"
+```
+
+#### 5. Leverage Trace Helpers for Complex Operations
+
+For debugging complex flows:
+
+```python
+def deploy_role(hostname: str, role: str) -> None:
+    output.trace_function_entry("deploy_role", hostname=hostname, role=role)
+
+    with output.step("Checking prerequisites"):
+        check_prerequisites()
+
+    with output.step("Applying configuration"):
+        apply_config(hostname, role)
+
+    output.trace_function_exit("deploy_role", result="success")
+```
+
+### Example: Complete Command Implementation
+
+```python
+@rclick.command(no_args_is_help=True)
+@click.pass_context
+@click.option("--dry-run", is_flag=True, help="Show what would be deployed")
+def deploy(ctx: click.Context, dry_run: bool) -> None:
+    """Deploy configuration to hosts."""
+    output = get_output_manager(ctx)
+
+    output.info("Starting deployment...")
+
+    if dry_run:
+        output.warning("DRY RUN MODE - No changes will be made")
+        output.debug("Skipping actual deployment")
+        return
+
+    with output.timer("Full deployment"):
+        output.section("Phase 1: Validation")
+        output.debug("Validating configuration...")
+        if not validate_config():
+            output.error("Configuration validation failed")
+            return
+
+        output.section("Phase 2: Deployment")
+        for host in get_hosts():
+            output.info(f"Deploying to {host}")
+            if deploy_to_host(host):
+                output.success(f"Successfully deployed to {host}")
+            else:
+                output.error(f"Failed to deploy to {host}")
+
+        output.success("Deployment complete")
+```
+
+### Testing Output
+
+When testing commands, verify both normal and verbose modes:
+
+```bash
+# Test normal output
+arda host
+
+# Test verbose output
+arda --verbose host
+
+# Test different themes
+arda --theme nord host
+arda --theme dracula host
+```
+
+### Troubleshooting Output Issues
+
+If output doesn't appear as expected:
+
+1. **Check verbosity level** - Some messages only show with `--verbose`
+2. **Verify theme** - Colors might not be visible in certain themes
+3. **Check timestamps** - Enabled/disabled via flags
+4. **Review config** - Check `~/.config/arda/arda.toml`
+
+For debugging the output system itself:
+
+```python
+# Add temporary debug output
+output.debug(f"Current verbosity: {output.verbosity}")
+output.debug(f"Current theme: {output.theme}")
+output.debug(f"Timestamps enabled: {output.timestamps}")
+```
+
 ## Testing
 
 ### Test Structure

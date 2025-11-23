@@ -1,85 +1,102 @@
 """Preview the current theme."""
 
+import sys
+
 import click
 import rich_click as rclick
 
-from arda_cli.lib.console import (
-    print_error,
-    print_info,
-    print_preview_section,
-    print_success,
-    print_warning,
-)
-from arda_cli.lib.helpers import get_console_from_ctx
-from arda_cli.lib.theme import get_rich_click_themes
+from arda_cli.lib.output import get_output_manager
 
 
 @rclick.command()
-@click.argument("theme_name", required=False)
 @click.pass_context
-def preview(ctx: click.Context, theme_name: str | None) -> None:
-    """Preview a theme.
+def preview(ctx: click.Context) -> None:
+    """Preview the current theme.
 
-    Args:
-        ctx: Click context object
-        theme_name: Optional theme name to preview. If not provided,
-                   uses the current theme from global config.
+    Use --theme <name> before this command to preview a different theme.
+
+    Example: arda --theme nord preview
 
     """
-    console = get_console_from_ctx(ctx)
+    output = get_output_manager(ctx)
 
-    # Check verbose setting from global config
-    verbose = ctx.obj.get("verbose", False)
+    # Get the current theme from context
+    preview_theme = ctx.obj["theme"]
 
-    # Use provided theme name or fall back to current theme
-    if theme_name:
-        # Validate the theme name
-        available_themes = [t.lower() for t in get_rich_click_themes()]
-        if theme_name.lower() not in available_themes:
-            print_error(f"Theme '{theme_name}' not found.", console)
-            console.print(
-                "\n[dim]Use '[/dim][command]arda theme list[/command]"
-                "[dim]' to see all available themes.[/dim]"
-            )
-            ctx.exit(1)
-        # Use the provided theme
-        preview_theme = theme_name.lower()
-    else:
-        # Use the current theme from context
-        preview_theme = ctx.obj["theme"]
+    # Verbose configuration info
+    if output.verbose:
+        output.trace("Theme configuration:")
+        output.debug(f"Current theme: {preview_theme}")
+        output.debug(f"Verbose mode: {output.verbose}")
+        output.debug(f"Timestamp enabled: {output.timestamps}")
+        output.spacer()
 
-    if verbose:
-        console.print("\n[dim]Theme configuration:[/dim]")
-        console.print(f"  [dim]• Previewing theme: {preview_theme}[/dim]")
-        console.print(f"  [dim]• Verbose mode: {verbose}[/dim]")
-        console.print(
-            f"  [dim]• Timestamp enabled: {ctx.obj.get('timestamp', False)}[/dim]\n"
-        )
+    # Section header for top section
+    output.section("Theme Info")
 
-    console.print(f"Current Theme: {preview_theme.upper()}\n")
-
-    # Use styled console helpers to show themed message types
-    print_info("Information", console)
-    print_success("Success message", console)
-    print_warning("Warning message", console)
-    print_error("Error message", console)
-
-    # Show examples in bordered panels (like help output)
-    console.print()
-    options_content = (
-        "[cyan]--theme[/cyan] [dim]TEXT[/dim]\n"
-        "[cyan]--verbose[/cyan]\n"
-        "[cyan]--timestamp[/cyan]/[cyan]--no-timestamp[/cyan]"
+    # First line: Current Theme
+    # Print with custom formatting to match original
+    output.console.print(
+        f"[{output.colors['text']}]Current Theme:[/{output.colors['text']}] "
+        f"[{output.colors['separator_text']}]{preview_theme.upper()}[/{output.colors['separator_text']}]"
     )
-    print_preview_section("Options", options_content, console)
+    output.spacer()
 
-    commands_content = (
-        "[cyan]host[/cyan]     [dim]Host management commands[/dim]\n"
-        "[cyan]roles[/cyan]    [dim]Role management commands[/dim]\n"
-        "[cyan]secrets[/cyan]  [dim]Secret management commands[/dim]"
+    # Instructions
+    output.console.print(
+        f"[{output.colors['text']}]Preview a different theme:[/{output.colors['text']}]"
     )
-    print_preview_section("Commands", commands_content, console)
+    output.console.print("  [command]arda --theme <name> preview[/command]")
+    output.spacer()
+    output.console.print(
+        f"[{output.colors['text']}]"
+        f"To see all available themes:[/{output.colors['text']}]"
+    )
+    output.console.print("  [command]arda theme list[/command]")
+    output.spacer()
 
-    # Show plain output example
-    console.print("\n> Command output")
-    console.print("[dim]Muted text[/dim]")
+    # Section 1: Message Types (no timestamps)
+    output.section("Message Types")
+
+    # Temporarily disable timestamps for this section
+    original_timestamps = output.timestamps
+    output.timestamps = False
+
+    output.info("Information")
+    output.success("Success message")
+    output.warning("Warning message")
+    output.error("Error message")
+
+    # Restore original timestamp setting
+    output.timestamps = original_timestamps
+    output.spacer()
+
+    # Section 2: Message Types With Timestamps
+    output.section("Message Types With Timestamps")
+
+    # Temporarily enable timestamps for these examples
+    output.timestamps = True
+
+    output.info("Information")
+    output.success("Success message")
+    output.warning("Warning message")
+    output.error("Error message")
+
+    # Restore original timestamp setting
+    output.timestamps = original_timestamps
+    output.spacer()
+
+    # Section 3: Example Help
+    output.section("Example Help")
+    output.spacer()
+
+    # Walk up to parent context
+    parent_ctx = ctx
+    while parent_ctx.parent is not None:
+        parent_ctx = parent_ctx.parent
+
+    # Get help text using the parent context's get_help() method
+    help_text = parent_ctx.get_help()
+
+    # Print help text directly to preserve ANSI codes
+    sys.stdout.write(help_text)

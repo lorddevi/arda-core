@@ -31,6 +31,8 @@ eggs/
 # Ignore build artifact lib/ but allow source code lib/ in specific projects
 lib/
 lib64/
+# Allow arda-cli source lib directory
+!pkgs/arda-cli/arda_cli/lib/
 parts/
 sdist/
 var/

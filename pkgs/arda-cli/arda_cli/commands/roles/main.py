@@ -3,25 +3,19 @@
 import click
 import rich_click as rclick
 
-from arda_cli.lib.helpers import get_console_from_ctx
+from arda_cli.lib.output import get_output_manager
 
 
-@rclick.command()
+@rclick.command(no_args_is_help=True)
 @click.pass_context
 def roles(ctx: click.Context) -> None:
     """Role management commands."""
-    console = get_console_from_ctx(ctx)
+    output = get_output_manager(ctx)
 
-    # Check verbose setting from global config
-    verbose = ctx.obj.get("verbose", False)
+    output.info("Role management - coming soon!")
 
-    if verbose:
-        console.print("\n[info]i Verbose mode enabled[/info]")
-
-    console.print("Role management - coming soon!")
-
-    if verbose:
-        console.print("\n[dim]Available operations:[/dim]")
-        console.print("  [dim]• List all roles[/dim]")
-        console.print("  [dim]• Assign roles to hosts[/dim]")
-        console.print("  [dim]• Create new role definitions[/dim]")
+    # Verbose operations list (only shown with --verbose)
+    output.section("Available operations")
+    output.debug("• List all roles")
+    output.debug("• Assign roles to hosts")
+    output.debug("• Create new role definitions")
