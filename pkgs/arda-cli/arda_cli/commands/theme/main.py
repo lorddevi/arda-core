@@ -17,6 +17,8 @@ def theme(ctx: click.Context) -> None:
     To preview a different theme, use: arda --theme <name> preview
 
 
+
+
     Examples:
         arda theme list              # List all available themes
         arda --theme nord preview    # Preview the nord theme
