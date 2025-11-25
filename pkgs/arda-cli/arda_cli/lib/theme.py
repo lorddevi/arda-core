@@ -140,3 +140,57 @@ def patch_rich_click() -> None:
 def get_current_theme() -> str:
     """Get the currently active theme name."""
     return _GLOBAL_THEME
+
+
+def get_theme_color(theme_name: str) -> str:
+    """Map theme names to appropriate colors for configuration path.
+
+    Args:
+        theme_name: The name of the theme (e.g., 'dracula', 'nord', 'forest')
+
+    Returns:
+        Rich color tag appropriate for the theme
+
+    """
+    theme_lower = theme_name.lower()
+
+    # Define theme-appropriate colors (using standard Rich colors)
+    theme_colors = {
+        # Dark themes with cyan accents
+        "dracula": "cyan",
+        "night": "cyan",
+        "solarized-dark": "cyan",
+        "nord": "bright_cyan",
+        "one-dark": "cyan",
+        # Light themes
+        "solarized-light": "blue",
+        "github": "blue",
+        "monokai": "cyan",
+        # Colorful themes
+        "forest": "green",
+        "gruvbox": "green",
+        "quartz": "magenta",
+        "rose_pine": "pink",
+        "ayu": "orange",
+        "tokyo-night": "blue",
+        # Default fallback
+        "default": "blue",
+    }
+
+    # Find matching theme (try exact match first, then partial)
+    if theme_lower in theme_colors:
+        return theme_colors[theme_lower]
+    elif "dracula" in theme_lower or "dark" in theme_lower:
+        return "cyan"
+    elif "light" in theme_lower:
+        return "blue"
+    elif "forest" in theme_lower or "green" in theme_lower:
+        return "green"
+    elif "quartz" in theme_lower or "pink" in theme_lower:
+        return "magenta"
+    elif "nord" in theme_lower or "bright" in theme_lower:
+        return "bright_cyan"
+    elif "blue" in theme_lower or "ocean" in theme_lower:
+        return "blue"
+    else:
+        return "cyan"

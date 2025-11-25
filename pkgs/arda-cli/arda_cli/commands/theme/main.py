@@ -6,6 +6,7 @@ from rich.console import Console
 
 from arda_cli.commands.theme.list import list
 from arda_cli.commands.theme.preview import preview
+from arda_cli.lib.theme import get_theme_color
 
 
 def show_theme_help(ctx: click.Context) -> None:
@@ -55,8 +56,12 @@ def show_theme_help(ctx: click.Context) -> None:
     from arda_cli.lib.config import get_active_config_path
 
     _config_path, config_source = get_active_config_path()
+
+    # Get theme-aware color for the config path
+    path_color = get_theme_color(theme_name)
     console.print(
-        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
+        f"\n[dim]Active configuration:[/dim] "
+        f"[{path_color}]{config_source}[/{path_color}]\n"
     )
 
 
