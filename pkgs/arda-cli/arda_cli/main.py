@@ -27,7 +27,7 @@ from arda_cli.lib.config import (
 from arda_cli.lib.output import create_error_panel
 
 # Import theme handling from lib
-from arda_cli.lib.theme import get_rich_click_themes, get_theme_color, patch_rich_click
+from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click
 
 # Suppress rich_click warnings about invalid themes (we handle this ourselves)
 warnings.filterwarnings("ignore", message="RichClickTheme.*not found")
@@ -176,15 +176,19 @@ def show_help_with_config(
     # Show the normal help first
     click.echo(ctx.get_help())
 
-    # Map theme to appropriate color
-    path_color = get_theme_color(theme)
+    # Get colors directly from the theme configuration
+    from rich_click.rich_help_configuration import RichHelpConfiguration
+
+    config = RichHelpConfiguration(theme=theme, enable_theme_env_var=True)
+    label_style = str(config.style_option or "dim")  # Use option style for the label
+    path_style = str(config.style_command or "white")  # Use command style for the path
 
     # Then show active configuration
     _config_path, config_source = get_active_config_path()
     console = Console()
     console.print(
-        f"\n[dim]Active configuration:[/dim] "
-        f"[{path_color}]{config_source}[/{path_color}]\n"
+        f"\n[{label_style}]Active configuration:[/] "
+        f"[{path_style}]{config_source}[/{path_style}]\n"
     )
     ctx.exit()
 

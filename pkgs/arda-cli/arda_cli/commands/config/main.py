@@ -13,7 +13,6 @@ from arda_cli.lib.config import (
     load_default_config,
     set_config_value,
 )
-from arda_cli.lib.theme import get_theme_color
 
 ALLOWED_KEYS = {
     ("theme", "default"),
@@ -63,13 +62,16 @@ def show_config_help(ctx: click.Context) -> None:
     console.print(panel)
 
     # Show active config (blank line before and after, matching arda --help)
+    # Use theme's actual colors from RichHelpConfiguration
     _config_path, config_source = get_active_config_path()
 
-    # Get theme-aware color for the config path
-    path_color = get_theme_color(theme_name)
+    # Get colors directly from the theme configuration
+    label_style = str(config.style_option or "dim")  # Use option style for the label
+    path_style = str(config.style_command or "white")  # Use command style for the path
+
     console.print(
-        f"\n[dim]Active configuration:[/dim] "
-        f"[{path_color}]{config_source}[/{path_color}]\n"
+        f"\n[{label_style}]Active configuration:[/] "
+        f"[{path_style}]{config_source}[/{path_style}]\n"
     )
 
 

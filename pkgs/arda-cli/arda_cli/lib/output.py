@@ -904,11 +904,26 @@ def show_command_help(ctx: click.Context) -> None:
 
     # Show active config (blank line before and after, matching arda --help)
     from rich import get_console
+    from rich_click.rich_help_configuration import RichHelpConfiguration
 
     from arda_cli.lib.config import get_active_config_path
 
     _config_path, config_source = get_active_config_path()
+
+    # Get theme colors from context or use default
+    theme_name = (
+        ctx.obj.get("theme", "dracula")
+        if ctx.obj and isinstance(ctx.obj, dict)
+        else "dracula"
+    )
+    config = RichHelpConfiguration(theme=theme_name, enable_theme_env_var=True)
+
+    # Get colors directly from the theme configuration
+    label_style = str(config.style_option or "dim")  # Use option style for the label
+    path_style = str(config.style_command or "white")  # Use command style for the path
+
     console = get_console()
     console.print(
-        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
+        f"\n[{label_style}]Active configuration:[/] "
+        f"[{path_style}]{config_source}[/{path_style}]\n"
     )
