@@ -790,12 +790,23 @@ def create_extra_help_panel(
         # Get title color (match what Click uses for "Options" and "Commands")
         # Use the exact same style that rich-click uses for panel titles
         # This ensures perfect color matching
-        options_title_style = getattr(config, "style_options_panel_title_style", None)
-        if options_title_style:
-            title_style = str(options_title_style)
+        # Try style_options_panel_title_style first (matches "Options" panel)
+        title_style_str = getattr(config, "style_options_panel_title_style", None)
+        if title_style_str and str(title_style_str).strip():
+            title_style = str(title_style_str)
         else:
-            # Fallback for themes that don't define it
-            title_style = "bold default"
+            # Try style_commands_panel_title_style (matches "Commands" panel)
+            title_style_str = getattr(config, "style_commands_panel_title_style", None)
+            if title_style_str and str(title_style_str).strip():
+                title_style = str(title_style_str)
+            else:
+                # Fallback to style_helptext_first_line (maintains backward compat)
+                title_style_str = getattr(config, "style_helptext_first_line", None)
+                if title_style_str:
+                    title_style = str(title_style_str)
+                else:
+                    # Final fallback
+                    title_style = "bold default"
     except Exception:
         # Invalid theme - fall back to dracula
         border_color = "dim"
