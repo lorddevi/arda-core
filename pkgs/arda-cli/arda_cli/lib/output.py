@@ -895,3 +895,20 @@ def create_error_panel(
         padding=(0, 1),
         title_align="left",
     )
+
+
+def show_command_help(ctx: click.Context) -> None:
+    """Show help with active configuration."""
+    # Show the normal help first
+    click.echo(ctx.get_help())
+
+    # Show active config (blank line before and after, matching arda --help)
+    from rich import get_console
+
+    from arda_cli.lib.config import get_active_config_path
+
+    _config_path, config_source = get_active_config_path()
+    console = get_console()
+    console.print(
+        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
+    )

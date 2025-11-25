@@ -61,9 +61,11 @@ def show_config_help(ctx: click.Context) -> None:
     console = Console()
     console.print(panel)
 
-    # Show active config
+    # Show active config (blank line before and after, matching arda --help)
     _config_path, config_source = get_active_config_path()
-    console.print(f"[dim]Active configuration:[/dim] [white]{config_source}[/white]\n")
+    console.print(
+        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
+    )
 
 
 def config_help_callback(
