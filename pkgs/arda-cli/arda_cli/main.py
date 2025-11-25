@@ -8,7 +8,6 @@ import warnings
 
 import click
 import rich_click as rclick
-from rich import get_console
 from rich.console import Console
 from rich.panel import Panel
 
@@ -244,9 +243,7 @@ def show_help_with_config(
     ctx.exit()
 
 
-@rclick.group(
-    no_args_is_help=True,
-)
+@rclick.group(invoke_without_command=True)
 @click.option(
     "--theme",
     type=str,
@@ -296,16 +293,10 @@ def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None
     ctx.obj["verbose"] = verbose
     ctx.obj["timestamp"] = timestamp
 
-    # Show active config file when running without subcommand
+    # Show help when no subcommand is provided (matching no_args_is_help behavior)
     if ctx.invoked_subcommand is None:
-        console = get_console()
-        show_active_config(console)
-
-    # Show welcome message with theme
-    if ctx.invoked_subcommand is None:
-        # Only show if running arda without subcommand
-        console = get_console()
-        show_welcome(console, theme)
+        # Manually show help to ensure active configuration line is displayed
+        show_help_with_config(ctx, None, True)
 
 
 def show_welcome(console: Console, theme: str) -> None:
