@@ -4,8 +4,10 @@ from typing import Any
 
 import click
 import rich_click as rclick
+from rich.console import Console
 
 from arda_cli.lib.config import (
+    get_active_config_path,
     get_config_for_viewing,
     get_config_for_writing,
     load_default_config,
@@ -19,7 +21,62 @@ ALLOWED_KEYS = {
 }
 
 
-@rclick.group()
+def show_config_help(ctx: click.Context) -> None:
+    """Show help with extra help panel."""
+    # Get base help
+    click.echo(ctx.get_help())
+
+    # Get theme colors
+    from rich_click.rich_help_configuration import RichHelpConfiguration
+
+    theme_name = ctx.obj.get("theme", "dracula") if ctx.obj else "dracula"
+    config = RichHelpConfiguration(theme=theme_name, enable_theme_env_var=True)
+
+    # Get styles for different content types
+    helptext_style = str(config.style_helptext_first_line or "default")
+    option_style = str(config.style_option or "#5e81ac")
+
+    # Create styled content using the builder API
+    from arda_cli.lib.output import ExtraHelpPanelBuilder
+
+    builder = ExtraHelpPanelBuilder(
+        title="Extra Help",
+        theme=theme_name,
+        helptext_style=helptext_style,
+    )
+
+    builder.add_description("Examples:").add_command(
+        "arda config view", "View all settings", option_style
+    ).add_command(
+        "arda config view theme.default", "View specific setting", option_style
+    ).add_command(
+        "arda config set theme.default nord", "Set a value", option_style
+    ).add_command(
+        "arda config --local set theme nord", "Set in project config", option_style
+    ).add_command(
+        "arda config --global set theme nord", "Set in XDG config", option_style
+    )
+
+    panel = builder.build()
+    console = Console()
+    console.print(panel)
+
+    # Show active config
+    _config_path, config_source = get_active_config_path()
+    console.print(f"[dim]Active configuration:[/dim] [white]{config_source}[/white]\n")
+
+
+def config_help_callback(
+    ctx: click.Context, param: click.Parameter, value: bool
+) -> None:
+    """Show help with extra help panel."""
+    if not value:
+        return
+    show_config_help(ctx)
+    ctx.exit()
+
+
+@rclick.group(invoke_without_command=True)
 @click.option(
     "--global",
     "force_global",
@@ -31,6 +88,14 @@ ALLOWED_KEYS = {
     "force_local",
     is_flag=True,
     help="Use local project config (etc/arda.toml)",
+)
+@click.option(
+    "--help",
+    is_flag=True,
+    is_eager=True,
+    expose_value=False,
+    callback=config_help_callback,
+    help="Show this help message and exit.",
 )
 @click.pass_context
 def config(ctx: click.Context, force_global: bool, force_local: bool) -> None:

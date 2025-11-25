@@ -480,6 +480,371 @@ def get_output_manager(
 
 
 # ============================================================================
+# EXTRA HELP PANEL BUILDER
+# ============================================================================
+
+
+class ExtraHelpPanelBuilder:
+    """Builder for creating extra help panels with aligned command-comment pairs.
+
+    This class provides a simpler API for building extra help panels without
+    worrying about the low-level details of Text objects, spans, and alignment.
+
+    Example:
+        builder = ExtraHelpPanelBuilder(
+            title="Extra Help",
+            theme="nord"
+        )
+        builder.add_description("Examples:")
+        builder.add_command(
+            "arda theme list",
+            "List all available themes",
+            option_style
+        )
+        builder.add_command(
+            "arda --theme nord preview",
+            "Preview the nord theme",
+            option_style
+        )
+        panel = builder.build()
+        console.print(panel)
+
+    """
+
+    def __init__(
+        self,
+        title: str,
+        theme: str | None = None,
+        helptext_style: str | None = None,
+    ):
+        """Initialize the builder.
+
+        Args:
+            title: Panel title (e.g., "Extra Help", "Additional Information")
+            theme: Theme name (default: "dracula")
+            helptext_style: Style for description text (e.g., "bold default")
+
+        """
+        from rich.text import Text as RichText
+
+        self._title = title
+        self._theme = theme or "dracula"
+        self._helptext_style = helptext_style or "bold default"
+        self._content: list[RichText | str | tuple[str, str]] = []
+        self._command_style: str | None = None
+        self._min_padding = 2
+
+    def add_description(
+        self, text: str, style: str | None = None
+    ) -> ExtraHelpPanelBuilder:
+        """Add a description line (like "Examples:" or section headers).
+
+        Args:
+            text: Description text
+            style: Style for the text (defaults to helptext_style)
+
+        Returns:
+            self for method chaining
+
+        Example:
+            builder.add_description("Examples:")
+
+        """
+        from rich.text import Text as RichText
+
+        text_style = style or self._helptext_style
+        description = RichText().append(text, style=text_style)
+        self._content.append(description)
+        return self
+
+    def add_command(
+        self,
+        command: str,
+        comment: str,
+        command_style: str,
+        min_padding: int | None = None,
+    ) -> ExtraHelpPanelBuilder:
+        """Add a command with aligned comment.
+
+        This creates a command-comment pair that will be aligned with other commands
+        in the panel. All commands will have their comments start at the same column.
+
+        Args:
+            command: The command text (e.g., "arda theme list")
+            comment: The description/comment (e.g., "List all available themes")
+            command_style: Style to apply to the command (theme-aware color)
+            min_padding: Minimum spaces between command and comment (default: 2)
+
+        Returns:
+            self for method chaining
+
+        Example:
+            builder.add_command(
+                "arda theme list",
+                "List all available themes",
+                option_style
+            )
+
+        """
+        self._command_style = command_style
+        if min_padding is not None:
+            self._min_padding = min_padding
+
+        self._content.append((command, comment))
+        return self
+
+    def add_spacer(self) -> ExtraHelpPanelBuilder:
+        """Add an empty line spacer.
+
+        Returns:
+            self for method chaining
+
+        Example:
+            builder.add_description("Examples:").add_command(...).add_spacer()
+
+        """
+        self._content.append("")
+        return self
+
+    def add_text(self, text: str, style: str | None = None) -> ExtraHelpPanelBuilder:
+        """Add plain text with optional styling.
+
+        Args:
+            text: Text content
+            style: Optional style to apply
+
+        Returns:
+            self for method chaining
+
+        """
+        from rich.text import Text as RichText
+
+        if style:
+            rich_text = RichText().append(text, style=style)
+            self._content.append(rich_text)
+        else:
+            self._content.append(text)
+
+        return self
+
+    def build(self) -> Panel:
+        """Build the final panel with all content.
+
+        Returns:
+            Panel widget ready to print
+
+        Example:
+            panel = builder.add_description("Examples:").add_command(...).build()
+            console.print(panel)
+
+        """
+        # Use the aligned content feature
+        if self._command_style:
+            # Align command-comment pairs
+            aligned_content = align_command_comments(
+                self._content,
+                min_spacing=self._min_padding,
+                command_style=self._command_style,
+            )
+        else:
+            aligned_content = self._content  # type: ignore[assignment]
+
+        return create_extra_help_panel(
+            title=self._title,
+            content=aligned_content,  # type: ignore[arg-type]
+            theme=self._theme,
+        )
+
+
+# ============================================================================
+# ALIGNMENT HELPERS
+# ============================================================================
+
+
+def align_command_comments(
+    content: list[str | Text | tuple[str, str]],
+    min_spacing: int = 2,
+    max_command_width: int | None = None,
+    command_style: str | None = None,
+) -> list[str | Text]:
+    """Align command-comment pairs in columns for better readability.
+
+    This function processes a list of content items and aligns command-comment
+    pairs so that all comment text starts at the same column position, creating
+    a clean vertical alignment.
+
+    Args:
+        content: List of strings, Text objects, or tuples of (command, comment)
+        min_spacing: Minimum number of spaces between command and comment
+        max_command_width: Maximum width for commands (auto-calculated if None)
+        command_style: Style to apply to commands (e.g., "bold cyan")
+
+    Returns:
+        List with aligned content
+
+    Example:
+        Input:
+            [
+                ("arda theme list", "List all available themes"),
+                ("arda --theme nord preview", "Preview the nord theme"),
+            ]
+        Output:
+            Text objects with proper alignment
+
+    """
+    from rich.text import Text as RichText
+
+    # Separate command-comment pairs from other content
+    command_pairs: list[tuple[str, str]] = []
+    other_content: list[str | Text] = []
+
+    for item in content:  # type: ignore[assignment]
+        if isinstance(item, tuple) and len(item) == 2:
+            command_pairs.append(item)  # type: ignore[arg-type]
+        else:
+            other_content.append(item)  # type: ignore[arg-type]
+
+    if not command_pairs:
+        return content  # type: ignore[return-value]
+
+    # Calculate max command width if not specified
+    if max_command_width is None:
+        max_command_width = max(len(cmd) for cmd, _ in command_pairs)
+
+    # Process command-comment pairs
+    aligned_pairs: list[Text] = []
+    for command, comment in command_pairs:
+        # Create Text object with aligned command and comment
+        command_len = len(command)
+        padding_needed = max_command_width - command_len + min_spacing
+
+        text = RichText()
+        text.append(command, style=command_style)
+        text.append(" " * padding_needed, style="")
+        text.append(comment, style="")
+
+        aligned_pairs.append(text)
+
+    # Combine aligned pairs with other content
+    result: list[str | Text] = []
+    pair_idx = 0
+
+    for item in content:
+        if isinstance(item, tuple) and len(item) == 2:
+            result.append(aligned_pairs[pair_idx])
+            pair_idx += 1
+        else:
+            result.append(item)
+
+    return result
+
+
+# ============================================================================
+# EXTRA HELP PANEL CREATOR
+# ============================================================================
+
+
+def create_extra_help_panel(
+    title: str,
+    content: list[str | Text],
+    theme: str | None = None,
+) -> Panel:
+    """Create an extra help panel with consistent styling.
+
+    This creates a styled panel that appears after the standard help sections
+    (Options and Commands) for displaying extended help information.
+
+    Args:
+        title: Panel title (e.g., "Extra Help", "Additional Information")
+        content: List of text strings or Text objects to display
+        theme: Theme name for styling (default: dracula)
+
+    Returns:
+        Panel widget with consistent help panel styling
+
+    Example:
+        content = [
+            "To preview a different theme:",
+            "  arda --theme <name> preview",
+            "",
+            "To change permanently:",
+            "  • arda config set theme <theme> --local",
+            "  • arda config --global set theme <theme>",
+        ]
+        panel = create_extra_help_panel("Extra Help", content, theme="nord")
+        console.print(panel)
+
+    """
+    # Use default theme if not specified
+    if theme is None:
+        theme = "dracula"
+
+    # Get theme colors for the panel
+    try:
+        config = RichHelpConfiguration(theme=theme, enable_theme_env_var=True)
+        border_color = str(
+            config.style_options_panel_border
+            or config.style_commands_panel_border
+            or "dim"
+        )
+        # Get title color (match what Click uses for "Options" and "Commands")
+        # Use the exact same style that rich-click uses for panel titles
+        # This ensures perfect color matching
+        options_title_style = getattr(config, "style_options_panel_title_style", None)
+        if options_title_style:
+            title_style = str(options_title_style)
+        else:
+            # Fallback for themes that don't define it
+            title_style = "bold default"
+    except Exception:
+        # Invalid theme - fall back to dracula
+        border_color = "dim"
+        title_style = "bold default"
+
+    # Create styled title (match the color of Options/Commands panel titles)
+    from rich.text import Text as RichText
+
+    title_text = RichText(title, style=title_style)
+
+    # Convert content to a single Text object with proper styling
+    if content:
+        # Start with first item
+        if isinstance(content[0], RichText):
+            full_text = content[0].copy()
+        else:
+            full_text = RichText(str(content[0]))
+
+        # Add remaining items with newlines
+        for item in content[1:]:
+            # Add newline first
+            full_text.append("\n")
+
+            if isinstance(item, RichText):
+                # Append Text object by copying its segments
+                for span in item._spans:
+                    full_text._spans.append(
+                        span._replace(
+                            start=full_text._length + span.start,
+                            end=full_text._length + span.end,
+                        )
+                    )
+                full_text.append(item.plain)
+            elif item != "":
+                # Non-empty string
+                full_text.append(str(item))
+    else:
+        full_text = RichText("")
+
+    return Panel(
+        full_text,
+        title=title_text,
+        border_style=border_color,
+        padding=(0, 1),
+        title_align="left",
+    )
+
+
+# ============================================================================
 # ERROR PANEL HELPER
 # ============================================================================
 
