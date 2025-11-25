@@ -131,6 +131,12 @@ def config(ctx: click.Context, force_global: bool, force_local: bool) -> None:
         click.echo("Error: Cannot use both --global and --local together", err=True)
         ctx.exit(1)
 
+    # Show full help with Extra Help panel when no subcommand is provided
+    # This ensures 'arda config' shows the same output as 'arda config --help'
+    if ctx.invoked_subcommand is None:
+        show_config_help(ctx)
+        ctx.exit()
+
 
 @config.command(name="view")
 @click.argument("key", required=False)
