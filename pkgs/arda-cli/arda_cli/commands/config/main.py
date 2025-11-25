@@ -1,7 +1,6 @@
 """Configuration management commands."""
 
-from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 import click
 import rich_click as rclick
@@ -9,9 +8,8 @@ import rich_click as rclick
 from arda_cli.lib.config import (
     get_config_for_viewing,
     get_config_for_writing,
-    set_config_value,
-    get_active_config_path,
     load_default_config,
+    set_config_value,
 )
 
 ALLOWED_KEYS = {
@@ -51,7 +49,6 @@ def config(ctx: click.Context, force_global: bool, force_local: bool) -> None:
 
 
     Examples:
-
         arda config view              # View all settings
         arda config view theme.default  # View specific setting
         arda config set theme.default nord  # Set a value
@@ -193,7 +190,7 @@ def set_config(ctx: click.Context, key: str, value: str) -> None:
     - Use --local to write to project config (etc/arda.toml)
     - Use --global to write to XDG config (~/.config/arda/arda.toml)
 
-    Without flags, writes to the highest-priority config file (see 'arda config --help').
+    Without flags, writes to the high-priority config file (see 'arda config --help').
 
     Never modifies the package default configuration.
 
@@ -315,7 +312,9 @@ def init_config(ctx: click.Context, force: bool) -> None:
 
     """
     # Get the force flags from parent context
-    force_global = ctx.parent.obj.get("force_global", False) if ctx.parent.obj else False
+    force_global = (
+        ctx.parent.obj.get("force_global", False) if ctx.parent.obj else False
+    )
     force_local = ctx.parent.obj.get("force_local", False) if ctx.parent.obj else False
 
     # Get or create output manager
@@ -360,8 +359,7 @@ def init_config(ctx: click.Context, force: bool) -> None:
     if target_path.exists():
         if not force:
             if not click.confirm(
-                f"Configuration file already exists at {target_path}\n"
-                "Overwrite?"
+                f"Configuration file already exists at {target_path}\nOverwrite?"
             ):
                 output.info("Initialization cancelled")
                 return
@@ -381,9 +379,7 @@ def init_config(ctx: click.Context, force: bool) -> None:
         with open(target_path, "wb") as f:
             tomli_w.dump(default_config, f)
 
-        output.success(
-            f"Configuration initialized at {target_path}"
-        )
+        output.success(f"Configuration initialized at {target_path}")
     except Exception as e:
         output.error(f"Failed to initialize configuration: {e}")
 

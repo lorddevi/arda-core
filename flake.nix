@@ -27,11 +27,10 @@
   };
 
   outputs =
-    inputs@{
-      nixpkgs,
-      systems,
-      flake-parts,
-      ...
+    inputs@{ nixpkgs
+    , systems
+    , flake-parts
+    , ...
     }:
     let
       # Import our custom overlay that upgrades rich-click to 1.9.4

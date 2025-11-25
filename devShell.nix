@@ -13,7 +13,7 @@
           pkgs.direnv
           pkgs.coreutils
           pkgs.which
-	  pkgs.just
+          pkgs.just
 
           # Include Python packages from overlaid python313Packages
           # This ensures rich-click 1.9.4 from our overlay is used
@@ -33,6 +33,10 @@
           pkgs.python313Packages.ruff
           pkgs.python313Packages.mypy
           pkgs.python313Packages.bandit
+
+          # Development tools
+          pkgs.pre-commit # Git hooks framework
+          pkgs.python313Packages.detect-secrets # Secret scanner
         ];
       };
     };

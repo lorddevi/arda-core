@@ -91,3 +91,7 @@ temp/
 
 # BMAD Method assets (consistent across branches)
 /bmad-docs/
+/.bmad/
+
+# Claude Code directory
+/.claude/

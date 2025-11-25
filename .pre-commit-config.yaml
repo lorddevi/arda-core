@@ -9,40 +9,61 @@ repos:
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: package.lock.json
+        exclude: |
+          (?x)^(
+              package\.lock\.json|
+              bmad-docs/.*|
+              \.bmad/.*|
+              \.claude/.*
+          )$
 
-  # Python code formatting with black
-  - repo: https://github.com/psf/black
-    rev: 25.11.0
+  # Python linting and formatting with ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.3
     hooks:
-      - id: black
-        language_version: python3
-
-  # Python linting with flake8
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
-    hooks:
-      - id: flake8
-        additional_dependencies: [flake8-docstrings]
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
+      - id: ruff-format
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
       - id: end-of-file-fixer
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
       - id: check-yaml
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
       - id: check-json
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
       - id: check-added-large-files
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
       - id: check-merge-conflict
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
       - id: check-toml
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
       - id: debug-statements
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
 
   # Nix formatting and checking
   - repo: https://github.com/nix-community/nixpkgs-fmt
     rev: v1.3.0
     hooks:
       - id: nixpkgs-fmt
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
+
+  # Build test - ensure arda-cli builds successfully
+  - repo: local
+    hooks:
+      - id: build-arda-cli
+        name: Build arda-cli
+        entry: just build-arda-cli
+        language: system
+        pass_filenames: false
+        always_run: true
 
   # Markdown linting (line length disabled for readability)
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -50,3 +71,4 @@ repos:
     hooks:
       - id: markdownlint
         args: ['--fix', '--config', '.markdownlint.json']
+        exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'

@@ -6,16 +6,11 @@ all help text and command output.
 
 import warnings
 
-# Suppress rich_click warnings about invalid themes (we handle this ourselves)
-warnings.filterwarnings("ignore", message="RichClickTheme.*not found")
-
 import click
-from click.exceptions import UsageError
 import rich_click as rclick
 from rich import get_console
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
 # Import commands from commands/ directory
 from arda_cli.commands.config.main import config
@@ -35,6 +30,9 @@ from arda_cli.lib.output import create_error_panel
 # Import theme handling from lib
 from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click
 
+# Suppress rich_click warnings about invalid themes (we handle this ourselves)
+warnings.filterwarnings("ignore", message="RichClickTheme.*not found")
+
 # Patch click with theme configuration
 patch_rich_click()
 
@@ -53,7 +51,7 @@ def ensure_config_exists() -> None:
     from pathlib import Path
 
     # Check if any config file exists
-    config_path, config_source = get_active_config_path()
+    config_path, _config_source = get_active_config_path()
 
     if config_path is None:
         # No config found - create project-level config
@@ -84,27 +82,10 @@ def ensure_config_exists() -> None:
 
 def show_active_config(console: Console) -> None:
     """Show the active configuration file path."""
-    config_path, config_source = get_active_config_path()
+    _config_path, config_source = get_active_config_path()
     console.print(
         f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
     )
-
-
-def custom_format_help(ctx: click.Context, cmd: click.Command, formatter: click.HelpFormatter) -> None:
-    """Custom help formatter that shows active config file."""
-    # Get the original help text
-    formatter.write(cmd.get_help(ctx))
-    formatter.write("\n")
-
-    # Get the active config file
-    config_path, config_source = get_active_config_path()
-
-    # Show active configuration
-    console = get_console()
-    console.print(
-        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
-    )
-
 
 
 def get_theme_color(theme_name: str) -> str:
@@ -115,6 +96,7 @@ def get_theme_color(theme_name: str) -> str:
 
     Returns:
         Rich color tag appropriate for the theme
+
     """
     theme_lower = theme_name.lower()
 
@@ -126,12 +108,10 @@ def get_theme_color(theme_name: str) -> str:
         "solarized-dark": "cyan",
         "nord": "bright_cyan",
         "one-dark": "cyan",
-
         # Light themes
         "solarized-light": "blue",
         "github": "blue",
         "monokai": "cyan",
-
         # Colorful themes
         "forest": "green",
         "gruvbox": "green",
@@ -139,7 +119,6 @@ def get_theme_color(theme_name: str) -> str:
         "rose_pine": "pink",
         "ayu": "orange",
         "tokyo-night": "blue",
-
         # Default fallback
         "default": "blue",
     }
@@ -204,8 +183,10 @@ def validate_theme(ctx: click.Context, param: click.Parameter, value: str) -> st
     return value
 
 
-def show_help_with_config(ctx: click.Context, param: click.Parameter, value: bool) -> None:
-    """Callback to show help with active config information."""
+def show_help_with_config(
+    ctx: click.Context, param: click.Parameter, value: bool
+) -> None:
+    """Show help with active config information."""
     if not value:
         return
 
@@ -219,6 +200,7 @@ def show_help_with_config(ctx: click.Context, param: click.Parameter, value: boo
     else:
         # Fallback: try to parse from command line args
         import sys
+
         if "--theme" in sys.argv:
             theme_idx = sys.argv.index("--theme")
             if theme_idx + 1 < len(sys.argv):
@@ -253,10 +235,11 @@ def show_help_with_config(ctx: click.Context, param: click.Parameter, value: boo
     path_color = get_theme_color(theme)
 
     # Then show active configuration
-    config_path, config_source = get_active_config_path()
+    _config_path, config_source = get_active_config_path()
     console = Console()
     console.print(
-        f"\n[dim]Active configuration:[/dim] [{path_color}]{config_source}[/{path_color}]\n"
+        f"\n[dim]Active configuration:[/dim] "
+        f"[{path_color}]{config_source}[/{path_color}]\n"
     )
     ctx.exit()
 
@@ -347,17 +330,20 @@ def show_welcome(console: Console, theme: str) -> None:
     console.print()
 
 
-def custom_format_help(ctx: click.Context, cmd: click.Command, formatter: click.HelpFormatter) -> None:
-    """Custom help formatter that shows active config file."""
+def custom_format_help(
+    ctx: click.Context, cmd: click.Command, formatter: click.HelpFormatter
+) -> None:
+    """Format custom help to show active config file."""
     # Get the original help text
     formatter.write(cmd.get_help(ctx))
     formatter.write("\n")
 
     # Get the active config file
-    config_path, config_source = get_active_config_path()
+    _config_path, config_source = get_active_config_path()
 
     # Show active configuration
     from rich import get_console
+
     console = get_console()
     console.print(
         f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"

@@ -296,6 +296,7 @@ Arda uses a centralized console output system that provides consistent, themed, 
 ### Why This System?
 
 The console output system ensures:
+
 - **Consistency** - All commands use the same output style
 - **User Experience** - Beautiful, themed output with helpful tags and metadata
 - **Debuggability** - Verbosity levels help troubleshoot issues
@@ -317,6 +318,7 @@ Each output message has a specific type with a distinct tag and color:
 | Trace | `[⋙ TRACE]` | Dim | Execution traces (debug mode) |
 
 **Example output:**
+
 ```
 [i INFO] Starting deployment
 [✓ SUCCESS] Configuration validated
@@ -333,6 +335,7 @@ Use verbosity to control output detail:
 3. **DEBUG** (future) - Full execution traces
 
 **Examples:**
+
 ```bash
 arda host                    # Shows only info/success/warning/error
 arda --verbose host          # Also shows debug messages
@@ -342,11 +345,13 @@ arda --verbose --debug host  # Shows all debug and trace info
 #### Themes
 
 Arda uses rich-click's built-in themes for unified styling:
+
 - Available: `dracula`, `forest`, `nord`, `quartz`, `solarized`, etc.
 - Theme variants: `slim`, `modern`, `nu`, `robo` (e.g., `dracula-modern`)
 - Default: `dracula`
 
 **Examples:**
+
 ```bash
 arda --theme nord host
 arda --theme forest list
@@ -393,6 +398,7 @@ def host(ctx: click.Context) -> None:
 #### Available Methods
 
 **Message Output:**
+
 - `output.info(message)` - Information messages
 - `output.success(message)` - Success confirmations
 - `output.warning(message)` - Warnings
@@ -400,17 +406,20 @@ def host(ctx: click.Context) -> None:
 - `output.debug(message)` - Debug info (with `--verbose`)
 
 **Layout Helpers:**
+
 - `output.section(title)` - Create section headers with separators
 - `output.spacer(count=1)` - Add empty lines
 - `output.print_panel(content, title, border_style)` - Display in bordered panel
 
 **Debugging Helpers:**
+
 - `output.timer("operation")` - Context manager to time operations
 - `output.trace_function_entry(name, **kwargs)` - Log function entry
 - `output.trace_function_exit(name, result)` - Log function exit
 - `output.step(message)` - Numbered execution steps
 
 **Example with timing:**
+
 ```python
 with output.timer("Host deployment"):
     deploy_hosts()
@@ -421,6 +430,7 @@ with output.timer("Host deployment"):
 #### Configuration
 
 Settings are sourced from (priority order):
+
 1. Command-line flags
 2. Config file locations (checked in this order):
    - `~/.config/arda/arda.toml` (XDG user config)
@@ -430,6 +440,7 @@ Settings are sourced from (priority order):
 3. Default values
 
 **Config file example:**
+
 ```toml
 [theme]
 default = "nord"
@@ -441,37 +452,43 @@ timestamp = true
 
 ### When to Use Each Message Type
 
-#### Use `info()` for:
+#### Use `info()` for
+
 - General status updates
 - Progress indicators
 - Informational messages
 - Command descriptions
 
-#### Use `success()` for:
+#### Use `success()` for
+
 - Successful operations
 - Validations passed
 - Configuration checks
 - Completion confirmations
 
-#### Use `warning()` for:
+#### Use `warning()` for
+
 - Non-critical issues
 - Missing optional dependencies
 - Degraded functionality warnings
 - Actions that need user attention
 
-#### Use `error()` for:
+#### Use `error()` for
+
 - Critical failures
 - Failed validations
 - Configuration errors
 - Operations that cannot proceed
 
-#### Use `debug()` for:
+#### Use `debug()` for
+
 - Detailed operation info
 - Internal state
 - Non-essential troubleshooting info
 - Available operations lists
 
 **Example guidance:**
+
 ```python
 # Good
 output.info("Reading configuration file")
@@ -502,11 +519,13 @@ This gives users immediate feedback on command usage.
 #### 2. Think About Verbosity When Adding Features
 
 When implementing new features, consider:
+
 - What would users need to debug issues?
 - What internal steps might be helpful with `--verbose`?
 - What errors might occur and how should they be communicated?
 
 **Example:**
+
 ```python
 # Show progress to all users
 output.info("Validating configuration")

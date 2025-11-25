@@ -1,13 +1,13 @@
-{
-  lib,
-  python,
-  setuptools,
-  click,
-  pyyaml,
-  rich,
-  pydantic,
-  rich-click,
-  tomli-w,
+{ lib
+, python
+, setuptools
+, click
+, pyyaml
+, rich
+, pydantic
+, rich-click
+, tomli-w
+,
 }:
 
 python.pkgs.buildPythonApplication {

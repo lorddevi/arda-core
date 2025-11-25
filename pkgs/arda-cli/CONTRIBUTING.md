@@ -13,7 +13,6 @@ Thank you for your interest in contributing to Arda CLI! This document provides 
 - [Adding New Commands](#adding-new-commands)
 - [Using Shared Helpers](#using-shared-helpers)
 - [Theme System](#theme-system)
-- [Testing](#testing)
 - [Development Workflow](#development-workflow)
 - [Submitting Changes](#submitting-changes)
 
@@ -188,6 +187,7 @@ deploy.add_command(update)
 ```
 
 This creates the hierarchy:
+
 - `arda host list` → from `commands/host/main.py`
 - `arda host deploy day0` → from `commands/host/deploy/day0.py`
 - `arda host deploy update` → from `commands/host/deploy/update.py`
@@ -340,6 +340,7 @@ def host(ctx: click.Context, verbose: bool) -> None:
 ### Code Style Requirements
 
 1. **Always use type hints**:
+
    ```python
    def function_name(param: str) -> bool:
        """Function description."""
@@ -347,11 +348,13 @@ def host(ctx: click.Context, verbose: bool) -> None:
    ```
 
 2. **Use f-strings for formatting**:
+
    ```python
    message = f"Host {hostname}: {status}"
    ```
 
 3. **Use descriptive names**:
+
    ```python
    # Good
    hosts_config = load_hosts_config(config_path)
@@ -361,6 +364,7 @@ def host(ctx: click.Context, verbose: bool) -> None:
    ```
 
 4. **Document public APIs**:
+
    ```python
    def create_console(theme_name: str) -> Console:
        """Create a themed Console instance.
@@ -375,6 +379,7 @@ def host(ctx: click.Context, verbose: bool) -> None:
    ```
 
 5. **One function = one responsibility**:
+
    ```python
    # Good: Separate functions for separate concerns
    def test_ssh_connection(host: str, port: int) -> bool: ...
@@ -485,6 +490,7 @@ All commands should use shared helpers from `lib/` instead of duplicating logic.
 ### Common Helper Modules
 
 **lib/theme.py** - Theme handling and rich-click:
+
 ```python
 from arda_cli.lib.theme import get_rich_click_themes, patch_rich_click, get_current_theme
 
@@ -496,6 +502,7 @@ current = get_current_theme()
 ```
 
 **lib/console.py** - Console styling helpers:
+
 ```python
 from arda_cli.lib.console import print_header, print_success, print_info, print_warning, print_error
 
@@ -507,6 +514,7 @@ print_error("Failed!", console)
 ```
 
 **lib/helpers.py** - General CLI helpers:
+
 ```python
 from arda_cli.lib.helpers import get_console_from_ctx, get_theme_from_ctx, check_and_show_help
 
@@ -524,6 +532,7 @@ if check_and_show_help(ctx):
 ### When to Create a New lib/ Module
 
 Create a new `lib/` module when:
+
 1. You need functionality not provided by existing modules
 2. The functionality is used by multiple commands
 3. It's a cohesive set of utilities (e.g., all SSH-related helpers)
@@ -548,6 +557,7 @@ Arda CLI uses **rich-click's built-in theming** system (version 1.9.0+).
 ### Available Themes
 
 24 built-in themes from rich-click:
+
 - Dracula variants: `dracula`, `dracula-dark`, `dracula-slim`, `dracula-modern`
 - Forest variants: `forest`, `forest-dark`, `forest-slim`, `forest-modern`
 - Solarized variants: `solarized`, `solarized-dark`, `solarized-slim`, `solarized-modern`
@@ -642,18 +652,21 @@ lib/
 ### Test Guidelines
 
 1. **Test commands in isolation**:
+
    ```python
    from arda_cli.commands.host.main import host
    result = runner.invoke(host, ['--verbose'])
    ```
 
 2. **Test lib/ helpers without CLI context**:
+
    ```python
    from arda_cli.lib.helpers import check_and_show_help
    # Test helper functions directly
    ```
 
 3. **Mock external dependencies** (when adding new helpers):
+
    ```python
    @patch('subprocess.run')
    def test_ssh_operation(mock_run):
@@ -666,11 +679,13 @@ lib/
 ### Typical Workflow
 
 1. **Create a feature branch**:
+
    ```bash
    git checkout -b feature/my-new-feature
    ```
 
 2. **Write tests first** (TDD approach):
+
    ```bash
    # Create test file
    touch tests/commands/host/test_new_command.py
@@ -684,6 +699,7 @@ lib/
    - Run tests: `pytest tests/commands/host/test_new_command.py`
 
 4. **Run all checks**:
+
    ```bash
    ruff check .
    ruff format .
@@ -693,12 +709,14 @@ lib/
    ```
 
 5. **Build and test the CLI**:
+
    ```bash
    nix build .#arda-cli
    ./result/bin/arda my-command --help
    ```
 
 6. **Commit and push**:
+
    ```bash
    git add .
    git commit -m "feat: add new command"
@@ -798,9 +816,9 @@ Brief description of changes
 ## Questions?
 
 Feel free to open an issue for questions about:
+
 - Project structure
 - Adding new commands
 - Using shared helpers
 - Testing approach
 - Architecture decisions
-

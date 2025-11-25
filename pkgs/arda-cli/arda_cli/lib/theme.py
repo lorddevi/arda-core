@@ -128,7 +128,7 @@ def patch_rich_click() -> None:
         config = RichHelpConfiguration(
             theme=_GLOBAL_THEME,
             enable_theme_env_var=True,
-            # Note: Don't override style_errors_panel_border - let each theme use its own error color
+            # Note: Use each theme's error color - don't override panel border
         )
         patch(rich_config=config)
     except TypeError:

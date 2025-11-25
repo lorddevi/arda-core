@@ -17,6 +17,7 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
+from rich.text import Text
 from rich_click.rich_help_configuration import RichHelpConfiguration
 
 
@@ -483,7 +484,9 @@ def get_output_manager(
 # ============================================================================
 
 
-def create_error_panel(message: str | "Text", title: str = "Error", theme: str | None = None) -> Panel:
+def create_error_panel(
+    message: str | Text, title: str = "Error", theme: str | None = None
+) -> Panel:
     """Create a consistent error panel with standard styling.
 
     Args:
@@ -492,7 +495,8 @@ def create_error_panel(message: str | "Text", title: str = "Error", theme: str |
         theme: Theme name to get error border color (default: dracula)
 
     Returns:
-        Panel widget with consistent error styling (theme-specific red border, left-aligned title)
+        Panel widget with consistent error styling (theme-specific red border,
+        left-aligned title)
 
     Example:
         panel = create_error_panel("Something went wrong", theme="nord")
@@ -503,6 +507,7 @@ def create_error_panel(message: str | "Text", title: str = "Error", theme: str |
         msg = Text("Error message with ")
         msg.append("colored text", style="bold yellow")
         panel = create_error_panel(msg, theme="dracula")
+
     """
     # Use default theme if not specified
     if theme is None:
