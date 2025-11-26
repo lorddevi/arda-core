@@ -7,7 +7,7 @@
 , pydantic
 , rich-click
 , tomli-w
-,
+, nix-select
 }:
 
 python.pkgs.buildPythonApplication {
@@ -26,6 +26,13 @@ python.pkgs.buildPythonApplication {
     rich-click
     tomli-w
   ];
+
+  postInstall = ''
+    # Create symlink to nix-select library (like clan-cli does)
+    # This makes the selector functions available to Python via import
+    mkdir -p $out/${python.sitePackages}/arda_cli
+    ln -sf ${nix-select} $out/${python.sitePackages}/arda_cli/select
+  '';
 
   meta = {
     description = "Arda - minimal infrastructure management for NixOS";

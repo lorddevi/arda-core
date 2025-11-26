@@ -24,6 +24,9 @@
 
     # Include nix-direnv for better direnv + nix integration
     nix-direnv.url = "github:nix-community/nix-direnv";
+
+    # Include nix-select for advanced Nix attribute selection (forked from clan)
+    nix-select.url = "https://git.clan.lol/clan/nix-select/archive/main.tar.gz";
   };
 
   outputs =

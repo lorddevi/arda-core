@@ -59,6 +59,19 @@
         "type": "github"
       }
     },
+    "nix-select": {
+      "locked": {
+        "lastModified": 1763303120,
+        "narHash": "sha256-yxcNOha7Cfv2nhVpz9ZXSNKk0R7wt4AiBklJ8D24rVg=",
+        "rev": "3d1e3860bef36857a01a2ddecba7cdb0a14c35a9",
+        "type": "tarball",
+        "url": "https://git.clan.lol/api/v1/repos/clan/nix-select/archive/3d1e3860bef36857a01a2ddecba7cdb0a14c35a9.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://git.clan.lol/clan/nix-select/archive/main.tar.gz"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1762361079,
@@ -124,6 +137,7 @@
       "inputs": {
         "flake-parts": "flake-parts",
         "nix-direnv": "nix-direnv",
+        "nix-select": "nix-select",
         "nixpkgs": "nixpkgs_2",
         "rich-click": "rich-click",
         "sops-nix": "sops-nix",

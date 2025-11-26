@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   perSystem =
     { system, ... }:
@@ -8,7 +8,10 @@
     {
       packages = {
         # Uses pkgs with our overlay (rich-click 1.9.4)
-        arda-cli = python313Packages.callPackage ./arda-cli/default.nix { };
+        # Also receives nix-select for advanced Nix attribute selection
+        arda-cli = python313Packages.callPackage ./arda-cli/default.nix {
+          inherit (inputs) nix-select;
+        };
       };
     };
 }
