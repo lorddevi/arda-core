@@ -8,12 +8,42 @@
 , rich-click
 , tomli-w
 , nix-select
+, jq
+, runCommand
 }:
 
+let
+  # Create arda source with nix-select integration
+  # This mirrors clan-cli's cliSource pattern but adapted for arda
+  ardaSource =
+    source:
+    runCommand "arda-cli-source"
+      {
+        nativeBuildInputs = [ jq ];
+      }
+      ''
+        cp -r ${source} $out
+        chmod -R +w $out
+
+        # Remove old symlinks if they exist
+        rm -f $out/arda_cli/select
+
+        # Substitute nix-select hash into Python code
+        # This allows Python to construct correct flake references to nix-select
+        if [ -f $out/arda_cli/nix.py ]; then
+          substituteInPlace $out/arda_cli/nix.py \
+            --replace-fail '@nix_select_hash@' "$(jq -r '.nodes."nix-select".locked.narHash' ${../../flake.lock})"
+        fi
+
+        # Create symlink to nix-select library
+        # This makes the selector functions available in Nix expressions
+        ln -sf ${nix-select} $out/arda_cli/select
+      '';
+in
 python.pkgs.buildPythonApplication {
   pname = "arda_cli";
   version = "0.1.5";
-  src = ./.;
+  src = ardaSource ./.;
   format = "pyproject";
 
   nativeBuildInputs = [ setuptools ];
@@ -27,12 +57,11 @@ python.pkgs.buildPythonApplication {
     tomli-w
   ];
 
-  postInstall = ''
-    # Create symlink to nix-select library (like clan-cli does)
-    # This makes the selector functions available to Python via import
-    mkdir -p $out/${python.sitePackages}/arda_cli
-    ln -sf ${nix-select} $out/${python.sitePackages}/arda_cli/select
-  '';
+  # Export ardaSource for testing (passthru)
+  # This allows tests to access the full source if needed
+  passthru = {
+    ardaSource = ardaSource ./.;
+  };
 
   meta = {
     description = "Arda - minimal infrastructure management for NixOS";
