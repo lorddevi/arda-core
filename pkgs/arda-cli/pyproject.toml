@@ -39,7 +39,7 @@ dev = [
 arda = "arda_cli.main:main"
 
 [tool.setuptools.packages.find]
-include = ["arda_cli*"]
+include = ["arda_cli*", "arda_lib*"]
 
 [tool.setuptools.package-data]
 arda_cli = [

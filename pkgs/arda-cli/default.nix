@@ -22,21 +22,22 @@ let
         nativeBuildInputs = [ jq ];
       }
       ''
+        # Copy source to output
         cp -r ${source} $out
         chmod -R +w $out
 
         # Remove old symlinks if they exist
         rm -f $out/arda_cli/select
+        rm -f $out/arda_cli/lib/arda_lib/select
 
         # Substitute nix-select hash into Python code
         # This allows Python to construct correct flake references to nix-select
-        if [ -f $out/arda_cli/nix.py ]; then
-          substituteInPlace $out/arda_cli/nix.py \
-            --replace-fail '@nix_select_hash@' "$(jq -r '.nodes."nix-select".locked.narHash' ${../../flake.lock})"
-        fi
+        substituteInPlace $out/arda_cli/lib/arda_lib/nix.py \
+          --replace-fail '@nix_select_hash@' "$(jq -r '.nodes."nix-select".locked.narHash' ${../../flake.lock})"
 
         # Create symlink to nix-select library
         # This makes the selector functions available in Nix expressions
+        ln -sf ${nix-select} $out/arda_cli/lib/arda_lib/select
         ln -sf ${nix-select} $out/arda_cli/select
       '';
 in
