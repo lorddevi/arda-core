@@ -1,3 +1,4 @@
+# ruff: noqa: S603,S608
 """Core Nix operations for arda.
 
 This module provides low-level Nix command wrappers and utilities.
@@ -8,8 +9,9 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
-from typing import ClassVar
+from typing import Any, ClassVar
+
+# Allow subprocess calls and string formatting in error messages
 
 # Nix-select hash placeholder
 # This will be replaced with the actual hash during build by ardaSource function
