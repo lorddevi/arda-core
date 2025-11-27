@@ -20,7 +20,8 @@ Example usage:
 """
 
 # Core Nix operations
-from .nix import (
+from .nix.nix import (
+    NIX_SELECT_HASH,
     Flake,
     NixError,
     Packages,
@@ -35,6 +36,7 @@ from .nix import (
 
 # Export all by default for convenience
 __all__ = [
+    "NIX_SELECT_HASH",
     "Flake",
     "NixError",
     "Packages",

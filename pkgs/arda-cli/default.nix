@@ -28,16 +28,16 @@ let
 
         # Remove old symlinks if they exist
         rm -f $out/arda_cli/select
-        rm -f $out/arda_cli/lib/arda_lib/select
+        rm -f $out/arda_lib/select
 
         # Substitute nix-select hash into Python code
         # This allows Python to construct correct flake references to nix-select
-        substituteInPlace $out/arda_cli/lib/arda_lib/nix.py \
+        substituteInPlace $out/arda_lib/nix/nix.py \
           --replace-fail '@nix_select_hash@' "$(jq -r '.nodes."nix-select".locked.narHash' ${../../flake.lock})"
 
         # Create symlink to nix-select library
         # This makes the selector functions available in Nix expressions
-        ln -sf ${nix-select} $out/arda_cli/lib/arda_lib/select
+        ln -sf ${nix-select} $out/arda_lib/select
         ln -sf ${nix-select} $out/arda_cli/select
       '';
 in
