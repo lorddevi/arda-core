@@ -26,6 +26,8 @@
           pkgs.python313Packages.rich
           pkgs.python313Packages.pydantic
           pkgs.python313Packages.rich-click
+          pkgs.python313Packages.tomlib
+          pkgs.python313Packages.tomli-w
 
           # Python development and testing tools
           pkgs.python313Packages.pytest

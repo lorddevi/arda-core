@@ -6,7 +6,7 @@ from pathlib import Path
 try:
     import tomli_w  # type: ignore
 except ImportError:
-    # Fallback for environments without tomli_w
+    # Fallback for environments without tomli_w (until devShell is activated)
     import toml as tomli_w
 
 DEFAULT_CONFIG_NAME = "arda.toml"
