@@ -79,7 +79,9 @@ def test_vm_qemu_subprocess_mocking():
 
         # Simulate a VM command for testing purposes
         subprocess.run(
-            ["qemu-system-x86_64", "--version"], check=True, capture_output=True  # noqa: S607
+            ["qemu-system-x86_64", "--version"],
+            check=True,
+            capture_output=True,  # noqa: S607
         )
 
         # Verify subprocess was called
@@ -132,7 +134,7 @@ def test_vm_error_handling():
 
     mock_exception = subprocess.CalledProcessError(
         1,
-        ["qemu-system-x86_64"],  # noqa: S607
+        ["qemu-system-x86_64"],
         stderr="error: VM startup failed: insufficient memory",
     )
 

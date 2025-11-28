@@ -8,6 +8,7 @@ and writing.
 # Import from the actual arda_cli package
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 from pathlib import Path as PathLib
 from unittest.mock import patch
@@ -141,8 +142,9 @@ def test_config_set_value():
         # Verify the file was created
         assert config_file.exists()
 
-        # Verify the values can be read back
-        config = load_config()
+        # Verify the values can be read back from the temp file
+        with open(config_file, "rb") as f:
+            config = tomllib.load(f)
         assert config["theme"]["default"] == "monokai"
         assert config["output"]["verbose"] is True
 
@@ -154,6 +156,8 @@ def test_config_priority_project_over_user():
     """Test that project config takes priority over user config."""
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
+        user_path = temp_path / "user_home"
+        user_path.mkdir()
 
         # Create both project and user configs
         project_config = temp_path / "etc" / "arda.toml"
@@ -165,7 +169,7 @@ default = "project_theme"
 verbose = false
 """)
 
-        user_config = temp_path.home() / ".config" / "arda" / "arda.toml"
+        user_config = user_path / ".config" / "arda" / "arda.toml"
         user_config.parent.mkdir(parents=True)
         user_config.write_text("""[theme]
 default = "user_theme"
@@ -175,13 +179,13 @@ verbose = true
 """)
 
         # Get config with priority (project should win)
-        with patch("pathlib.Path.cwd", return_value=temp_path):
-            with patch("pathlib.Path.home", return_value=temp_path.home()):
-                config = get_config_for_viewing()
+        with patch("pathlib.Path.cwd", return_value=temp_path), \
+             patch("pathlib.Path.home", return_value=user_path):
+            config = get_config_for_viewing()
 
-                # Project config should override user config
-                assert config["theme"]["default"] == "project_theme"
-                assert config["output"]["verbose"] is False
+            # Project config should override user config
+            assert config["theme"]["default"] == "project_theme"
+            assert config["output"]["verbose"] is False
 
 
 @pytest.mark.slow
@@ -203,7 +207,8 @@ def test_config_writing_creates_directory():
         assert config_file.exists()
 
         # Verify value was written
-        config = load_config()
+        with open(config_file, "rb") as f:
+            config = tomllib.load(f)
         assert config["theme"]["default"] == "deep_test"
 
 
@@ -222,8 +227,8 @@ def test_config_default_values_when_no_file():
             verbose = get_verbose_from_config()
             timestamp = get_timestamp_from_config()
 
-            # Should return defaults
-            assert theme == "dracula"
+            # Should return defaults (from arda.toml)
+            assert theme == "forest"
             assert verbose is False
             assert timestamp is True
 
@@ -253,9 +258,9 @@ default = "user"
 """)
 
         # Test get_config_path finds project config (highest priority)
-        with patch("pathlib.Path.cwd", return_value=temp_path):
-            with patch("pathlib.Path.home", return_value=home_path):
-                found_path = get_config_path()
-                assert found_path == project_config
-                assert found_path.exists()
-                assert "project" in found_path.as_posix()
+        with patch("pathlib.Path.cwd", return_value=temp_path), \
+             patch("pathlib.Path.home", return_value=home_path):
+            found_path = get_config_path()
+            assert found_path == project_config
+            assert found_path.exists()
+            assert found_path.parent.name == "etc"

@@ -110,7 +110,7 @@ def load_default_config() -> dict:
 
     # Return hardcoded default if file doesn't exist
     return {
-        "theme": {"default": "dracula"},
+        "theme": {"default": "forest"},
         "output": {"verbose": False, "timestamp": True},
     }
 
@@ -318,6 +318,9 @@ def set_config_value(
 
     # Set the value
     config_data[section][setting] = value
+
+    # Create parent directory if it doesn't exist
+    config_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write back to file
     # Check if we're using tomli_w (binary mode) or toml (text mode)
