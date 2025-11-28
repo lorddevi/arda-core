@@ -179,8 +179,10 @@ verbose = true
 """)
 
         # Get config with priority (project should win)
-        with patch("pathlib.Path.cwd", return_value=temp_path), \
-             patch("pathlib.Path.home", return_value=user_path):
+        with (
+            patch("pathlib.Path.cwd", return_value=temp_path),
+            patch("pathlib.Path.home", return_value=user_path),
+        ):
             config = get_config_for_viewing()
 
             # Project config should override user config
@@ -258,8 +260,10 @@ default = "user"
 """)
 
         # Test get_config_path finds project config (highest priority)
-        with patch("pathlib.Path.cwd", return_value=temp_path), \
-             patch("pathlib.Path.home", return_value=home_path):
+        with (
+            patch("pathlib.Path.cwd", return_value=temp_path),
+            patch("pathlib.Path.home", return_value=home_path),
+        ):
             found_path = get_config_path()
             assert found_path == project_config
             assert found_path.exists()

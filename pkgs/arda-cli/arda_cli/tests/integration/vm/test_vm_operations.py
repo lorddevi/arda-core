@@ -81,7 +81,7 @@ def test_vm_qemu_subprocess_mocking():
         subprocess.run(
             ["qemu-system-x86_64", "--version"],
             check=True,
-            capture_output=True,  # noqa: S607
+            capture_output=True,
         )
 
         # Verify subprocess was called
