@@ -6,10 +6,10 @@ let
     {
       nativeBuildInputs = [ pkgs.python313Packages.pytest ];
     } ''
-      cd ${dir}
-      pytest -m "fast" -n auto --tb=short -v
-      touch $out
-    '';
+    cd ${dir}
+    pytest -m "fast" -n auto --tb=short -v
+    touch $out
+  '';
 
   # Function to create a test group runner
   runTestGroup = name: testPaths:
