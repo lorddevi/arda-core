@@ -107,11 +107,25 @@ class TempDirectory:
         self.path: Path | None = None
 
     def __enter__(self) -> Path:
+        """Enter the temporary directory context.
+
+        Returns:
+            Path to the created temporary directory.
+
+        """
         self.temp_dir = tempfile.mkdtemp()
         self.path = Path(self.temp_dir)
         return self.path
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the temporary directory context and clean up.
+
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+
+        """
         if self.path and self.path.exists():
             import shutil
 
