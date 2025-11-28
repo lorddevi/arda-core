@@ -10,6 +10,7 @@
 , nix-select
 , jq
 , runCommand
+, pytest
 }:
 
 let
@@ -39,6 +40,9 @@ let
         # This makes the selector functions available in Nix expressions
         ln -sf ${nix-select} $out/arda_lib/select
         ln -sf ${nix-select} $out/arda_cli/select
+
+        # Ensure testing infrastructure is in place for build-time tests
+        # (Note: pytest.ini and testing/ are in the arda-cli source directory)
       '';
 in
 python.pkgs.buildPythonApplication {
@@ -49,6 +53,9 @@ python.pkgs.buildPythonApplication {
 
   nativeBuildInputs = [ setuptools ];
 
+  # Add pytest for build-time testing
+  checkInputs = [ pytest ];
+
   propagatedBuildInputs = [
     click
     pyyaml
@@ -57,6 +64,27 @@ python.pkgs.buildPythonApplication {
     rich-click
     tomli-w
   ];
+
+  # Run tests during build (Phase 1.4)
+  # Execute fast unit tests to verify code quality
+  installCheckPhase = ''
+    echo "Running Phase 1.4: Build-time test execution"
+    echo "=============================================="
+    echo ""
+
+    # Run pytest with fast marker to execute only quick unit tests
+    # Tests are in the source directory, not in the package
+    # The build removes tests after packaging (pythonRemoveTestsDir)
+    echo "Running fast unit tests..."
+    python -m pytest -v -m "fast" \
+      ./arda_cli/tests \
+      ./arda_lib/tests \
+      --tb=short
+
+    echo ""
+    echo "=============================================="
+    echo "Build-time tests completed successfully"
+  '';
 
   # Export ardaSource for testing (passthru)
   # This allows tests to access the full source if needed

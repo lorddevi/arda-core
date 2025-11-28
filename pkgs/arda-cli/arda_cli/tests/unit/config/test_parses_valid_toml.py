@@ -88,8 +88,11 @@ def test_temp_directory_context_manager():
         try:
             import tomli_w
 
+            toml_data = tomli_w.dumps(config)
+            if isinstance(toml_data, str):
+                toml_data = toml_data.encode("utf-8")
             with open(config_file, "wb") as f:
-                f.write(tomli_w.dumps(config))
+                f.write(toml_data)
         except ImportError:
             import toml
 
