@@ -39,7 +39,7 @@ dev = [
 arda = "arda_cli.main:main"
 
 [tool.setuptools.packages.find]
-include = ["arda_cli*", "arda_lib*"]
+include = ["arda_cli*", "arda_lib*", "arda_cli.testing*", "arda_lib.testing*"]
 
 [tool.setuptools.package-data]
 arda_cli = [
@@ -72,6 +72,12 @@ lint.ignore = [
     "D203", # conflicting with D211
     "D213", # conflicting with D212
     "S101", # Use of assert detected (we use it in tests)
+    "F841", # Local variable assigned but never used (common in test setup)
+    "S110", # try-except-pass (common in tests for expected failures)
+    "F401", # Imported but unused (common in test files with conditional imports)
+    "S607", # Partial executable path (legitimate in test code)
+    "T201", # print found (useful for warnings and diagnostics)
+    "D105", # Missing docstring in magic method (e.g., __init__, __repr__)
 ]
 exclude = [
     ".git",

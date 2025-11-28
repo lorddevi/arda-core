@@ -1,0 +1,173 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, master, testing ]
+  pull_request:
+    branches: [ main, master, testing ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast validation: Linting, formatting, and quick checks
+  validate:
+    runs-on: ubuntu-latest
+    name: Fast Validation
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup cachix
+        uses: cachix/cachix-action@v14
+        with:
+          name: arda-core
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+      - name: Check flake
+        run: nix flake check
+
+      - name: Run pre-commit
+        run: nix develop --command pre-commit run --all-files
+
+  # Build and run fast tests
+  test-fast:
+    runs-on: ubuntu-latest
+    name: Fast Tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup cachix
+        uses: cachix/cachix-action@v14
+        with:
+          name: arda-core
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+      - name: Build and run fast tests
+        run: nix build .#arda-cli
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fast-test-results
+          path: |
+            result/
+            test-reports/
+
+  # Run all tests (including integration, excluding VM tests)
+  test-all:
+    runs-on: ubuntu-latest
+    name: All Tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup cachix
+        uses: cachix/cachix-action@v14
+        with:
+          name: arda-core
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+      - name: Run all tests
+        run: nix develop --command just test-all
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            result/
+            test-reports/
+            coverage-*/
+
+  # VM tests (optional, runs on schedule)
+  test-vm:
+    runs-on: ubuntu-latest
+    name: VM Tests
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run VM tests
+        run: nix develop --command just test-vm
+
+      - name: Upload VM test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vm-test-results
+          path: result/
+
+  # Build documentation
+  build-docs:
+    runs-on: ubuntu-latest
+    name: Build Documentation
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build arda-cli
+        run: nix build .#arda-cli
+
+      - name: Upload CLI binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: arda-cli
+          path: result/bin/arda
+
+  # Summary
+  summary:
+    runs-on: ubuntu-latest
+    needs: [validate, test-fast, test-all]
+    if: always()
+    name: Test Summary
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Display summary
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Validate: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Fast Tests: ${{ needs.test-fast.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All Tests: ${{ needs.test-all.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.validate.result }}" == "success" && "${{ needs.test-fast.result }}" == "success" && "${{ needs.test-all.result }}" == "success" ]]; then
+            echo "🎉 All tests passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some tests failed. Check the individual job results for details." >> $GITHUB_STEP_SUMMARY
+          fi

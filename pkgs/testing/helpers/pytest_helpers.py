@@ -31,6 +31,8 @@ def create_temp_config_file(config_dict: Dict[str, Any]) -> Path:
     temp_file = tempfile.NamedTemporaryFile(mode="wb", suffix=".toml", delete=False)
 
     toml_bytes = tomli_w.dumps(config_dict)
+    if isinstance(toml_bytes, str):
+        toml_bytes = toml_bytes.encode("utf-8")
     temp_file.write(toml_bytes)
     temp_file.close()
 

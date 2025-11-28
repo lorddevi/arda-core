@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 
 def create_temp_config_file(config_dict: dict[str, Any]) -> Path:
@@ -31,11 +31,10 @@ def create_temp_config_file(config_dict: dict[str, Any]) -> Path:
 
     temp_file = tempfile.NamedTemporaryFile(mode="wb", suffix=".toml", delete=False)
 
-    toml_data = tomli_w.dumps(config_dict)
-    # tomli_w might return str in some versions, ensure bytes
-    if isinstance(toml_data, str):
-        toml_data = toml_data.encode("utf-8")
-    temp_file.write(toml_data)
+    toml_bytes = tomli_w.dumps(config_dict)
+    if isinstance(toml_bytes, str):
+        toml_bytes = toml_bytes.encode("utf-8")
+    temp_file.write(toml_bytes)
     temp_file.close()
 
     return Path(temp_file.name)
@@ -107,25 +106,11 @@ class TempDirectory:
         self.path: Path | None = None
 
     def __enter__(self) -> Path:
-        """Enter the temporary directory context.
-
-        Returns:
-            Path to the created temporary directory.
-
-        """
         self.temp_dir = tempfile.mkdtemp()
         self.path = Path(self.temp_dir)
         return self.path
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit the temporary directory context and clean up.
-
-        Args:
-            exc_type: Exception type if an error occurred
-            exc_val: Exception value if an error occurred
-            exc_tb: Exception traceback if an error occurred
-
-        """
         if self.path and self.path.exists():
             import shutil
 

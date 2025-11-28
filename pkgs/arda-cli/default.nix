@@ -1,18 +1,19 @@
-{ lib
-, python
-, setuptools
-, click
-, pyyaml
-, rich
-, pydantic
-, rich-click
-, tomli-w
-, nix-select
-, jq
-, runCommand
-, pytest
-, pytest-xdist
-, pytest-cov
+{
+  lib,
+  python,
+  setuptools,
+  click,
+  pyyaml,
+  rich,
+  pydantic,
+  rich-click,
+  tomli-w,
+  nix-select,
+  jq,
+  runCommand,
+  pytest,
+  pytest-xdist,
+  pytest-cov,
 }:
 
 let
@@ -123,33 +124,6 @@ python.pkgs.buildPythonApplication {
       ./arda_cli/tests/integration
 
     echo ""
-    echo "Phase 3: VM Integration Tests (Optional)"
-    echo "------------------------------------------"
-    # Run VM tests if VM_SUPPORT environment variable is set
-    # VM tests are slow and require KVM/QEMU/Virsh infrastructure
-    if [ "''${VM_SUPPORT:-0}" = "1" ]; then
-      echo "VM support detected - running VM tests..."
-      python -m pytest -v \
-        -m "vm and system and not e2e" \
-        --tb=short \
-        --maxfail=2 \
-        -n 1 \
-        --cov=./arda_cli \
-        --cov=./arda_lib \
-        --cov-report=term-missing \
-        --cov-report=html:test-reports/coverage-vm \
-        --junitxml=test-reports/vm-tests.xml \
-        ./arda_cli/tests/integration/vm/test_real_vm_integration.py
-
-      echo ""
-      echo "VM tests completed successfully"
-    else
-      echo "VM_SUPPORT not set - skipping VM tests"
-      echo "To run VM tests during build, set VM_SUPPORT=1"
-      echo "Example: VM_SUPPORT=1 nix build .#arda-cli"
-    fi
-
-    echo ""
     echo "==================================================================="
     echo "  Build-time tests completed successfully"
     echo "==================================================================="
@@ -159,10 +133,6 @@ python.pkgs.buildPythonApplication {
     echo "  Integration tests:    test-reports/integration-tests.xml"
     echo "  Coverage (unit):      test-reports/coverage-unit/index.html"
     echo "  Coverage (integration): test-reports/coverage-integration/index.html"
-    if [ "''${VM_SUPPORT:-0}" = "1" ]; then
-      echo "  VM tests:             test-reports/vm-tests.xml"
-      echo "  Coverage (VM):        test-reports/coverage-vm/index.html"
-    fi
     echo ""
   '';
 

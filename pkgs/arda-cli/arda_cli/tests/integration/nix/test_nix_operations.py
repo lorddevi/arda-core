@@ -16,10 +16,9 @@ sys.path.insert(0, str(PathLib(__file__).parent.parent.parent.parent.parent))
 
 # Import nix functions and errors
 # Import pytest helpers for subprocess mocking
-from pytest_helpers import (
+from arda_cli.testing.helpers.pytest_helpers import (
     create_mock_nix_eval_success,
 )
-
 from arda_lib.nix.nix import (
     BuildError,
     NixError,

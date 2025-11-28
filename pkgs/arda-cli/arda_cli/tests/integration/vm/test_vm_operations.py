@@ -21,7 +21,7 @@ import pytest
 sys.path.insert(0, str(PathLib(__file__).parent.parent.parent.parent.parent))
 
 # Import pytest helpers for subprocess mocking
-from pytest_helpers import (
+from arda_cli.testing.helpers.pytest_helpers import (
     TempDirectory,
 )
 
@@ -143,7 +143,7 @@ def test_vm_error_handling():
         # For now, we verify that subprocess exceptions can be caught and handled
 
         try:
-            subprocess.run(["qemu-system-x86_64"], check=True, capture_output=True)  # noqa: S607
+            subprocess.run(["qemu-system-x86_64"], check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             assert "insufficient memory" in e.stderr
             assert e.returncode == 1

@@ -9,8 +9,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# Import helpers (path configured via conftest.py)
-from pytest_helpers import (
+# Import helpers
+from arda_cli.testing.helpers.pytest_helpers import (
     TempDirectory,
     cleanup_temp_file,
     create_temp_config_file,

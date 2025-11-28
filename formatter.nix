@@ -29,6 +29,7 @@
         ".envrc"
         "result"
         "result-*"
+        "vm-tests/*"
       ];
     };
 }

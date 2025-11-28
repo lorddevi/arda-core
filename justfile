@@ -24,9 +24,9 @@ build-all: build-arda-cli build-ea-cli
 test-fast:
     python -m pytest -v -m "fast" --tb=short
 
-# Run all unit tests (fast + slow)
+# Run all unit tests (fast + slow, but exclude system tests which need infrastructure)
 test-all:
-    python -m pytest -v --tb=short
+    python -m pytest -v -m "not system" --tb=short
 
 # Run only config-related tests (all types)
 test-config:
@@ -52,9 +52,43 @@ test-cli:
 test-nix:
     python -m pytest -v -m "nix" --tb=short
 
-# Run only VM-related tests (tests VM integration framework)
+# Run VM integration tests using NixOS framework (no manual setup required)
 test-vm:
-    python -m pytest -v -m "vm" --tb=short
+    @echo "Running NixOS VM tests (NixOS native framework)..."
+    @echo "This uses the declarative NixOS test framework instead of libvirt."
+    @echo ""
+    nix build .#checks.x86_64-linux.arda-cli-vm
+    @echo ""
+    @echo "✓ VM tests completed successfully!"
+
+# =================
+# NixOS VM Test Commands
+# =================
+
+# Run NixOS VM tests using native NixOS test framework
+test-vm-nixos:
+    @echo "Running NixOS VM tests..."
+    @echo "Building VM test: arda-cli-vm"
+    nix build .#checks.x86_64-linux.arda-cli-vm
+    @echo ""
+    @echo "VM test built successfully!"
+    @echo "To run the test manually, use: nix build .#checks.x86_64-linux.arda-cli-vm --no-out-link"
+    @echo "Or check the test derivation at: result"
+
+# Run all NixOS VM tests
+test-vm-nixos-all:
+    @echo "Running all NixOS VM tests..."
+    @echo "Building arda-cli-vm test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm
+    @echo ""
+    @echo "Building treefmt check..."
+    nix build .#checks.x86_64-linux.treefmt
+    @echo ""
+    @echo "All NixOS VM tests built successfully"
+
+# =================
+# Integration Test Commands
+# =================
 
 # Run all integration tests (slower, requires full environment)
 test-integration:
@@ -99,7 +133,9 @@ help:
     @echo "  test-themes     - Run theme-related tests only"
     @echo "  test-cli        - Run CLI-related tests only"
     @echo "  test-nix        - Run Nix integration tests only"
-    @echo "  test-vm         - Run VM integration tests only"
+    @echo "  test-vm         - Run VM integration tests (NixOS framework)"
+    @echo "  test-vm-nixos   - Run NixOS VM tests (native framework)"
+    @echo "  test-vm-nixos-all - Run all checks (arda-cli-vm + treefmt)"
     @echo "  test-integration - Run all integration tests (slower)"
     @echo "  test-arda-cli   - Run arda-cli build-time tests"
     @echo "  test-watch      - Run tests in watch mode (requires pytest-watch)"

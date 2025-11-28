@@ -6,8 +6,8 @@ Tests focus on theme configuration structure and validation logic.
 
 import pytest
 
-# Import helpers (path configured via conftest.py)
-from pytest_helpers import (
+# Import helpers
+from arda_cli.testing.helpers.pytest_helpers import (
     TempDirectory,
     assert_theme_config,
     create_test_theme_config,

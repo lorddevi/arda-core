@@ -48,11 +48,14 @@ repos:
       - id: debug-statements
         exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
 
-  # Nix formatting and checking
-  - repo: https://github.com/nix-community/nixpkgs-fmt
-    rev: v1.3.0
+  # Nix formatting and checking - use treefmt from nix environment
+  - repo: local
     hooks:
-      - id: nixpkgs-fmt
+      - id: treefmt
+        name: treefmt (Nix formatter)
+        entry: nix run .#formatter.x86_64-linux -- --allow-missing-formatter
+        language: system
+        pass_filenames: false
         exclude: '^(bmad-docs/|\.bmad/|\.claude/).*'
 
   # Build test - ensure arda-cli builds successfully
