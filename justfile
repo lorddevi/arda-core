@@ -28,9 +28,17 @@ test-fast:
 test-all:
     python -m pytest -v --tb=short
 
-# Run only config-related tests
+# Run only config-related tests (all types)
 test-config:
     python -m pytest -v -m "config" --tb=short
+
+# Run only config unit tests
+test-config-unit:
+    python -m pytest -v -m "config and unit" --tb=short
+
+# Run only config integration tests
+test-config-integration:
+    python -m pytest -v -m "config and integration" --tb=short
 
 # Run only theme-related tests
 test-themes:
@@ -40,7 +48,11 @@ test-themes:
 test-cli:
     python -m pytest -v -m "cli" --tb=short
 
-# Run arda-cli build-time tests (with Nix)
+# Run all integration tests (slower, requires full environment)
+test-integration:
+    python -m pytest -v -m "integration" --tb=short
+
+# Run arda-cli build-time tests (with Nix - includes all test types)
 test-arda-cli:
     nix build --no-link .#arda-cli
     @echo "Build-time tests executed during nix build"
@@ -73,9 +85,12 @@ help:
     @echo "Test Commands:"
     @echo "  test-fast       - Run fast unit tests (pre-commit compatible)"
     @echo "  test-all        - Run all unit tests (fast + slow)"
-    @echo "  test-config     - Run config-related tests only"
+    @echo "  test-config     - Run all config tests (unit + integration)"
+    @echo "  test-config-unit     - Run only config unit tests"
+    @echo "  test-config-integration - Run only config integration tests"
     @echo "  test-themes     - Run theme-related tests only"
     @echo "  test-cli        - Run CLI-related tests only"
+    @echo "  test-integration - Run all integration tests (slower)"
     @echo "  test-arda-cli   - Run arda-cli build-time tests"
     @echo "  test-watch      - Run tests in watch mode (requires pytest-watch)"
     @echo ""
