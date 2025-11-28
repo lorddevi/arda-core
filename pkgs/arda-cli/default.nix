@@ -11,6 +11,8 @@
 , jq
 , runCommand
 , pytest
+, pytest-xdist
+, pytest-cov
 }:
 
 let
@@ -53,8 +55,12 @@ python.pkgs.buildPythonApplication {
 
   nativeBuildInputs = [ setuptools ];
 
-  # Add pytest for build-time testing
-  checkInputs = [ pytest ];
+  # Add pytest and testing tools for build-time testing
+  checkInputs = [
+    pytest
+    pytest-xdist # Parallel test execution (like clan)
+    pytest-cov # Coverage reporting
+  ];
 
   propagatedBuildInputs = [
     click
@@ -65,25 +71,68 @@ python.pkgs.buildPythonApplication {
     tomli-w
   ];
 
-  # Run tests during build (Phase 1.4)
-  # Execute fast unit tests to verify code quality
-  installCheckPhase = ''
-    echo "Running Phase 1.4: Build-time test execution"
-    echo "=============================================="
+  # Run tests during build following clan's pattern
+  # Tests are executed as part of nix build with proper isolation
+  checkPhase = ''
+    echo "==================================================================="
+    echo "  Arda Build-Time Test Execution (Following Clan Pattern)"
+    echo "==================================================================="
     echo ""
 
-    # Run pytest with fast marker to execute only quick unit tests
-    # Tests are in the source directory, not in the package
-    # The build removes tests after packaging (pythonRemoveTestsDir)
-    echo "Running fast unit tests..."
-    python -m pytest -v -m "fast" \
-      ./arda_cli/tests \
-      ./arda_lib/tests \
-      --tb=short
+    # Set up isolated test environment
+    export HOME=$TMPDIR
+    export NIX_STATE_DIR=$TMPDIR/nix
+    export IN_NIX_SANDBOX=1
+
+    # Create test directories
+    mkdir -p test-reports
+
+    echo "Phase 1: Fast Unit Tests (without dependencies)"
+    echo "------------------------------------------------"
+    # Run fast unit tests (analogous to clan's "without_core")
+    # These are quick tests that don't need heavy dependencies
+    # Parallel execution with pytest-xdist
+    jobs="$((NIX_BUILD_CORES>16 ? 16 : NIX_BUILD_CORES))"
+    python -m pytest -v \
+      -m "fast and not slow" \
+      --tb=short \
+      --maxfail=5 \
+      -n "$jobs" \
+      --cov=./arda_cli \
+      --cov=./arda_lib \
+      --cov-report=term-missing \
+      --cov-report=html:test-reports/coverage-unit \
+      --junitxml=test-reports/unit-tests.xml \
+      ./arda_cli/tests/unit \
+      ./arda_lib/tests
 
     echo ""
-    echo "=============================================="
-    echo "Build-time tests completed successfully"
+    echo "Phase 2: Integration Tests"
+    echo "--------------------------"
+    # Run integration tests
+    python -m pytest -v \
+      -m "integration" \
+      --tb=short \
+      --maxfail=3 \
+      -n "$jobs" \
+      --cov=./arda_cli \
+      --cov=./arda_lib \
+      --cov-report=term-missing \
+      --cov-report=html:test-reports/coverage-integration \
+      --junitxml=test-reports/integration-tests.xml \
+      ./arda_cli/tests/integration
+
+    echo ""
+    echo "==================================================================="
+    echo "  Build-time tests completed successfully"
+    echo "==================================================================="
+    echo ""
+    echo "Test Reports:"
+    echo "  Unit tests:           test-reports/unit-tests.xml"
+    echo "  Integration tests:    test-reports/integration-tests.xml"
+    echo "  Coverage (unit):      test-reports/coverage-unit/index.html"
+    echo "  Coverage (integration): test-reports/coverage-integration/index.html"
+    echo ""
   '';
 
   # Export ardaSource for testing (passthru)
