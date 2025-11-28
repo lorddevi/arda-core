@@ -117,7 +117,7 @@ def test_vm_lifecycle():
 
 ```bash
 cd /home/ld/src/arda-core
-./vm-smoke-test.sh
+./bin/vm-smoke-test.sh
 ```
 
 This script will check:
@@ -173,14 +173,14 @@ Recommendation: Use container-based tests for Phase 4.
 
 ### For Native Linux
 
-1. ✅ Run `./vm-smoke-test.sh`
+1. ✅ Run `./bin/vm-smoke-test.sh`
 2. ✅ Ensure all tests pass
 3. ✅ Proceed with Phase 4 using **real VMs**
 4. Tests will use: KVM + QEMU + Virsh
 
 ### For WSL2 (Most Common)
 
-1. ✅ Run `./vm-smoke-test.sh`
+1. ✅ Run `./bin/vm-smoke-test.sh`
 2. ⚠ Expect some failures (nested virtualization limits)
 3. ✅ Proceed with Phase 4 using **containers**
 4. Tests will use: Docker/Podman
@@ -239,7 +239,7 @@ class ContainerManager:
 
 Before I develop Phase 4, please verify:
 
-- [ ] I've run `./vm-smoke-test.sh`
+- [ ] I've run `./bin/vm-smoke-test.sh`
 - [ ] I know whether my system supports VMs
 - [ ] I've tested a simple Nix VM or container
 - [ ] I understand the difference between VM and container testing
@@ -249,7 +249,7 @@ Before I develop Phase 4, please verify:
 
 Once you've verified your infrastructure:
 
-1. **Tell me the results** of `vm-smoke-test.sh`
+1. **Tell me the results** of `bin/vm-smoke-test.sh`
 2. **Specify your preference**: VMs, Containers, or Hybrid
 3. **I'll implement Phase 4** based on your infrastructure
 4. **Real integration tests** will be created with actual VM/container operations
