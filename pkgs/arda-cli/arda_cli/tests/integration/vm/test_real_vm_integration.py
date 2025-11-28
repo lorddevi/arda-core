@@ -15,6 +15,9 @@ import pytest
 # Add parent directory to path to import arda_cli
 sys.path.insert(0, str(PathLib(__file__).parent.parent.parent.parent.parent))
 
+# Import VM testing infrastructure
+from arda_cli.testing.vm import VMManager, VM, VMNotFoundError
+
 
 @pytest.mark.slow
 @pytest.mark.vm

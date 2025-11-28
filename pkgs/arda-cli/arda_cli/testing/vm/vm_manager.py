@@ -18,11 +18,11 @@ class VMManager:
     Provides high-level API for creating, starting, stopping, and deleting VMs.
     """
 
-    def __init__(self, uri: str = "qemu:///system"):
+    def __init__(self, uri: str = "qemu:///session"):
         """Initialize VM manager.
 
         Args:
-            uri: libvirt connection URI (default: qemu:///system for system connection)
+            uri: libvirt connection URI (default: qemu:///session for user session)
 
         Raises:
             ImportError: If libvirt is not installed
