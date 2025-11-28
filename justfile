@@ -48,6 +48,14 @@ test-themes:
 test-cli:
     python -m pytest -v -m "cli" --tb=short
 
+# Run only Nix-related tests
+test-nix:
+    python -m pytest -v -m "nix" --tb=short
+
+# Run only VM-related tests (tests VM integration framework)
+test-vm:
+    python -m pytest -v -m "vm" --tb=short
+
 # Run all integration tests (slower, requires full environment)
 test-integration:
     python -m pytest -v -m "integration" --tb=short
@@ -90,6 +98,8 @@ help:
     @echo "  test-config-integration - Run only config integration tests"
     @echo "  test-themes     - Run theme-related tests only"
     @echo "  test-cli        - Run CLI-related tests only"
+    @echo "  test-nix        - Run Nix integration tests only"
+    @echo "  test-vm         - Run VM integration tests only"
     @echo "  test-integration - Run all integration tests (slower)"
     @echo "  test-arda-cli   - Run arda-cli build-time tests"
     @echo "  test-watch      - Run tests in watch mode (requires pytest-watch)"
