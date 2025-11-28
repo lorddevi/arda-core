@@ -14,7 +14,19 @@ def create_temp_config_file(config_dict: Dict[str, Any]) -> Path:
     Returns:
         Path to the temporary config file
     """
-    import tomli_w
+    try:
+        import tomli_w
+    except ImportError:
+        # Fallback for environments without tomli_w
+        import toml
+
+        temp_file = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".toml", delete=False, encoding="utf-8"
+        )
+        toml_str = toml.dumps(config_dict)
+        temp_file.write(toml_str)
+        temp_file.close()
+        return Path(temp_file.name)
 
     temp_file = tempfile.NamedTemporaryFile(mode="wb", suffix=".toml", delete=False)
 
