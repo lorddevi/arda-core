@@ -103,6 +103,8 @@ python.pkgs.buildPythonApplication {
       --cov=./arda_lib \
       --cov-report=term-missing \
       --cov-report=html:test-reports/coverage-unit \
+      --cov-report=xml:test-reports/coverage-unit.xml \
+      --cov-fail-under=15 \
       --junitxml=test-reports/unit-tests.xml \
       ./arda_cli/tests/unit \
       ./arda_lib/tests
@@ -120,6 +122,8 @@ python.pkgs.buildPythonApplication {
       --cov=./arda_lib \
       --cov-report=term-missing \
       --cov-report=html:test-reports/coverage-integration \
+      --cov-report=xml:test-reports/coverage-integration.xml \
+      --cov-fail-under=30 \
       --junitxml=test-reports/integration-tests.xml \
       ./arda_cli/tests/integration
 
@@ -132,7 +136,11 @@ python.pkgs.buildPythonApplication {
     echo "  Unit tests:           test-reports/unit-tests.xml"
     echo "  Integration tests:    test-reports/integration-tests.xml"
     echo "  Coverage (unit):      test-reports/coverage-unit/index.html"
+    echo "  Coverage (unit XML):  test-reports/coverage-unit.xml"
     echo "  Coverage (integration): test-reports/coverage-integration/index.html"
+    echo "  Coverage (integration XML): test-reports/coverage-integration.xml"
+    echo ""
+    echo "Coverage thresholds: Phase 1=15% (unit), Phase 2=30% (integration) - Goal: 70%"
     echo ""
   '';
 

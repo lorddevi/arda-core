@@ -154,6 +154,7 @@ CI uploads the following artifacts:
 - **Fast test results**: `fast-test-results/`
   - Build outputs
   - Unit test reports
+  - Coverage reports (HTML, XML)
 
 - **All test results**: `test-results/`
   - Coverage reports (HTML, XML)
@@ -166,6 +167,68 @@ CI uploads the following artifacts:
 
 - **CLI binary**: `arda-cli/`
   - Final built binary for download
+
+## Coverage Reporting
+
+The CI automatically generates and tracks code coverage metrics:
+
+### Coverage Thresholds
+
+- **Phase 1 (Unit Tests)**: 15% (enforced)
+- **Phase 2 (Integration Tests)**: 30% (enforced)
+- **Goal**: 70% (requires additional tests)
+- **Enforcement**: Build fails if coverage < threshold
+
+### Coverage Reports
+
+Coverage reports are generated for every test run and include:
+
+- **HTML Reports**: Interactive web-based coverage reports
+  - Location: `test-reports/coverage-unit/index.html`
+  - Location: `test-reports/coverage-integration/index.html`
+
+- **XML Reports**: Machine-readable coverage data
+  - Location: `test-reports/coverage-unit.xml`
+  - Location: `test-reports/coverage-integration.xml`
+
+### Viewing Coverage
+
+1. **In CI Artifacts**: Download the `test-results` artifact
+2. **Locally**:
+
+   ```bash
+   # Run tests with coverage
+   python -m pytest --cov=pkgs/arda-cli/arda_cli --cov-report=html
+
+   # Open HTML report
+   open htmlcov/index.html  # macOS
+   xdg-open htmlcov/index.html  # Linux
+   ```
+
+3. **In Terminal**: Coverage percentage displayed in test output
+
+### Coverage Components
+
+- **Unit tests**: 17% coverage (baseline)
+- **Integration tests**: Additional 26% coverage
+- **Combined**: 43% total coverage
+
+### Improving Coverage
+
+To increase coverage:
+
+1. Identify untested code from HTML reports
+2. Write additional unit or integration tests
+3. Aim for 70% coverage goal
+4. Monitor coverage trend over time
+
+### Coverage in Summary
+
+CI displays coverage information in the job summary:
+
+- Coverage threshold (40%)
+- Links to coverage reports
+- Coverage status (pass/fail)
 
 ## Concurrency Control
 
