@@ -2,5 +2,9 @@
   "default": true,
   "MD013": false,
   "MD040": false,
-  "line-length": false
+  "MD024": false,
+  "line-length": false,
+  "excludes": [
+    "examples/"
+  ]
 }

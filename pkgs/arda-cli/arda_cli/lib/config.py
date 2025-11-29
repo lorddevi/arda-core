@@ -3,7 +3,11 @@
 import tomllib
 from pathlib import Path
 
-import tomli_w  # type: ignore
+try:
+    import tomli_w  # type: ignore
+except ImportError:
+    # Fallback for environments without tomli_w (until devShell is activated)
+    import toml as tomli_w
 
 DEFAULT_CONFIG_NAME = "arda.toml"
 
@@ -106,7 +110,7 @@ def load_default_config() -> dict:
 
     # Return hardcoded default if file doesn't exist
     return {
-        "theme": {"default": "dracula"},
+        "theme": {"default": "forest"},
         "output": {"verbose": False, "timestamp": True},
     }
 
@@ -315,9 +319,19 @@ def set_config_value(
     # Set the value
     config_data[section][setting] = value
 
+    # Create parent directory if it doesn't exist
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+
     # Write back to file
-    with open(config_path, "wb") as f:
-        tomli_w.dump(config_data, f)
+    # Check if we're using tomli_w (binary mode) or toml (text mode)
+    if tomli_w.__name__ == "tomli_w":
+        # tomli_w requires binary mode
+        with open(config_path, "wb") as f:
+            tomli_w.dump(config_data, f)
+    else:
+        # toml module requires text mode
+        with open(config_path, "w", encoding="utf-8") as f:
+            tomli_w.dump(config_data, f)
 
 
 def get_valid_config_keys() -> list[tuple[str, str]]:
