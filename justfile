@@ -107,6 +107,11 @@ test-watch:
         echo "pytest-watch not installed. Install with: pip install pytest-watch"; \
     fi
 
+# Verify that the rich-click overlay is working correctly
+verify-overlay:
+    @echo "Verifying rich-click overlay..."
+    @./pkgs/testing/verify-overlay.sh
+
 # =================
 # Utility Commands
 # =================
@@ -139,6 +144,7 @@ help:
     @echo "  test-integration - Run all integration tests (slower)"
     @echo "  test-arda-cli   - Run arda-cli build-time tests"
     @echo "  test-watch      - Run tests in watch mode (requires pytest-watch)"
+    @echo "  verify-overlay  - Verify rich-click overlay is working correctly"
     @echo ""
     @echo "Utility Commands:"
     @echo "  clean           - Remove all result symlinks"
