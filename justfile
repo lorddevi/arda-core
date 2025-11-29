@@ -87,6 +87,68 @@ test-vm-nixos-all:
     @echo "All NixOS VM tests built successfully"
 
 # =================
+# CLI VM Test Commands
+# =================
+
+# Run all CLI VM tests (help, config, themes)
+test-vm-cli:
+    @echo "Running all CLI VM tests..."
+    @echo ""
+    @echo "Building help output test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-help
+    @echo ""
+    @echo "Building config operations test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-config-operations
+    @echo ""
+    @echo "Building config priority test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-config-priority
+    @echo ""
+    @echo "Building theme commands test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-theme-commands
+    @echo ""
+    @echo "✅ All CLI VM tests completed!"
+
+# Run help-specific CLI VM tests
+test-vm-cli-help:
+    @echo "Running CLI help VM tests..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-help
+    @echo "✅ Help VM tests completed!"
+
+# Run config-specific CLI VM tests
+test-vm-cli-config:
+    @echo "Running CLI config VM tests..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-config-operations
+    nix build .#checks.x86_64-linux.arda-cli-vm-config-priority
+    @echo "✅ Config VM tests completed!"
+
+# Run theme-specific CLI VM tests
+test-vm-cli-themes:
+    @echo "Running CLI theme VM tests..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-theme-commands
+    @echo "✅ Theme VM tests completed!"
+
+# Run individual CLI VM test scenarios
+test-vm-cli-help-output:
+    @echo "Running help output VM test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-help
+    @echo "✅ Help output test completed!"
+
+test-vm-cli-config-operations:
+    @echo "Running config operations VM test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-config-operations
+    @echo "✅ Config operations test completed!"
+
+test-vm-cli-config-priority:
+    @echo "Running config priority VM test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-config-priority
+    @echo "✅ Config priority test completed!"
+
+test-vm-cli-theme-commands:
+    @echo "Running theme commands VM test..."
+    nix build .#checks.x86_64-linux.arda-cli-vm-theme-commands
+    @echo "✅ Theme commands test completed!"
+
+# =================
 # Integration Test Commands
 # =================
 
@@ -145,6 +207,16 @@ help:
     @echo "  test-arda-cli   - Run arda-cli build-time tests"
     @echo "  test-watch      - Run tests in watch mode (requires pytest-watch)"
     @echo "  verify-overlay  - Verify rich-click overlay is working correctly"
+    @echo ""
+    @echo "CLI VM Tests (Run arda CLI in isolated VMs):"
+    @echo "  test-vm-cli     - Run all CLI VM tests"
+    @echo "  test-vm-cli-help - Run help output VM tests"
+    @echo "  test-vm-cli-config - Run config VM tests"
+    @echo "  test-vm-cli-themes - Run theme VM tests"
+    @echo "  test-vm-cli-help-output - Run help output VM test only"
+    @echo "  test-vm-cli-config-operations - Run config operations VM test only"
+    @echo "  test-vm-cli-config-priority - Run config priority VM test only"
+    @echo "  test-vm-cli-theme-commands - Run theme commands VM test only"
     @echo ""
     @echo "Utility Commands:"
     @echo "  clean           - Remove all result symlinks"
