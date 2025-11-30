@@ -31,6 +31,7 @@ from arda_lib.nix.nix import (
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_eval_json_success():
     """Test successful nix eval with JSON output."""
     # Mock subprocess.run to return successful result
@@ -55,6 +56,7 @@ def test_nix_eval_json_success():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_eval_with_attribute():
     """Test nix eval with specific attribute path."""
     mock_result = create_mock_nix_eval_success('{"version": "1.0.0"}')
@@ -72,6 +74,7 @@ def test_nix_eval_with_attribute():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_eval_raw_output():
     """Test nix eval with raw (non-JSON) output."""
     # Mock result with plain text output (as bytes since text=True will decode)
@@ -90,6 +93,7 @@ def test_nix_eval_raw_output():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_eval_error_handling():
     """Test nix eval error handling."""
     # Create an exception for nix error
@@ -107,6 +111,7 @@ def test_nix_eval_error_handling():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_build_success():
     """Test successful nix build operation."""
     mock_result = MagicMock()
@@ -142,6 +147,7 @@ def test_nix_build_with_out_link():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_build_error_handling():
     """Test nix build error handling."""
     # Create an exception for build error
@@ -161,6 +167,7 @@ def test_nix_build_error_handling():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_command_construction():
     """Test nix command construction with various options."""
     # Test nix_command directly (it doesn't call subprocess.run)
@@ -178,6 +185,7 @@ def test_nix_command_construction():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_eval_flake_lock():
     """Test nix eval with flake.lock updates."""
     # Create an exception for flake error
@@ -198,6 +206,7 @@ def test_nix_eval_flake_lock():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_build_multiple_outputs():
     """Test nix build with multiple outputs."""
     mock_result = MagicMock()
@@ -219,6 +228,7 @@ def test_nix_build_multiple_outputs():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_command_with_extra_options():
     """Test nix command with extra keyword options."""
     mock_result = MagicMock()
@@ -241,6 +251,7 @@ def test_nix_command_with_extra_options():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.nix
+@pytest.mark.with_core
 def test_nix_eval_with_extra_args():
     """Test nix eval with extra arguments passed via kwargs."""
     mock_result = create_mock_nix_eval_success('{"system": "x86_64-linux"}')

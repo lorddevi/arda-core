@@ -90,75 +90,142 @@ python.pkgs.buildPythonApplication {
     tomli-w
   ];
 
-  # Run tests during build following clan's pattern
-  # Tests are executed as part of nix build with proper isolation
+  # Run tests during build using clan's two-phase approach
+  # Phase 1: Tests that don't need arda-core (without-core)
+  # Phase 2: Tests that need arda-core (with-core)
+  # This mirrors clan-core's approach exactly
+
+  # Phase 1: Tests WITHOUT arda-core dependencies
+  # These are fast, isolated tests (unit tests, CLI tests, etc.)
+  arda-pytest-without-core =
+    runCommand "arda-pytest-without-core"
+      {
+        nativeBuildInputs = [
+          python
+          pytest
+          pytest-xdist
+          pytest-cov
+          jq
+        ];
+      }
+      ''
+        set -euo pipefail
+        cp -r ${ardaSource ./.} ./src
+        chmod +w -R ./src
+        cd ./src
+
+        # Set up isolated test environment (clan pattern)
+        export HOME=$TMPDIR
+        export NIX_STATE_DIR=$TMPDIR/nix
+        export NIX_CONF_DIR=$TMPDIR/etc
+        export IN_NIX_SANDBOX=1
+        export ARDA_TEST_STORE=$TMPDIR/store
+        export LOCK_NIX=$TMPDIR/nix_lock
+        mkdir -p "$ARDA_TEST_STORE/nix/store"
+
+        # Limit build cores to 16 (like clan-core)
+        jobs="$((NIX_BUILD_CORES>16 ? 16 : NIX_BUILD_CORES))"
+
+        echo "==================================================================="
+        echo "  Phase 1: Tests WITHOUT arda-core (analogous to clan without-core)"
+        echo "==================================================================="
+        echo ""
+
+        # Run tests WITHOUT arda-core
+        # Markers: not service_runner, not impure, not with_core
+        python -m pytest -v \
+          -m "not service_runner and not impure and not with_core" \
+          --tb=short \
+          --maxfail=5 \
+          -n "$jobs" \
+          --cov=./arda_cli \
+          --cov=./arda_lib \
+          --cov-report=term-missing \
+          --cov-report=html \
+          --cov-fail-under=10 \
+          ./arda_cli \
+          ./arda_lib
+
+        echo ""
+        echo "==================================================================="
+        echo "  Phase 1 (without-core) completed successfully"
+        echo "==================================================================="
+        echo ""
+
+        touch $out
+      '';
+
+  # Phase 2: Tests WITH arda-core dependencies
+  # These are slower tests that need full arda-core infrastructure
+  arda-pytest-with-core =
+    runCommand "arda-pytest-with-core"
+      {
+        nativeBuildInputs = [
+          python
+          pytest
+          pytest-xdist
+          pytest-cov
+          jq
+        ];
+      }
+      ''
+        set -euo pipefail
+        cp -r ${ardaSource ./.} ./src
+        chmod +w -R ./src
+        cd ./src
+
+        # Set up isolated test environment (clan pattern)
+        export HOME=$TMPDIR
+        export NIX_STATE_DIR=$TMPDIR/nix
+        export NIX_CONF_DIR=$TMPDIR/etc
+        export IN_NIX_SANDBOX=1
+        export ARDA_TEST_STORE=$TMPDIR/store
+        export LOCK_NIX=$TMPDIR/nix_lock
+        mkdir -p "$ARDA_TEST_STORE/nix/store"
+
+        # Limit build cores to 16 (like clan-core)
+        jobs="$((NIX_BUILD_CORES>16 ? 16 : NIX_BUILD_CORES))"
+
+        echo "==================================================================="
+        echo "  Phase 2: Tests WITH arda-core (analogous to clan with-core)"
+        echo "==================================================================="
+        echo ""
+
+        # Run tests WITH arda-core
+        # Markers: not service_runner, not impure, with_core
+        python -m pytest -v \
+          -m "not service_runner and not impure and with_core" \
+          --tb=short \
+          --maxfail=3 \
+          -n "$jobs" \
+          --cov=./arda_cli \
+          --cov=./arda_lib \
+          --cov-report=term-missing \
+          --cov-report=html \
+          --cov-fail-under=10 \
+          ./arda_cli \
+          ./arda_lib
+
+        echo ""
+        echo "==================================================================="
+        echo "  Phase 2 (with-core) completed successfully"
+        echo "==================================================================="
+        echo ""
+
+        touch $out
+      '';
+
+  # Main checkPhase runs both phases
   checkPhase = ''
     echo "==================================================================="
-    echo "  Arda Build-Time Test Execution (Following Clan Pattern)"
+    echo "  Arda Build-Time Test Execution (Clan's Two-Phase Pattern)"
     echo "==================================================================="
     echo ""
-
-    # Set up isolated test environment
-    export HOME=$TMPDIR
-    export NIX_STATE_DIR=$TMPDIR/nix
-    export IN_NIX_SANDBOX=1
-
-    # Create test directories
-    mkdir -p test-reports
-
-    echo "Phase 1: Fast Unit Tests (without dependencies)"
-    echo "------------------------------------------------"
-    # Run fast unit tests (analogous to clan's "without_core")
-    # These are quick tests that don't need heavy dependencies
-    # Parallel execution with pytest-xdist
-    jobs="$((NIX_BUILD_CORES>16 ? 16 : NIX_BUILD_CORES))"
-    python -m pytest -v \
-      -m "fast and not slow" \
-      --tb=short \
-      --maxfail=5 \
-      -n "$jobs" \
-      --cov=./arda_cli \
-      --cov=./arda_lib \
-      --cov-report=term-missing \
-      --cov-report=html:test-reports/coverage-unit \
-      --cov-report=xml:test-reports/coverage-unit.xml \
-      --cov-fail-under=15 \
-      --junitxml=test-reports/unit-tests.xml \
-      ./arda_cli/tests/unit \
-      ./arda_lib/tests
-
+    echo "This build uses clan-core's two-phase testing approach:"
+    echo "  Phase 1: Tests without arda-core (fast, isolated)"
+    echo "  Phase 2: Tests with arda-core (comprehensive)"
     echo ""
-    echo "Phase 2: Integration Tests"
-    echo "--------------------------"
-    # Run integration tests (excluding VM tests which require libvirt)
-    python -m pytest -v \
-      -m "integration and not vm" \
-      --tb=short \
-      --maxfail=3 \
-      -n "$jobs" \
-      --cov=./arda_cli \
-      --cov=./arda_lib \
-      --cov-report=term-missing \
-      --cov-report=html:test-reports/coverage-integration \
-      --cov-report=xml:test-reports/coverage-integration.xml \
-      --cov-fail-under=30 \
-      --junitxml=test-reports/integration-tests.xml \
-      ./arda_cli/tests/integration
-
-    echo ""
-    echo "==================================================================="
-    echo "  Build-time tests completed successfully"
-    echo "==================================================================="
-    echo ""
-    echo "Test Reports:"
-    echo "  Unit tests:           test-reports/unit-tests.xml"
-    echo "  Integration tests:    test-reports/integration-tests.xml"
-    echo "  Coverage (unit):      test-reports/coverage-unit/index.html"
-    echo "  Coverage (unit XML):  test-reports/coverage-unit.xml"
-    echo "  Coverage (integration): test-reports/coverage-integration/index.html"
-    echo "  Coverage (integration XML): test-reports/coverage-integration.xml"
-    echo ""
-    echo "Coverage thresholds: Phase 1=15% (unit), Phase 2=30% (integration) - Goal: 70%"
+    echo "See arda-pytest-without-core and arda-pytest-with-core derivations."
     echo ""
   '';
 

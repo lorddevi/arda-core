@@ -38,7 +38,8 @@ def preview(ctx: click.Context) -> None:
     # Print with custom formatting to match original
     output.console.print(
         f"[{output.colors['text']}]Current Theme:[/{output.colors['text']}] "
-        f"[{output.colors['separator_text']}]{preview_theme.upper()}[/{output.colors['separator_text']}]"
+        f"[{output.colors['separator_text']}]{preview_theme.upper()}"
+        f"[/{output.colors['separator_text']}]"
     )
     output.spacer()
 
