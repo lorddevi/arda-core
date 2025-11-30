@@ -16,6 +16,8 @@
   pytest,
   pytest-xdist,
   pytest-cov,
+  # Import nix isolation utilities from clan-core pattern
+  pkgs,
 }:
 
 let
@@ -114,7 +116,7 @@ python.pkgs.buildPythonApplication {
         chmod +w -R ./src
         cd ./src
 
-        # Set up isolated test environment (clan pattern)
+        # Set up isolated test environment using clan-core pattern
         export HOME=$TMPDIR
         export NIX_STATE_DIR=$TMPDIR/nix
         export NIX_CONF_DIR=$TMPDIR/etc
@@ -174,7 +176,7 @@ python.pkgs.buildPythonApplication {
         chmod +w -R ./src
         cd ./src
 
-        # Set up isolated test environment (clan pattern)
+        # Set up isolated test environment using clan-core pattern
         export HOME=$TMPDIR
         export NIX_STATE_DIR=$TMPDIR/nix
         export NIX_CONF_DIR=$TMPDIR/etc
