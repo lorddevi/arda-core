@@ -48,6 +48,14 @@ test-cli:
 test-nix:
     python -m pytest -v -m "nix" --tb=short
 
+# Run network utility tests (port management, SSH utilities)
+test-network:
+    @echo "==================================================================="
+    @echo "  Network Testing Utilities (Port Management & SSH)"
+    @echo "==================================================================="
+    @echo ""
+    python -m pytest -v -m "network and integration" --tb=short
+
 # =================
 # Two-Phase Testing (Following Clan-Core Pattern)
 # =================
@@ -248,6 +256,7 @@ help:
     @echo "  test-themes     - Run theme-related tests only"
     @echo "  test-cli        - Run CLI-related tests only"
     @echo "  test-nix        - Run Nix integration tests only"
+    @echo "  test-network    - Run network utility tests (port management, SSH)"
     @echo "  test-without-core - Run tests WITHOUT arda-core (fast, isolated)"
     @echo "  test-with-core  - Run tests WITH arda-core (comprehensive)"
     @echo "  test-two-phase  - Run both test phases sequentially (full test suite)"
