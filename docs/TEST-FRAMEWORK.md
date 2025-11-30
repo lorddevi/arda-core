@@ -1,7 +1,7 @@
 # Testing Framework Guide
 
-**Version**: 1.0
-**Last Updated**: 2025-11-29
+**Version**: 2.0
+**Last Updated**: 2025-11-30
 **Status**: Active Development
 
 This document serves as a complete reference and guide for the arda-core testing framework. It covers test organization, execution, writing guidelines, and best practices for all contributors.
@@ -13,32 +13,61 @@ This document serves as a complete reference and guide for the arda-core testing
 1. [Overview](#overview)
 2. [Directory Structure](#directory-structure)
 3. [Test Types](#test-types)
-4. [Test Execution](#test-execution)
-5. [Writing Tests](#writing-tests)
-6. [VM Testing Guide](#vm-testing-guide)
-7. [CI/CD Integration](#cicd-integration)
-8. [Best Practices](#best-practices)
-9. [Troubleshooting](#troubleshooting)
-10. [Quick Reference](#quick-reference)
+4. [Two-Phase Testing Pattern](#two-phase-testing-pattern)
+5. [Test Execution](#test-execution)
+6. [Writing Tests](#writing-tests)
+7. [VM Testing Guide](#vm-testing-guide)
+8. [CI/CD Integration](#cicd-integration)
+9. [Best Practices](#best-practices)
+10. [Troubleshooting](#troubleshooting)
+11. [Quick Reference](#quick-reference)
 
 ---
 
 ## Overview
 
-The arda-core testing framework is a multi-layered approach designed to ensure code quality through:
+The arda-core testing framework is a comprehensive, multi-layered approach following the clan-core pattern:
 
-- **Fast Unit Tests**: Isolated function testing (< 10ms each)
-- **Integration Tests**: Component interaction testing (10-100ms each)
-- **VM Tests**: End-to-end testing in isolated virtual machines (2-5 minutes)
+- **Phase 1 (without-core)**: Fast isolated tests (180 tests)
+- **Phase 2 (with-core)**: Comprehensive integration tests (45 tests)
+- **VM Tests**: End-to-end testing in isolated virtual machines (4 test suites)
 - **CI/CD Integration**: Automated testing on every push/PR
 
 ### Testing Philosophy
 
 1. **Speed**: Fast tests run on every build and commit
 2. **Isolation**: Tests don't interfere with each other
-3. **Coverage**: Multiple test types for comprehensive coverage
-4. **Automation**: Tests run automatically in CI/CD
-5. **Developer Experience**: Easy to run, write, and debug
+3. **Two-Phase Pattern**: Separate fast isolated tests from comprehensive integration tests
+4. **Coverage**: Multiple test types for comprehensive coverage
+5. **Automation**: Tests run automatically in CI/CD
+6. **Developer Experience**: Easy to run, write, and debug
+
+### Current Test Statistics
+
+**Total Tests**: 225 tests
+
+**Phase 1 (without-core)**: 180 tests
+
+- Unit tests for isolated functions/classes
+- Config parsing and validation
+- Theme system tests
+- CLI integration tests
+- Overlay regression tests (rich-click)
+- Network utility tests (port management, SSH)
+
+**Phase 2 (with-core)**: 45 tests
+
+- CLI workflow tests
+- Config file workflow tests
+- Nix operations tests
+- VM integration tests
+
+**VM Tests**: 4 test suites
+
+- Help output tests (10 tests)
+- Config operations tests (8 tests)
+- Config priority tests (8 tests)
+- Theme command tests (9 tests)
 
 ---
 
@@ -48,30 +77,41 @@ The testing framework is distributed across multiple directories:
 
 ```
 /home/ld/src/arda-core/
-├── docs/                          # This document (tracked by git)
-│   └── TEST-FRAMEWORK.md         # Testing framework guide
+├── docs/                          # Current documentation (tracked by git)
+│   └── TEST-FRAMEWORK.md         # This document
 │
 ├── bmad-docs/                     # Development docs (not tracked)
-│   └── plan-testing.md           # Implementation plan & deviations
+│   ├── plan-testing.md           # Implementation plan & deviations
+│   ├── phase-a-b-complete.md     # Phase A & B completion report
+│   └── binary-fix-report.md      # Binary runtime issue resolution
 │
 ├── pkgs/arda-cli/arda_cli/tests/  # Main pytest test suite
+│   ├── conftest.py               # Pytest fixtures (14 fixtures)
 │   ├── unit/                     # Fast unit tests
 │   │   ├── cli/
 │   │   │   └── test_cli_integration.py
 │   │   ├── config/
 │   │   │   └── test_parses_valid_toml.py
+│   │   ├── lib/
+│   │   │   ├── test_config.py       # Config library tests
+│   │   │   ├── test_output.py       # Output library tests
+│   │   │   └── test_theme.py        # Theme library tests
 │   │   ├── overlay/
-│   │   │   └── test_rich_click_version.py
+│   │   │   └── test_rich_click_version.py  # Overlay regression tests
 │   │   └── themes/
 │   │       └── test_theme_validation.py
 │   │
 │   └── integration/              # Slow integration tests
+│       ├── cli/
+│       │   └── test_main_cli.py     # CLI workflow tests
 │       ├── config/
-│       │   └── test_config_workflow.py
+│       │   └── test_config_workflow.py  # Config workflow tests
+│       ├── network/
+│       │   └── test_network_utils.py    # Port/SSH utilities
 │       ├── nix/
-│       │   └── test_nix_operations.py
+│       │   └── test_nix_operations.py   # Nix integration tests
 │       └── vm/
-│           └── test_vm_operations.py
+│           └── test_vm_operations.py    # VM integration tests
 │
 ├── tests/                        # NixOS VM tests (isolated VMs)
 │   └── nixos/
@@ -85,11 +125,15 @@ The testing framework is distributed across multiple directories:
 │               └── test-theme-commands.nix
 │
 ├── pkgs/testing/                 # Test infrastructure
+│   ├── fixtures_arda.py          # Two-phase testing fixtures
 │   ├── helpers/
-│   │   ├── pytest_helpers.py
+│   │   ├── pytest_helpers.py    # Test helper utilities
 │   │   └── __init__.py
-│   ├── run-tests.nix
-│   └── verify-overlay.sh         # Executable verification script
+│   ├── nix_isolation.nix         # Nix store isolation utilities
+│   ├── nixos_test_lib/           # Python NixOS test library
+│   ├── run-tests.nix             # Test runner
+│   ├── run-vm-tests.nix          # VM test runner with caching
+│   └── vm-prebuild.nix           # VM pre-building infrastructure
 │
 ├── checks/                       # Flake check orchestration
 │   └── flake-module.nix
@@ -99,7 +143,7 @@ The testing framework is distributed across multiple directories:
 ├── flake.nix                     # Nix flake configuration
 └── .github/
     ├── workflows/
-    │   └── test.yml              # CI/CD pipeline
+    │   └── test.yml              # CI/CD pipeline (6 jobs)
     └── CI.md                     # CI/CD documentation
 ```
 
@@ -107,19 +151,19 @@ The testing framework is distributed across multiple directories:
 
 | Directory | Purpose | Test Type | Execution |
 |-----------|---------|-----------|-----------|
-| `pkgs/arda-cli/arda_cli/tests/unit/` | Fast unit tests | pytest | Build, pre-commit, CI |
-| `pkgs/arda-cli/arda_cli/tests/integration/` | Slow integration tests | pytest | CI only |
-| `tests/nixos/cli/*/` | VM tests | NixOS VM | CI, manual |
-| `pkgs/testing/` | Test utilities | N/A | Shared by all tests |
+| `pkgs/arda-cli/arda_cli/tests/unit/` | Fast unit tests (Phase 1) | pytest | Build, pre-commit, CI |
+| `pkgs/arda-cli/arda_cli/tests/integration/` | Integration tests (Phase 2) | pytest | CI |
+| `tests/nixos/cli/*/` | VM tests (isolated VMs) | NixOS VM | CI, manual |
+| `pkgs/testing/` | Test utilities & fixtures | N/A | Shared by all tests |
 | `checks/` | VM test orchestration | Nix flake | CI |
 
 ---
 
 ## Test Types
 
-The framework uses multiple test types for different purposes:
+The framework uses multiple test types organized into two phases:
 
-### 1. Fast Unit Tests
+### Phase 1: Without-Core Tests (Fast, Isolated)
 
 **Location**: `pkgs/arda-cli/arda_cli/tests/unit/`
 
@@ -128,18 +172,38 @@ The framework uses multiple test types for different purposes:
 **Characteristics**:
 
 - Execution time: < 10ms per test
+- No external dependencies on arda-core
 - No file I/O (or minimal/mock file I/O)
 - No network calls
-- No external dependencies
 - Can run during build
+- **180 tests total**
 
-**Markers**: `@pytest.mark.fast`, `@pytest.mark.unit`
+**Markers**: `@pytest.mark.fast`, `@pytest.mark.unit`, `@pytest.mark.without_core`
+
+**Categories**:
+
+1. **Unit Tests**: Test isolated functions/classes
+   - Config parsing and validation
+   - Theme system functions
+   - Output formatting
+   - CLI option parsing
+
+2. **Overlay Regression Tests**: Prevent critical configuration regressions
+   - Rich-click overlay version verification
+   - Package dependency validation
+   - Build-time configuration checks
+
+3. **Network Utility Tests**: Port management and SSH utilities
+   - Port allocation and validation
+   - SSH connection management
+   - Network connectivity testing
 
 **Example**:
 
 ```python
 @pytest.mark.fast
 @pytest.mark.unit
+@pytest.mark.without_core
 @pytest.mark.config
 def test_parse_bool_converts_various_formats():
     """Test that parse_bool handles different boolean representations."""
@@ -149,16 +213,9 @@ def test_parse_bool_converts_various_formats():
     assert parse_bool("false") is False
 ```
 
-**When to Write**:
-
-- Testing pure functions
-- Testing configuration parsing
-- Testing utility functions
-- Testing error handling logic
-
 ---
 
-### 2. Integration Tests
+### Phase 2: With-Core Tests (Comprehensive)
 
 **Location**: `pkgs/arda-cli/arda_cli/tests/integration/`
 
@@ -170,15 +227,41 @@ def test_parse_bool_converts_various_formats():
 - May use file I/O
 - May test CLI commands via CliRunner
 - Tests real-world scenarios
-- NOT run during build (marked slow)
+- Requires arda-core infrastructure
+- **45 tests total**
 
-**Markers**: `@pytest.mark.slow`, `@pytest.mark.integration`
+**Markers**: `@pytest.mark.slow`, `@pytest.mark.integration`, `@pytest.mark.with_core`
+
+**Categories**:
+
+1. **CLI Workflow Tests**: End-to-end CLI command testing
+   - Command routing and help display
+   - Theme application via CLI
+   - Config management via CLI
+   - Error handling in CLI
+
+2. **Config Workflow Tests**: File-based configuration operations
+   - Config file discovery and loading
+   - Config writing and persistence
+   - XDG compliance
+   - Priority order (local vs global)
+
+3. **Nix Integration Tests**: Nix operations
+   - Nix build operations
+   - Nix eval operations
+   - Flake handling
+
+4. **VM Integration Tests**: VM management operations
+   - VM lifecycle operations
+   - Snapshot management
+   - Network configuration
 
 **Example**:
 
 ```python
 @pytest.mark.slow
 @pytest.mark.integration
+@pytest.mark.with_core
 @pytest.mark.config
 def test_config_set_cli_command():
     """Test 'arda config set theme.name dracula' via CLI."""
@@ -191,16 +274,9 @@ def test_config_set_cli_command():
         assert Path('arda.toml').exists()
 ```
 
-**When to Write**:
-
-- Testing CLI command workflows
-- Testing file operations
-- Testing component integration
-- Testing real-world user scenarios
-
 ---
 
-### 3. VM Tests
+### VM Tests
 
 **Location**: `tests/nixos/cli/*/`
 
@@ -213,8 +289,32 @@ def test_config_set_cli_command():
 - Complete system isolation
 - Tests actual user experience
 - Only run in CI or manually
+- **4 test suites, ~35 tests total**
 
 **Framework**: NixOS `runNixOSTest` (native NixOS testing)
+
+**Test Suites**:
+
+1. **Help Tests** (`help/test-help-output.nix`)
+   - arda --help display
+   - Subcommand help
+   - Theme application in help
+   - Verbose mode
+
+2. **Config Operations** (`config/test-config-operations.nix`)
+   - Config file creation
+   - Config set/get operations
+   - Default value handling
+
+3. **Config Priority** (`config/test-config-priority.nix`)
+   - Local vs global config priority
+   - XDG Base Directory compliance
+   - Multiple config file handling
+
+4. **Theme Commands** (`themes/test-theme-commands.nix`)
+   - Theme listing
+   - Theme switching
+   - Theme validation
 
 **Example**:
 
@@ -231,69 +331,78 @@ testScript = ''
 '';
 ```
 
-**When to Write**:
-
-- Testing actual CLI commands
-- Testing config file creation
-- Testing theme application
-- Testing user workflows end-to-end
-- Testing behavior in clean environment
-
 ---
 
-### 4. System Tests
+## Two-Phase Testing Pattern
 
-**Location**: Varies (marked with `@pytest.mark.system`)
+The framework follows clan-core's two-phase testing pattern for better isolation and performance:
 
-**Purpose**: Tests requiring special infrastructure
+### Phase 1: Without-Core (Fast, Isolated)
 
-**Characteristics**:
+**What**: Tests that don't need arda-core infrastructure
+**When**: Every build, commit, and PR
+**Marker**: `@pytest.mark.without_core`
+**Run**: `just test-without-core` or `pytest -m "without_core"`
 
-- Require external services
-- Require special hardware
-- Require setup/teardown
-- Excluded from regular test runs
+**Includes**:
 
-**Markers**: `@pytest.mark.system`
+- Unit tests for individual functions
+- Overlay regression tests
+- Network utility tests
+- Pure library tests
 
-**When to Write**:
+**Execution**: ~30 seconds
 
-- Tests needing libvirt
-- Tests needing real VMs
-- Tests needing network services
-- Long-running benchmarks
+### Phase 2: With-Core (Comprehensive)
 
----
+**What**: Tests that need arda-core infrastructure
+**When**: Full test runs, CI
+**Marker**: `@pytest.mark.with_core`
+**Run**: `just test-with-core` or `pytest -m "with_core"`
 
-### 5. Overlay Regression Tests
+**Includes**:
 
-**Location**: `pkgs/arda-cli/arda_cli/tests/unit/overlay/`
+- CLI workflow tests
+- Config file operations
+- Nix integration tests
+- VM integration tests
 
-**Purpose**: Prevent regression of critical system configurations
+**Execution**: ~1-2 minutes
 
-**Current Focus**: Rich-click overlay version management
+### Why Two Phases?
 
-**Example**:
+1. **Speed**: Developers get fast feedback (Phase 1) before waiting for full suite
+2. **Isolation**: Phase 1 tests are truly isolated
+3. **CI Efficiency**: Phase 1 can run on every commit, Phase 2 on PRs
+4. **Clear Intent**: Markers clearly indicate test requirements
+5. **Parallel Execution**: Phases can run in parallel in CI
+
+### Fixtures
+
+**File**: `pkgs/testing/fixtures_arda.py`
+
+Provides fixtures for the two-phase pattern:
+
+- `with_core` - Enable arda-core infrastructure
+- `without_core` - Disable arda-core infrastructure
+- `create_test_flake` - Create temporary test flake
+- `temporary_home` - Isolated home directory
+
+### Usage
 
 ```python
-@pytest.mark.fast
-@pytest.mark.unit
-@pytest.mark.overlay
-def test_rich_click_version_is_overlaid():
-    """Verify rich-click is the overlaid version (1.9.4), not nixpkgs (1.8.9)."""
-    import rich_click
+# For Phase 1 tests
+@pytest.mark.without_core
+def test_function():
+    # Test without arda-core dependencies
+    pass
 
-    # The overlay upgrades from nixpkgs 1.8.9 to 1.9.4
-    assert rich_click.__version__ == "1.9.4", \
-        f"Expected rich-click 1.9.4, got {rich_click.__version__}"
+# For Phase 2 tests
+@pytest.mark.with_core
+def test_workflow():
+    # Test with arda-core infrastructure
+    pass
 ```
-
-**When to Write**:
-
-- Critical system configurations
-- Package version dependencies
-- Overlay configurations
-- Build-time dependencies
 
 ---
 
@@ -313,9 +422,12 @@ markers = [
     "config: Configuration system tests",
     "nix: Nix integration tests",
     "vm: Tests requiring virtual machine",
-    "system: System tests needing infrastructure",
-    "e2e: End-to-end workflow tests",
-    "overlay: Overlay regression tests"
+    "system: System-level tests (real VMs/containers)",
+    "service_runner: Tests requiring service runner",
+    "impure: Tests requiring network or system state",
+    "with_core: Tests requiring arda-core infrastructure",
+    "without_core: Tests that run without arda-core (fast, isolated)",
+    "network: Network utilities tests (port management, SSH)",
 ]
 ```
 
@@ -331,8 +443,9 @@ markers = [
 | `theme` | Theme tests | All levels | Theme system |
 | `cli` | CLI tests | All levels | Command execution |
 | `vm` | VM tests | Manual, CI | End-to-end testing |
-| `system` | Infrastructure tests | Manual | Tests needing setup |
-| `overlay` | Regression tests | Build, CI | Critical configurations |
+| `with_core` | Phase 2 tests | CI | arda-core integration |
+| `without_core` | Phase 1 tests | Build, CI | Isolated testing |
+| `network` | Network tests | All levels | Port/SSH utilities |
 
 ### Running Tests by Marker
 
@@ -340,70 +453,121 @@ markers = [
 # Fast tests only
 pytest -m "fast"
 
-# Config tests only
-pytest -m "config"
+# Phase 1 (without-core) tests
+pytest -m "without_core"
 
-# Fast AND unit tests
-pytest -m "fast and unit"
+# Phase 2 (with-core) tests
+pytest -m "with_core"
 
-# Config OR theme tests
-pytest -m "config or theme"
-
-# Everything except slow tests
+# All tests except slow
 pytest -m "not slow"
 
-# Everything except system tests
-pytest -m "not system"
+# Config tests in Phase 1
+pytest -m "config and without_core"
+
+# Network tests
+pytest -m "network"
+
+# CLI tests (all phases)
+pytest -m "cli"
 ```
 
 ---
 
 ## Test Execution
 
-There are multiple ways to run tests depending on your needs:
+Multiple ways to run tests depending on your needs:
 
 ### Method 1: Justfile (Recommended)
 
 The justfile provides convenient shortcuts for common test operations:
 
 ```bash
-# Quick validation - runs in < 30 seconds
+# =================
+# Quick Tests
+# =================
+
+# Fast unit tests (pre-commit compatible) - ~30 seconds
 just test-fast
 
-# All unit tests (50 tests) - runs in 2-3 minutes
-just test-all
+# Component-specific tests - ~30-60 seconds each
+just test-config        # Config tests (unit + integration)
+just test-themes        # Theme tests
+just test-cli          # CLI tests
+just test-nix          # Nix integration tests
+just test-network      # Network utility tests
 
-# Integration tests only
-just test-integration
+# =================
+# Two-Phase Testing
+# =================
 
-# All CLI VM tests - runs in 5-10 minutes
+# Phase 1: Without arda-core (fast, isolated) - ~30 seconds
+just test-without-core
+
+# Phase 2: With arda-core (comprehensive) - ~1-2 minutes
+just test-with-core
+
+# Both phases sequentially (full test suite) - ~2-3 minutes
+just test-two-phase
+
+# =================
+# VM Tests
+# =================
+
+# All CLI VM tests - ~5-10 minutes
 just test-vm-cli
 
-# Specific VM test
-just test-vm-cli-help
+# Specific VM test category - ~2-3 minutes each
+just test-vm-cli-help          # Help output tests
+just test-vm-cli-config        # Config tests
+just test-vm-cli-themes        # Theme tests
+
+# Individual VM tests - ~2-3 minutes each
+just test-vm-cli-help-output
 just test-vm-cli-config-operations
 just test-vm-cli-config-priority
 just test-vm-cli-theme-commands
 
-# Component-specific tests
-just test-config        # All config tests
-just test-themes        # All theme tests
-just test-cli          # All CLI tests
-just test-nix          # All Nix tests
-
-# Overlay verification
-just verify-overlay
-
-# Clear VM test cache for fresh builds
+# Clear VM test cache for fresh builds - ~5-15 minutes
 just clear-vm-test-cache
+
+# =================
+# Coverage Testing
+# =================
+
+# Run tests with coverage report (shows missing lines)
+just coverage
+
+# Run coverage check (fails if below threshold)
+just coverage-check
+
+# Generate HTML coverage report
+just coverage-html
+
+# =================
+# Build Testing
+# =================
+
+# Build arda-cli (runs tests during build) - ~2-5 minutes
+just build-arda-cli
+
+# Run arda-cli build-time tests - ~2-5 minutes
+just test-arda-cli
+
+# =================
+# Utility
+# =================
+
+# Run tests in watch mode (requires pytest-watch)
+just test-watch
 ```
 
 **Benefits**:
 
-- No need to remember nix commands
+- No need to remember pytest/nix commands
 - Consistent interface
 - Organizes tests logically
-- Documented in `justfile` itself
+- Documented in justfile itself
 
 ---
 
@@ -424,9 +588,17 @@ pytest --cov=pkgs/arda-cli/arda_cli --cov-report=html
 # Run in parallel
 pytest -n auto
 
-# Run with specific markers
+# Run Phase 1 (without-core) tests
+pytest -m "without_core" -v
+
+# Run Phase 2 (with-core) tests
+pytest -m "with_core" -v
+
+# Run network tests only
+pytest -m "network" -v
+
+# Run fast tests only
 pytest -m "fast" -v
-pytest -m "config and not slow" -v
 
 # Run only failing tests
 pytest --lf  # Last failed
@@ -453,15 +625,13 @@ pytest -v --tb=short
 Run tests through the Nix build system:
 
 ```bash
-# Build arda-cli (runs tests during build)
+# Build arda-cli (runs Phase 1 tests during build)
 nix build .#arda-cli
 
 # Run specific VM test
 nix build .#checks.x86_64-linux.arda-cli-vm-help
 
 # Run all VM tests
-nix build .#checks.x86_64-linux.arda-cli-vm-config-operations
-nix build .#checks.x86_64-linux.arda-cli-vm-config-priority
 nix build .#checks.x86_64-linux.arda-cli-vm-theme-commands
 
 # Run flake check (includes VM tests)
@@ -489,7 +659,7 @@ Tests run automatically in GitHub Actions:
 
 **Workflow**: `.github/workflows/test.yml`
 
-**Jobs**:
+**Jobs** (6 total):
 
 1. **validate** (1-2 min)
    - `nix flake check`
@@ -502,13 +672,14 @@ Tests run automatically in GitHub Actions:
    - Generate coverage
 
 3. **test-all** (3-5 min)
-   - All unit tests
-   - All integration tests
+   - Run `just test-all` (both phases)
+   - All unit and integration tests
+   - Upload test reports
 
 4. **test-vm** (5-10 min)
    - All VM tests
    - Scheduled nightly
-   - Manual dispatch
+   - Manual dispatch only
 
 5. **build-docs** (2-3 min)
    - Build CLI binary
@@ -516,10 +687,11 @@ Tests run automatically in GitHub Actions:
 
 6. **summary** (< 1 min)
    - Aggregate results
+   - Update check status
 
 **Triggers**:
 
-- Push to `master`, `main`, `testing`
+- Push to `main`, `master`, `testing`
 - Pull requests
 - Manual dispatch (VM tests)
 - Nightly schedule (VM tests)
@@ -531,7 +703,8 @@ Tests run automatically in GitHub Actions:
 | Scenario | Command | Time |
 |----------|---------|------|
 | Pre-commit check | `just test-fast` | < 30s |
-| Full validation | `just test-all` | 2-3 min |
+| Phase 1 validation | `just test-without-core` | ~30s |
+| Full validation | `just test-two-phase` | 2-3 min |
 | Component testing | `just test-config` | 30-60s |
 | VM testing | `just test-vm-cli` | 5-10 min |
 | Debug build | `nix build .#arda-cli` | 2-5 min |
@@ -544,7 +717,7 @@ Tests run automatically in GitHub Actions:
 
 This section guides you through writing tests for the framework.
 
-### Writing Fast Unit Tests
+### Writing Phase 1 Tests (without-core)
 
 **Location**: `pkgs/arda-cli/arda_cli/tests/unit/<component>/`
 
@@ -560,6 +733,7 @@ from arda_cli.lib.config import load_config
 
 @pytest.mark.fast
 @pytest.mark.unit
+@pytest.mark.without_core
 @pytest.mark.config
 def test_function_name():
     """Test description: what is being tested and expected."""
@@ -572,55 +746,22 @@ def test_function_name():
     # Assert
     # Verify the results
     assert expected_result == actual_result
-
-
-@pytest.mark.fast
-@pytest.mark.unit
-@pytest.mark.config
-def test_edge_case_handling():
-    """Test edge cases and error conditions."""
-    # Test that function handles edge cases correctly
-    pass
 ```
 
 **Guidelines**:
 
-1. **One test per behavior**: Each test should verify one specific behavior
-2. **Clear test names**: `test_should_do_something_when_condition`
-3. **AAA pattern**: Arrange, Act, Assert
-4. **Use appropriate markers**: Always include `fast` and `unit`
-5. **Add component marker**: Include `config`, `theme`, `cli`, etc.
-6. **Avoid external dependencies**: Mock external calls
-7. **Keep tests isolated**: Tests should not depend on each other
-
-**Example**:
-
-```python
-@pytest.mark.fast
-@pytest.mark.unit
-@pytest.mark.config
-def test_parse_bool_converts_various_formats():
-    """Test that parse_bool handles different boolean representations."""
-    from arda_cli.lib.config import parse_bool
-
-    # Test true values
-    assert parse_bool(True) is True
-    assert parse_bool("true") is True
-    assert parse_bool("True") is True
-    assert parse_bool("yes") is True
-    assert parse_bool("1") is True
-
-    # Test false values
-    assert parse_bool(False) is False
-    assert parse_bool("false") is False
-    assert parse_bool("False") is False
-    assert parse_bool("no") is False
-    assert parse_bool("0") is False
-```
+1. **Always mark with `@pytest.mark.without_core`** - This is Phase 1!
+2. **One test per behavior**: Each test should verify one specific behavior
+3. **Clear test names**: `test_should_do_something_when_condition`
+4. **AAA pattern**: Arrange, Act, Assert
+5. **Use appropriate markers**: Always include `fast`, `unit`, and `without_core`
+6. **Add component marker**: Include `config`, `theme`, `cli`, `network`, etc.
+7. **Avoid external dependencies**: Mock external calls
+8. **Keep tests isolated**: Tests should not depend on each other
 
 ---
 
-### Writing Integration Tests
+### Writing Phase 2 Tests (with-core)
 
 **Location**: `pkgs/arda-cli/arda_cli/tests/integration/<component>/`
 
@@ -637,6 +778,7 @@ from arda_cli.main import main
 
 @pytest.mark.slow
 @pytest.mark.integration
+@pytest.mark.with_core
 @pytest.mark.config
 def test_workflow_description():
     """Test complete workflow with real components."""
@@ -659,38 +801,96 @@ def test_workflow_description():
 
 **Guidelines**:
 
-1. **Mark as slow**: Integration tests are slow and should be marked accordingly
-2. **Use CliRunner**: For testing CLI commands
-3. **Isolated filesystem**: Use `runner.isolated_filesystem()` for tests that create files
-4. **Real I/O**: Integration tests can use real file operations
-5. **Component marker**: Include component-specific marker
-6. **Clear assertions**: Verify outcomes clearly
+1. **Always mark with `@pytest.mark.with_core`** - This is Phase 2!
+2. **Mark as slow**: Integration tests are slow and should be marked accordingly
+3. **Use CliRunner**: For testing CLI commands
+4. **Isolated filesystem**: Use `runner.isolated_filesystem()` for tests that create files
+5. **Real I/O**: Integration tests can use real file operations
+6. **Component marker**: Include component-specific marker
+7. **Clear assertions**: Verify outcomes clearly
+
+---
+
+### Writing Overlay Regression Tests
+
+**Location**: `pkgs/arda-cli/arda_cli/tests/unit/overlay/`
+
+**Purpose**: Prevent regression of critical system configurations
+
+**Current Focus**: Rich-click overlay version management
+
+**Example**:
+
+```python
+@pytest.mark.fast
+@pytest.mark.unit
+@pytest.mark.without_core
+def test_rich_click_version_is_overlaid():
+    """Verify rich-click is the overlaid version (1.9.4), not nixpkgs (1.8.9).
+
+    The overlay upgrades from nixpkgs 1.8.9 to 1.9.4 which includes
+    theming support required by arda-cli.
+    """
+    import rich_click
+
+    # The overlay version (1.9.4) vs nixpkgs version (1.8.9)
+    expected_version = "1.9.4"
+    actual_version = rich_click.__version__
+
+    assert actual_version == expected_version, (
+        f"Expected rich-click {expected_version} "
+        f"(custom overlay version with theming), "
+        f"but got {actual_version} (nixpkgs version without theming support). "
+    )
+```
+
+**Guidelines**:
+
+1. **Always in Phase 1** - Overlay tests verify arda-cli's build dependencies
+2. **No filesystem navigation** - Don't try to navigate to repo root in Nix stores
+3. **Runtime verification only** - Check that the overlay actually works
+4. **Test in both devShell and Nix builds** - These tests run in both environments
+
+---
+
+### Writing Network Utility Tests
+
+**Location**: `pkgs/arda-cli/arda_cli/tests/integration/network/`
+
+**Purpose**: Test port management and SSH connection utilities
 
 **Example**:
 
 ```python
 @pytest.mark.slow
 @pytest.mark.integration
-@pytest.mark.config
-def test_config_set_cli_command():
-    """Test 'arda config set theme.name dracula' via CLI."""
-    runner = CliRunner()
+@pytest.mark.without_core
+@pytest.mark.network
+def test_find_free_port():
+    """Test that find_free_port returns an available port."""
+    from arda_cli.testing.network import find_free_port
 
-    with runner.isolated_filesystem():
-        # Run config set command
-        result = runner.invoke(main, ['config', 'set', 'theme.name', 'dracula'])
+    port = find_free_port(start=8000, end=9000)
 
-        # Verify it succeeded
-        assert result.exit_code == 0, f"Config set failed: {result.output}"
+    # Port should be in the specified range
+    assert 8000 <= port <= 9000
 
-        # Verify config file was created
-        config_file = Path('arda.toml')
-        assert config_file.exists(), "Config file should be created"
+    # Port should actually be free
+    import socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex(('localhost', port))
+    sock.close()
 
-        # Verify content
-        content = config_file.read_text()
-        assert "dracula" in content, "Config should contain theme setting"
+    # Should not be able to connect (port is free)
+    assert result != 0
 ```
+
+**Guidelines**:
+
+1. **Mark with `@pytest.mark.network`** - Identifies network utility tests
+2. **Mark with `@pytest.mark.without_core`** - These don't need arda-core
+3. **Use real network operations** - Network tests use actual sockets/SSH
+4. **Clean up resources** - Close sockets, terminate connections
 
 ---
 
@@ -715,7 +915,7 @@ def test_config_set_cli_command():
     };
 
   testScript = ''
-    # Start the VM
+    # Start the VM (REQUIRED!)
     machine.start()
     machine.wait_for_unit("default.target")
 
@@ -752,47 +952,11 @@ def test_config_set_cli_command():
 5. **Assert outcomes**: Use `assert` to verify results
 6. **Test isolation**: Each test is independent
 
-**Available Machine Methods**:
-
-- `machine.start()` - Start the VM
-- `machine.wait_for_unit("default.target")` - Wait for systemd
-- `machine.succeed("command")` - Execute command, expect success, return output
-- `machine.fail("command")` - Execute command, expect failure
-- `machine.log("message")` - Log a message
-- `machine.wait_for_file("/path")` - Wait for file to exist
-- `machine.wait_for_text("text")` - Wait for text to appear
-
-**Example**:
-
-```nix
-testScript = ''
-  # Start the VM
-  machine.start()
-  machine.wait_for_unit("default.target")
-
-  # Test 1: arda --help
-  print("=== Testing: arda --help ===")
-  result = machine.succeed("/tmp/arda-test/arda --help")
-  assert "Arda" in result
-  assert "config" in result
-  print("✅ arda --help works correctly")
-
-  # Test 2: Config operations
-  print("\n=== Testing: arda config init ===")
-  machine.succeed("/tmp/arda-test/arda config --local init --force")
-  machine.succeed("test -f etc/arda.toml")
-  print("✅ arda config init creates file")
-''
-
-  meta.maintainers = [ "Lord Devi" ];
-}
-```
-
 ---
 
 ### Test File Organization
 
-**Unit Tests**:
+**Phase 1 Tests (without-core)**:
 
 ```
 pkgs/arda-cli/arda_cli/tests/unit/
@@ -800,18 +964,26 @@ pkgs/arda-cli/arda_cli/tests/unit/
 │   └── test_cli_integration.py          # CLI-specific unit tests
 ├── config/
 │   └── test_parses_valid_toml.py        # Config parsing tests
+├── lib/
+│   ├── test_config.py                   # Config library tests
+│   ├── test_output.py                   # Output library tests
+│   └── test_theme.py                    # Theme library tests
 ├── overlay/
 │   └── test_rich_click_version.py       # Overlay regression tests
 └── themes/
     └── test_theme_validation.py         # Theme validation tests
 ```
 
-**Integration Tests**:
+**Phase 2 Tests (with-core)**:
 
 ```
 pkgs/arda-cli/arda_cli/tests/integration/
+├── cli/
+│   └── test_main_cli.py                 # CLI workflow tests
 ├── config/
 │   └── test_config_workflow.py          # Config workflow tests
+├── network/
+│   └── test_network_utils.py            # Port/SSH utility tests
 ├── nix/
 │   └── test_nix_operations.py           # Nix integration tests
 └── vm/
@@ -880,41 +1052,33 @@ VM tests use the NixOS testing framework to:
 4. **User Experience**: Tests how users actually use the CLI
 5. **Clean Environment**: Tests with minimal dependencies
 
-### How It Works
-
-1. **NixOS VM Framework**: Uses `runNixOSTest` from `pkgs/testers`
-2. **Test Script**: Python code that controls the VM
-3. **Commands**: Executes real CLI commands
-4. **Assertions**: Verifies expected outcomes
-
 ### VM Test Structure
 
 ```nix
 { config, pkgs, lib, ... }:
 {
-  name = "arda-cli-vm-<category>";
+  name = "arda-cli-vm-help";
 
-  # VM definition
   nodes.machine =
     { config, pkgs, lib, ... }:
     {
-      # VM configuration
       environment.systemPackages = [
-        # Packages available in VM
+        pkgs.bash
       ];
     };
 
-  # Test script
   testScript = ''
     # Boot VM
     machine.start()
     machine.wait_for_unit("default.target")
 
     # Run tests
-    result = machine.succeed("/tmp/arda-test/arda command")
-    assert "expected" in result
+    result = machine.succeed("/tmp/arda-test/arda --help")
+    assert "Arda" in result
+    assert "config" in result
+    assert "theme" in result
 
-    print("✅ Test passed")
+    print("✅ All tests PASSED")
   '';
 
   meta.maintainers = [ "Lord Devi" ];
@@ -942,10 +1106,11 @@ VM tests use the NixOS testing framework to:
 - ✅ Test actual user workflows
 - ✅ Verify file creation and content
 - ✅ Test error handling
+- ✅ Use `--force` flag for config init to avoid interactive prompts
 
 **DON'T**:
 
-- ❌ Forget `machine.start()`
+- ❌ Forget `machine.start()` (causes hang)
 - ❌ Test implementation details
 - ❌ Use mocks (VM tests are for real testing)
 - ❌ Run too many commands (keep tests focused)
@@ -959,6 +1124,7 @@ VM tests use the NixOS testing framework to:
 result = machine.succeed("/tmp/arda-test/arda --help")
 assert "Arda" in result
 assert "config" in result
+assert "theme" in result
 print("✅ Help output is correct")
 ```
 
@@ -987,7 +1153,9 @@ print("✅ Config set works")
 result = machine.succeed("/tmp/arda-test/arda theme list")
 assert "dracula" in result
 assert "nord" in result
+assert "forest" in result
 print("✅ Theme list works")
+print(f"Total themes: {result.count(chr(10))}")
 ```
 
 **Testing Error Handling**:
@@ -1022,26 +1190,29 @@ nix build .#checks.x86_64-linux.arda-cli-vm-help --verbose
 
 ### VM Test Debugging
 
-**Problem**: Tests are cached and run too fast
+**Problem**: Tests are cached and run too fast (no output)
+
+**Solution**: Clear cache for fresh build
 
 ```bash
-# Solution: Clear cache for fresh build
 just clear-vm-test-cache
 nix build .#checks.x86_64-linux.arda-cli-vm-help
 ```
 
 **Problem**: VM hangs during boot
 
+**Solution**: Clear cache and rebuild with verbose output
+
 ```bash
-# Solution: Clear cache and rebuild
 just clear-vm-test-cache
 nix build .#checks.x86_64-linux.arda-cli-vm-help --no-out-link 2>&1 | tee /tmp/vm-debug.log
 ```
 
 **Problem**: Test fails intermittently
 
+**Solution**: Run multiple times
+
 ```bash
-# Solution: Run multiple times
 for i in {1..5}; do
     echo "Run $i:"
     nix build .#checks.x86_64-linux.arda-cli-vm-help
@@ -1050,8 +1221,9 @@ done
 
 **Problem**: Need to see VM output
 
+**Solution**: Build without cache
+
 ```bash
-# Solution: Build without cache
 just clear-vm-test-cache
 nix build .#checks.x86_64-linux.arda-cli-vm-help --no-out-link
 # Check result/ directory for test logs
@@ -1067,11 +1239,11 @@ Tests run automatically in GitHub Actions for every push and pull request.
 
 **File**: `.github/workflows/test.yml`
 
-**Jobs**:
+**Jobs** (6 total):
 
 1. **validate** - Fast validation (flake check, pre-commit)
 2. **test-fast** - Build package + run fast tests
-3. **test-all** - Complete test suite (all pytest tests)
+3. **test-all** - Complete test suite (both phases)
 4. **test-vm** - VM tests (scheduled/manual only)
 5. **build-docs** - Build CLI binary
 6. **summary** - Aggregate results
@@ -1085,9 +1257,10 @@ Tests run automatically in GitHub Actions for every push and pull request.
 **Steps**:
 
 1. Check out code
-2. Setup Nix
-3. Run `nix flake check`
-4. Run pre-commit hooks
+2. Install Nix
+3. Setup cachix (optional)
+4. Run `nix flake check`
+5. Run pre-commit hooks
 
 **When**: Every push/PR
 
@@ -1098,9 +1271,9 @@ Tests run automatically in GitHub Actions for every push and pull request.
 **Steps**:
 
 1. Check out code
-2. Setup Nix
-3. Build `arda-cli` package
-4. Tests run in build (fast unit tests)
+2. Install Nix
+3. Setup cachix (optional)
+4. Build `arda-cli` package (runs Phase 1 tests during build)
 5. Upload coverage report
 
 **When**: Every push/PR
@@ -1112,12 +1285,12 @@ Tests run automatically in GitHub Actions for every push and pull request.
 **Steps**:
 
 1. Check out code
-2. Setup Nix
-3. Run `just test-all`
-4. Upload test report
+2. Install Nix
+3. Setup cachix (optional)
+4. Run `just test-all` (runs both Phase 1 and Phase 2)
+5. Upload test reports
 
 **When**: Every push/PR
-**Excludes**: VM tests (too slow)
 
 #### test-vm Job (5-10 minutes)
 
@@ -1126,13 +1299,13 @@ Tests run automatically in GitHub Actions for every push and pull request.
 **Steps**:
 
 1. Check out code
-2. Setup Nix
-3. Run VM tests
+2. Install Nix
+3. Run VM tests via `just test-vm`
 4. Upload test logs
 
 **When**:
 
-- Manual dispatch
+- Manual dispatch only (workflow_dispatch)
 - Nightly schedule (00:00 UTC)
 - Push to `testing` branch
 
@@ -1145,7 +1318,7 @@ Tests run automatically in GitHub Actions for every push and pull request.
 **Steps**:
 
 1. Check out code
-2. Setup Nix
+2. Install Nix
 3. Build `arda-cli`
 4. Archive binary
 
@@ -1158,8 +1331,8 @@ Tests run automatically in GitHub Actions for every push and pull request.
 
 **Steps**:
 
-1. Collect results from all jobs
-2. Post comment on PR
+1. Download all artifacts
+2. Post summary to PR
 3. Update check status
 
 **When**: After all test jobs complete
@@ -1168,8 +1341,8 @@ Tests run automatically in GitHub Actions for every push and pull request.
 
 **Automatic Triggers**:
 
-- Push to `master`, `main`, `testing` branches
-- Pull requests to `master`, `main`, `testing` branches
+- Push to `main`, `master`, `testing` branches
+- Pull requests to `main`, `master`, `testing` branches
 
 **Manual Triggers**:
 
@@ -1268,6 +1441,7 @@ This section covers best practices for writing and maintaining tests.
    # Good
    @pytest.mark.fast
    @pytest.mark.unit
+   @pytest.mark.without_core
    @pytest.mark.config
    def test_something():
        pass
@@ -1295,6 +1469,7 @@ This section covers best practices for writing and maintaining tests.
    ```python
    # Good
    @pytest.mark.fast
+   @pytest.mark.without_core
    def test_config_parsing():
        with patch('arda_cli.lib.config.get_config_path') as mock:
            mock.return_value = None
@@ -1312,6 +1487,32 @@ This section covers best practices for writing and maintaining tests.
            pass
    ```
 
+### Two-Phase Pattern
+
+1. **Choose the Right Phase**
+
+   **Phase 1 (without_core)**:
+   - Testing pure functions
+   - Testing library code
+   - Testing configuration parsing
+   - Testing overlay/configurations
+
+   **Phase 2 (with_core)**:
+   - Testing CLI workflows
+   - Testing file operations
+   - Testing component integration
+   - Testing arda-core dependencies
+
+2. **Mark Appropriately**
+
+   ```python
+   # For Phase 1
+   @pytest.mark.without_core
+
+   # For Phase 2
+   @pytest.mark.with_core
+   ```
+
 ### Performance
 
 1. **Mark Slow Tests**
@@ -1320,6 +1521,7 @@ This section covers best practices for writing and maintaining tests.
    # Good
    @pytest.mark.slow
    @pytest.mark.integration
+   @pytest.mark.with_core
    def test_full_workflow():
        # Slow test marked appropriately
    ```
@@ -1329,6 +1531,7 @@ This section covers best practices for writing and maintaining tests.
    ```python
    # Good - no network calls, minimal I/O
    @pytest.mark.fast
+   @pytest.mark.without_core
    def test_parse_bool():
        assert parse_bool("true") is True
    ```
@@ -1342,15 +1545,21 @@ This section covers best practices for writing and maintaining tests.
 
 ### Coverage
 
+**Current Thresholds**:
+
+- Phase 1 (without-core): 30% minimum
+- Phase 2 (with-core): 30% minimum
+
 1. **Focus on Critical Paths**
    - Configuration parsing
    - Error handling
    - CLI commands
+   - Theme system
 
 2. **Don't Chase 100%**
-   - 15% minimum for unit tests
-   - 30% minimum for integration tests
    - Quality over quantity
+   - 30% minimum is reasonable for both phases
+   - Focus on critical code paths
 
 3. **Test Edge Cases**
 
@@ -1469,19 +1678,26 @@ Common issues and solutions:
 
 **Solution**:
 
-1. Mark integration tests as slow
+1. Run only Phase 1 (without-core) for development
+
+   ```bash
+   just test-without-core
+   ```
+
+2. Run only fast tests
+
+   ```bash
+   just test-fast
+   ```
+
+3. Mark integration tests as slow
 
    ```python
    @pytest.mark.slow
    @pytest.mark.integration
+   @pytest.mark.with_core
    def test_slow_workflow():
        pass
-   ```
-
-2. Run only fast tests for development
-
-   ```bash
-   just test-fast
    ```
 
 ### VM Tests Hanging
@@ -1490,19 +1706,7 @@ Common issues and solutions:
 
 **Solution**:
 
-1. Clear VM test cache
-
-   ```bash
-   just clear-vm-test-cache
-   ```
-
-2. Rebuild test
-
-   ```bash
-   nix build .#checks.x86_64-linux.arda-cli-vm-help --no-out-link
-   ```
-
-3. Check for `machine.start()` in test
+1. Ensure `machine.start()` is in test
 
    ```nix
    testScript = ''
@@ -1510,11 +1714,23 @@ Common issues and solutions:
      machine.wait_for_unit("default.target")
    ```
 
+2. Clear VM test cache
+
+   ```bash
+   just clear-vm-test-cache
+   ```
+
+3. Rebuild test without cache
+
+   ```bash
+   nix build .#checks.x86_64-linux.arda-cli-vm-help --no-out-link
+   ```
+
 ### Interactive Prompt Hang
 
 **Problem**: Test hangs waiting for input
 
-**Solution**: Use `--force` flag
+**Solution**: Use `--force` flag to avoid prompts
 
 ```nix
 machine.succeed("/tmp/arda-test/arda config --local init --force")
@@ -1539,20 +1755,25 @@ machine.succeed("/tmp/arda-test/arda config --local init --force")
 
 ### Coverage Too Low
 
-**Problem**: Coverage below threshold (15% unit, 30% integration)
+**Problem**: Coverage below threshold (30%)
 
 **Solutions**:
 
-1. Add more unit tests
+1. Add more tests
 
    ```bash
    # Check what's not covered
    pytest --cov=pkgs/arda-cli/arda_cli --cov-report=term-missing
    ```
 
-2. Increase thresholds gradually
-   - Update `pkgs/arda-cli/default.nix`
-   - Raise from 15% to 20% to 30%, etc.
+2. Focus on critical paths
+   - Config parsing
+   - Error handling
+   - CLI workflows
+
+3. Update thresholds if needed
+   - Edit `pkgs/arda-cli/default.nix`
+   - Update `--cov-fail-under` values
 
 ### Import Errors
 
@@ -1573,6 +1794,12 @@ machine.succeed("/tmp/arda-test/arda config --local init --force")
    export PYTHONPATH="$PYTHONPATH:/home/ld/src/arda-core"
    ```
 
+3. Use justfile commands
+
+   ```bash
+   just test-fast
+   ```
+
 ### Nix Build Failures
 
 **Problem**: `nix build` fails with errors
@@ -1590,6 +1817,12 @@ machine.succeed("/tmp/arda-test/arda config --local init --force")
    ```bash
    nix flake update
    nix build .#arda-cli
+   ```
+
+3. Clear Nix store if needed
+
+   ```bash
+   nix store gc
    ```
 
 ### Test Discovery Issues
@@ -1614,6 +1847,33 @@ machine.succeed("/tmp/arda-test/arda config --local init --force")
    - Test files: `test_*.py`
    - Test functions: `test_*()`
 
+### Phase Selection Issues
+
+**Problem**: Tests not running in the right phase
+
+**Solution**:
+
+1. Check test markers
+
+   ```bash
+   # Check which markers a test has
+   pytest --collect-only -m "test_name"
+   ```
+
+2. Ensure Phase 1 tests have `@pytest.mark.without_core`
+
+3. Ensure Phase 2 tests have `@pytest.mark.with_core`
+
+4. Run specific phase
+
+   ```bash
+   # Phase 1 only
+   pytest -m "without_core"
+
+   # Phase 2 only
+   pytest -m "with_core"
+   ```
+
 ---
 
 ## Quick Reference
@@ -1623,24 +1883,26 @@ machine.succeed("/tmp/arda-test/arda config --local init --force")
 | Task | Command |
 |------|---------|
 | Run fast tests | `just test-fast` |
-| Run all tests | `just test-all` |
-| Run integration tests | `just test-integration` |
+| Run Phase 1 tests | `just test-without-core` |
+| Run Phase 2 tests | `just test-with-core` |
+| Run all tests | `just test-two-phase` |
+| Run network tests | `just test-network` |
 | Run VM tests | `just test-vm-cli` |
 | Run specific VM test | `just test-vm-cli-help` |
 | Build with tests | `nix build .#arda-cli` |
 | Run flake check | `nix flake check` |
 | Clear VM cache | `just clear-vm-test-cache` |
-| Verify overlay | `just verify-overlay` |
-| Generate coverage | `pytest --cov=pkgs/arda-cli/arda_cli --cov-report=html` |
+| Generate coverage | `just coverage` |
+| Check coverage | `just coverage-check` |
 
 ### Directory Quick Reference
 
 | Directory | Purpose |
 |-----------|---------|
-| `pkgs/arda-cli/arda_cli/tests/unit/` | Fast unit tests |
-| `pkgs/arda-cli/arda_cli/tests/integration/` | Integration tests |
+| `pkgs/arda-cli/arda_cli/tests/unit/` | Phase 1: Fast unit tests |
+| `pkgs/arda-cli/arda_cli/tests/integration/` | Phase 2: Integration tests |
 | `tests/nixos/cli/*/` | VM tests |
-| `pkgs/testing/` | Test utilities |
+| `pkgs/testing/` | Test utilities & fixtures |
 | `checks/` | Flake checks |
 | `pytest.ini` | Pytest configuration |
 | `justfile` | Test shortcuts |
@@ -1651,8 +1913,15 @@ machine.succeed("/tmp/arda-test/arda config --local init --force")
 |--------|--------|
 | `fast` | Build, CI, pre-commit |
 | `slow` | CI only |
+| `without_core` | All levels (Phase 1) |
+| `with_core` | CI (Phase 2) |
 | `unit` | All levels |
 | `integration` | CI |
+| `cli` | All levels |
+| `config` | All levels |
+| `theme` | All levels |
+| `network` | All levels |
+| `nix` | CI |
 | `vm` | Manual, CI |
 | `system` | Never (requires special setup) |
 
@@ -1662,8 +1931,17 @@ machine.succeed("/tmp/arda-test/arda config --local init --force")
 |------|---------|---------|
 | Unit test file | `test_*.py` | `test_config_parsing.py` |
 | Unit test function | `test_*()` | `test_loads_valid_toml()` |
+| Integration test file | `test_*workflow*.py` | `test_config_workflow.py` |
 | VM test file | `test-*.nix` | `test-help-output.nix` |
 | VM test name | `"arda-cli-vm-*"` | `"arda-cli-vm-help"` |
+
+### Phase Selection
+
+| Phase | Marker | Tests | Run With |
+|-------|--------|-------|----------|
+| Phase 1 | `without_core` | 180 tests | `just test-without-core` |
+| Phase 2 | `with_core` | 45 tests | `just test-with-core` |
+| Both | N/A | 225 tests | `just test-two-phase` |
 
 ### Common Assertions
 
@@ -1677,12 +1955,19 @@ assert "text" in result
 assert len(items) == 5
 ```
 
+**Integration Tests**:
+
+```python
+assert result.exit_code == 0
+assert Path('file.toml').exists()
+assert "expected" in result.output
+```
+
 **VM Tests**:
 
 ```nix
 assert "expected" in result
 machine.succeed("test -f /path/file")
-machine.succeed("test -d /path/dir")
 machine.fail("invalid-command")
 ```
 
@@ -1709,7 +1994,25 @@ machine.fail("invalid-command")
 | `nix build --no-out-link` | Build without creating symlink |
 | `nix build --verbose` | Verbose output |
 | `nix flake update` | Update flake inputs |
-| `nix-store --delete /path` | Delete from Nix store |
+| `nix store gc` | Garbage collect Nix store |
+
+### Test Statistics
+
+**Current Test Counts**:
+
+- Total: 225 tests
+- Phase 1 (without-core): 180 tests
+- Phase 2 (with-core): 45 tests
+- Network tests: 12 tests
+- VM test suites: 4 suites (~35 tests)
+- Overlay tests: 4 tests
+
+### Coverage Thresholds
+
+| Phase | Threshold |
+|-------|-----------|
+| Phase 1 (without-core) | 30% |
+| Phase 2 (with-core) | 30% |
 
 ### Getting Help
 
@@ -1722,49 +2025,91 @@ machine.fail("invalid-command")
 
 ## Conclusion
 
-The arda-core testing framework provides comprehensive test coverage through multiple layers:
+The arda-core testing framework provides comprehensive test coverage through a multi-layered, two-phase approach:
 
-1. **Fast Unit Tests** - Quick validation during development
-2. **Integration Tests** - Component interaction testing
-3. **VM Tests** - End-to-end testing in isolated VMs
-4. **CI/CD Integration** - Automated testing on every push
+### Key Components
 
-**Key Principles**:
+1. **Phase 1 (without-core)** - Fast isolated tests (180 tests)
+   - Unit tests for isolated functions
+   - Overlay regression tests
+   - Network utility tests
+   - Config and theme tests
 
-- Speed for fast tests
-- Isolation for all tests
-- Comprehensive coverage
-- Automated execution
-- Excellent developer experience
+2. **Phase 2 (with-core)** - Comprehensive integration tests (45 tests)
+   - CLI workflow tests
+   - Config file operations
+   - Nix integration tests
+   - VM integration tests
 
-**Getting Started**:
+3. **VM Tests** - End-to-end testing (4 test suites)
+   - Help output tests
+   - Config operations tests
+   - Config priority tests
+   - Theme command tests
+
+4. **CI/CD Integration** - Automated testing (6 jobs)
+   - validate (fast feedback)
+   - test-fast (build + fast tests)
+   - test-all (both phases)
+   - test-vm (scheduled/manual)
+   - build-docs (binary build)
+   - summary (result aggregation)
+
+### Key Principles
+
+- **Speed for Phase 1**: Fast feedback for developers
+- **Isolation**: Tests don't interfere with each other
+- **Two-Phase Pattern**: Clear separation of concerns
+- **Comprehensive Coverage**: Multiple test types
+- **Automated Execution**: CI/CD on every push/PR
+- **Excellent Developer Experience**: Easy commands, clear documentation
+
+### Getting Started
 
 ```bash
 # Run fast tests (do this before every commit)
 just test-fast
 
-# Run all unit tests
-just test-all
+# Run Phase 1 tests
+just test-without-core
+
+# Run all tests
+just test-two-phase
 
 # Run VM tests (when needed)
 just test-vm-cli
 ```
 
-**Questions or Issues**:
+### Recent Changes
+
+**Version 2.0 (2025-11-30)**:
+
+- ✅ Implemented two-phase testing pattern (without_core / with_core)
+- ✅ Moved overlay tests to Phase 1 (without_core)
+- ✅ Removed verify-overlay.sh (tests integrated into Phase 1)
+- ✅ Added network utility tests (port management, SSH)
+- ✅ Updated coverage thresholds to 30% for both phases
+- ✅ Created fixtures_arda.py for two-phase pattern
+- ✅ Added comprehensive VM test suite (4 test suites)
+
+### Questions or Issues
 
 - See troubleshooting section above
 - Check `.github/CI.md` for CI issues
 - Review `bmad-docs/plan-testing.md` for historical context
 
-**Contributing**:
+### Contributing
 
-- Follow the test organization guidelines
+- Follow the two-phase testing pattern
+- Mark tests appropriately (`without_core` or `with_core`)
 - Write tests for new features
 - Update tests when code changes
 - Maintain test quality and coverage
+- Use justfile commands for consistency
 
 ---
 
 **Document maintained by**: Development Team
-**Last updated**: 2025-11-29
+**Last updated**: 2025-11-30
+**Version**: 2.0
 **Next review**: As needed with framework changes

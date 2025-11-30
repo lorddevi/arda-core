@@ -20,6 +20,9 @@ from rich.rule import Rule
 from rich.text import Text
 from rich_click.rich_help_configuration import RichHelpConfiguration
 
+# Import from compatibility layer for Rich API compatibility
+from arda_cli.lib.rich_compat import get_console, get_text_plain
+
 
 class VerbosityLevel(Enum):
     """Verbosity levels for different output detail.
@@ -840,7 +843,7 @@ def create_extra_help_panel(
                             end=full_text._length + span.end,
                         )
                     )
-                full_text.append(item.plain)
+                full_text.append(get_text_plain(item))
             elif item != "":
                 # Non-empty string
                 full_text.append(str(item))
@@ -915,7 +918,6 @@ def show_command_help(ctx: click.Context) -> None:
     click.echo(ctx.get_help())
 
     # Show active config (blank line before and after, matching arda --help)
-    from rich import get_console
     from rich_click.rich_help_configuration import RichHelpConfiguration
 
     from arda_cli.lib.config import get_active_config_path

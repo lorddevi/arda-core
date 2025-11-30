@@ -68,6 +68,16 @@ repos:
         pass_filenames: false
         always_run: true
 
+  # Pytest - run all tests (Phase 1 and Phase 2)
+  - repo: local
+    hooks:
+      - id: pytest-with-core
+        name: Run all pytest tests (without-core and with-core)
+        entry: just test-two-phase
+        language: system
+        pass_filenames: false
+        always_run: true
+
   # Markdown linting (line length disabled for readability)
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.43.0

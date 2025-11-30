@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arda_cli"
-version = "0.1.5"
+version = "0.1.6"
 description = "Arda - minimal infrastructure management for NixOS"
 license = {text = "MIT"}
 authors = [

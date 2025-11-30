@@ -11,6 +11,13 @@ import rich_click as rclick
 from rich.console import Console
 from rich.panel import Panel
 
+# Import tomli_w conditionally (for config file creation)
+try:
+    import tomli_w
+except ImportError:
+    # tomli_w may not be available in all environments
+    tomli_w = None
+
 # Import commands from commands/ directory
 from arda_cli.commands.config.main import config
 from arda_cli.commands.host.main import host
@@ -54,8 +61,6 @@ def ensure_config_exists() -> None:
 
     if config_path is None:
         # No config found - create project-level config
-        import tomli_w
-
         project_config = Path.cwd() / "etc" / "arda.toml"
 
         # Ensure etc directory exists

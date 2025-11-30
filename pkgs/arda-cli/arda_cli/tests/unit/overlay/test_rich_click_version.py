@@ -6,27 +6,18 @@ Without the custom overlay, arda-cli will fail with:
 
 The overlay upgrades rich-click from nixpkgs version (1.8.9) to custom version (1.9.4)
 which includes theming support required by arda-cli.
-"""
 
-import os
+These tests are part of Phase 1 (without-core) because:
+1. The overlay is part of arda-cli's build dependencies
+2. arda-cli cannot function without the overlay
+3. This is testing arda-cli in isolation, not arda-core integration
+"""
 
 import pytest
 
-# Skip these tests in Nix build environment - they require devShell
-# Check if we're in a Nix build by looking for NIX_BUILD_CORES
-in_nix_build = os.environ.get("NIX_BUILD_CORES") is not None
-
-
-def skip_if_in_nix_build():
-    """Skip test if running in Nix build environment."""
-    if in_nix_build:
-        pytest.skip(
-            "Test requires devShell overlay infrastructure, not available in Nix build"
-        )
-
 
 @pytest.mark.fast
-@pytest.mark.with_core
+@pytest.mark.without_core
 def test_rich_click_version_is_overlaid():
     """Verify that rich-click version is 1.9.4 (overlay), not 1.8.9 (nixpkgs).
 
@@ -37,8 +28,9 @@ def test_rich_click_version_is_overlaid():
     - rich-click version would be 1.8.9 (from nixpkgs)
     - RichHelpConfiguration doesn't accept 'theme' parameter in 1.8.9
     - arda --help would fail with TypeError
+
+    This test runs in both devShell and Nix builds to verify the overlay is applied.
     """
-    skip_if_in_nix_build()
     import rich_click
 
     # The overlay version (1.9.4) vs nixpkgs version (1.8.9)
@@ -58,7 +50,7 @@ def test_rich_click_version_is_overlaid():
 
 
 @pytest.mark.fast
-@pytest.mark.with_core
+@pytest.mark.without_core
 def test_rich_click_has_theming_support():
     """Verify that RichHelpConfiguration accepts 'theme' parameter.
 
@@ -68,8 +60,9 @@ def test_rich_click_has_theming_support():
     Failure means:
     - arda --help will fail with: TypeError: RichHelpConfiguration.__init__()
       got an unexpected keyword argument 'theme'
+
+    This test runs in both devShell and Nix builds to verify the overlay is working.
     """
-    skip_if_in_nix_build()
     import inspect
 
     from rich_click.rich_help_configuration import RichHelpConfiguration
@@ -94,7 +87,7 @@ def test_rich_click_has_theming_support():
 
 
 @pytest.mark.slow
-@pytest.mark.with_core
+@pytest.mark.without_core
 def test_arda_cli_help_works():
     """Integration test: Verify arda --help command works without errors.
 
@@ -104,11 +97,10 @@ def test_arda_cli_help_works():
       argument 'theme'
 
     This is the actual user-facing symptom of the overlay not being applied.
-    """
-    skip_if_in_nix_build()
-    import subprocess
-    import sys
 
+    This test runs in both devShell and Nix builds to verify
+    the overlay works end-to-end.
+    """
     # Try to import arda_cli to ensure it can be loaded
     try:
         import arda_cli.main
@@ -118,8 +110,6 @@ def test_arda_cli_help_works():
     # Run arda --help as a subprocess to test the actual CLI
     # We just verify it exits with 0, not the output
     try:
-        # For package build: arda might not be in PATH
-        # We'll try a simple Python import test instead
         from click.testing import CliRunner
 
         from arda_cli.main import main
@@ -138,77 +128,17 @@ def test_arda_cli_help_works():
 
 
 @pytest.mark.fast
-@pytest.mark.with_core
-def test_overlay_configuration_exists():
-    """Verify that the overlay files exist and are properly configured.
-
-    This is a sanity check that the overlay infrastructure is in place.
-    """
-    skip_if_in_nix_build()
-    import os
-    import pathlib
-
-    # Navigate from the test file to the repository root
-    # Test is at: pkgs/arda-cli/arda_cli/tests/unit/overlay/test_rich_click_version.py
-    # Need to go up 7 levels to reach repo root
-    repo_root = pathlib.Path(__file__).resolve()
-    for _ in range(7):
-        repo_root = repo_root.parent
-
-    # Check for overlays in the repo root
-    overlay_dir = repo_root / "overlays"
-
-    assert overlay_dir.exists(), (
-        f"Overlays directory {overlay_dir} does not exist. "
-        "The custom overlay infrastructure is missing."
-    )
-
-    # Check specific overlay files
-    python3_overlay = overlay_dir / "python3" / "rich-click.nix"
-    assert python3_overlay.exists(), (
-        f"Rich-click overlay file {python3_overlay} does not exist. "
-        "The overlay to upgrade rich-click to 1.9.4 is missing."
-    )
-
-    # Check that flake.nix references the overlay
-    flake_nix = repo_root / "flake.nix"
-    assert flake_nix.exists(), (
-        f"flake.nix does not exist at {flake_nix}. Cannot verify overlay configuration."
-    )
-
-    with open(flake_nix) as f:
-        flake_content = f.read()
-
-    assert "overlays/default.nix" in flake_content, (
-        "flake.nix does not import overlays/default.nix. "
-        "The overlay is not being applied to nixpkgs."
-    )
-
-    assert "rich-click" in flake_content, (
-        "flake.nix does not reference rich-click. "
-        "The rich-click overlay may not be configured."
-    )
-
-
-@pytest.mark.integration
-@pytest.mark.with_core
+@pytest.mark.without_core
 def test_package_uses_overlaid_python313packages():
     """Verify that arda-cli package is built with overlaid python313Packages.
 
     This test checks that the package derivation uses the overlaid version.
-    In Nix, this means checking that python313Packages.rich-click is 1.9.4.
+    In Nix builds, we verify that the rich-click in the environment is 1.9.4.
+
+    This is a runtime verification test - it checks that the overlay actually works,
+    not whether the overlay files exist in the source tree.
     """
-    skip_if_in_nix_build()
-    import os
-    import sys
-
-    # Check if we're in a Nix build environment
-    nix_build = os.environ.get("NIX_BUILD_TOP") or os.environ.get("IN_NIX_SANDBOX")
-
-    if not nix_build:
-        pytest.skip("This test only runs during Nix build")
-
-    # In a Nix build, we can verify the package is built correctly
+    # In both devShell and Nix builds, we can verify the package is built correctly
     # by checking that the rich-click in the environment is 1.9.4
     import rich_click
 
