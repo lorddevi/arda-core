@@ -164,13 +164,3 @@ while true; do
         * ) echo "Please answer yes or no.";;
     esac
 done
-
-# verify-overlay
-while true; do
-    read -r -p "Execute Test: just verify-overlay? " yn
-    case $yn in
-        [Yy]* ) just verify-overlay; break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done

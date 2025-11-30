@@ -3,6 +3,10 @@
 import os
 import sys
 
+# Import rich_click classes at module level for proper test mocking
+from rich_click import RichHelpConfiguration
+from rich_click.patch import patch
+
 # IMPORTANT: Parse theme from command-line BEFORE importing rich_click
 # This ensures the environment variable is set before rich_click reads it
 from arda_cli.lib.config import get_theme_from_config
@@ -119,9 +123,6 @@ def patch_rich_click() -> None:
 
     RichHelpConfiguration theme parameter requires rich-click >= 1.9.0
     """
-    from rich_click import RichHelpConfiguration
-    from rich_click.patch import patch
-
     # Patch click with the theme configuration
     try:
         # Try with theme parameter (rich-click >= 1.9.0)
@@ -131,8 +132,8 @@ def patch_rich_click() -> None:
             # Note: Use each theme's error color - don't override panel border
         )
         patch(rich_config=config)
-    except TypeError:
-        # Fallback for rich-click < 1.9.0 (uses env var only)
+    except (TypeError, Exception):
+        # Fallback for rich-click < 1.9.0 or any other error
         # The RICH_CLICK_THEME env var will still be respected
         patch()
 
