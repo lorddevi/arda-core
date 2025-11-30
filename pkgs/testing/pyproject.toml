@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nixos-test-lib"
+version = "1.0.0"
+description = "Nix store setup utilities for VM tests"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+packages = ["nixos_test_lib"]
