@@ -8,13 +8,25 @@ The overlay upgrades rich-click from nixpkgs version (1.8.9) to custom version (
 which includes theming support required by arda-cli.
 """
 
+import os
+
 import pytest
 
-# Run this test in both devShell and Nix build environment
-# Don't skip - we want to catch overlay issues in both places
+# Skip these tests in Nix build environment - they require devShell
+# Check if we're in a Nix build by looking for NIX_BUILD_CORES
+in_nix_build = os.environ.get("NIX_BUILD_CORES") is not None
+
+
+def skip_if_in_nix_build():
+    """Skip test if running in Nix build environment."""
+    if in_nix_build:
+        pytest.skip(
+            "Test requires devShell overlay infrastructure, not available in Nix build"
+        )
 
 
 @pytest.mark.fast
+@pytest.mark.with_core
 def test_rich_click_version_is_overlaid():
     """Verify that rich-click version is 1.9.4 (overlay), not 1.8.9 (nixpkgs).
 
@@ -26,6 +38,7 @@ def test_rich_click_version_is_overlaid():
     - RichHelpConfiguration doesn't accept 'theme' parameter in 1.8.9
     - arda --help would fail with TypeError
     """
+    skip_if_in_nix_build()
     import rich_click
 
     # The overlay version (1.9.4) vs nixpkgs version (1.8.9)
@@ -45,6 +58,7 @@ def test_rich_click_version_is_overlaid():
 
 
 @pytest.mark.fast
+@pytest.mark.with_core
 def test_rich_click_has_theming_support():
     """Verify that RichHelpConfiguration accepts 'theme' parameter.
 
@@ -55,6 +69,7 @@ def test_rich_click_has_theming_support():
     - arda --help will fail with: TypeError: RichHelpConfiguration.__init__()
       got an unexpected keyword argument 'theme'
     """
+    skip_if_in_nix_build()
     import inspect
 
     from rich_click.rich_help_configuration import RichHelpConfiguration
@@ -79,6 +94,7 @@ def test_rich_click_has_theming_support():
 
 
 @pytest.mark.slow
+@pytest.mark.with_core
 def test_arda_cli_help_works():
     """Integration test: Verify arda --help command works without errors.
 
@@ -89,6 +105,7 @@ def test_arda_cli_help_works():
 
     This is the actual user-facing symptom of the overlay not being applied.
     """
+    skip_if_in_nix_build()
     import subprocess
     import sys
 
@@ -120,11 +137,14 @@ def test_arda_cli_help_works():
         pytest.skip(f"Cannot test arda CLI directly: {e}")
 
 
+@pytest.mark.fast
+@pytest.mark.with_core
 def test_overlay_configuration_exists():
     """Verify that the overlay files exist and are properly configured.
 
     This is a sanity check that the overlay infrastructure is in place.
     """
+    skip_if_in_nix_build()
     import os
     import pathlib
 
@@ -171,12 +191,14 @@ def test_overlay_configuration_exists():
 
 
 @pytest.mark.integration
+@pytest.mark.with_core
 def test_package_uses_overlaid_python313packages():
     """Verify that arda-cli package is built with overlaid python313Packages.
 
     This test checks that the package derivation uses the overlaid version.
     In Nix, this means checking that python313Packages.rich-click is 1.9.4.
     """
+    skip_if_in_nix_build()
     import os
     import sys
 

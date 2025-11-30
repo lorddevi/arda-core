@@ -32,6 +32,7 @@ from arda_cli.lib.config import (
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config
+@pytest.mark.with_core
 def test_config_file_discovery_in_temp_directory():
     """Test that config files are discovered correctly in temp directories."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -61,6 +62,7 @@ timestamp = false
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config
+@pytest.mark.with_core
 def test_config_loading_from_file():
     """Test that config values are loaded correctly from files."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -92,6 +94,7 @@ timestamp = false
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config
+@pytest.mark.with_core
 def test_config_getter_functions():
     """Test that config getter functions work with real files."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -125,6 +128,7 @@ timestamp = false
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config
+@pytest.mark.with_core
 def test_config_set_value():
     """Test that config values can be set and written correctly."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -193,6 +197,7 @@ verbose = true
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config
+@pytest.mark.with_core
 def test_config_writing_creates_directory():
     """Test that writing config creates necessary directories."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -217,6 +222,7 @@ def test_config_writing_creates_directory():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config
+@pytest.mark.with_core
 def test_config_default_values_when_no_file():
     """Test that default values are returned when no config file exists."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -238,6 +244,7 @@ def test_config_default_values_when_no_file():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config
+@pytest.mark.with_core
 def test_config_file_priority_order():
     """Test the priority order of config file discovery."""
     with tempfile.TemporaryDirectory() as temp_dir:

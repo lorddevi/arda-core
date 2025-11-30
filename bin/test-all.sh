@@ -35,11 +35,31 @@ while true; do
     esac
 done
 
-# test-all
+# test-with-core
 while true; do
-    read -r -p "Execute Test: just test-all? " yn
+    read -r -p "Execute Test: just test-with-core? " yn
     case $yn in
-        [Yy]* ) just test-all; break;;
+        [Yy]* ) just test-with-core; break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+# test-without-core
+while true; do
+    read -r -p "Execute Test: just test-without-core? " yn
+    case $yn in
+        [Yy]* ) just test-without-core; break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+# test-two-phase
+while true; do
+    read -r -p "Execute Test: just test-two-phase? " yn
+    case $yn in
+        [Yy]* ) just test-two-phase; break;;
         [Nn]* ) exit;;
         * ) echo "Please answer yes or no.";;
     esac
@@ -130,16 +150,6 @@ while true; do
     read -r -p "Execute Test: just test-vm-nixos-all? " yn
     case $yn in
         [Yy]* ) just test-vm-nixos-all; break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
-done
-
-# test-integration
-while true; do
-    read -r -p "Execute Test: just test-integration? " yn
-    case $yn in
-        [Yy]* ) just test-integration; break;;
         [Nn]* ) exit;;
         * ) echo "Please answer yes or no.";;
     esac

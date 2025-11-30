@@ -183,7 +183,8 @@ class OutputManager:
             # Wrap title in brackets (preserve aesthetic preference)
             title_with_brackets = (
                 f"[{self.colors['separator']}][[{self.colors['separator']}]"
-                f"[{self.colors['separator_text']}]{title}[/{self.colors['separator_text']}]"
+                f"[{self.colors['separator_text']}]{title}"
+                f"[/{self.colors['separator_text']}]"
                 f"[{self.colors['separator']}]][/{self.colors['separator']}]"
             )
             separator = Rule(

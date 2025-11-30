@@ -32,6 +32,7 @@ from arda_cli.testing.helpers.pytest_helpers import (
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_test_documentation():
     """Documentation test for VM integration functionality.
 
@@ -58,6 +59,7 @@ def test_vm_test_documentation():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_qemu_subprocess_mocking():
     """Test that VM operations can be mocked with subprocess.
 
@@ -92,6 +94,7 @@ def test_vm_qemu_subprocess_mocking():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_configuration_file_operations():
     """Test VM configuration file operations.
 
@@ -152,6 +155,7 @@ def test_vm_error_handling():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_lifecycle_operations():
     """Test VM lifecycle operations (create, start, stop, delete).
 
@@ -186,6 +190,7 @@ def test_vm_lifecycle_operations():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_snapshot_management():
     """Test VM snapshot management.
 
@@ -210,6 +215,7 @@ def test_vm_snapshot_management():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_network_configuration():
     """Test VM network configuration.
 
@@ -232,6 +238,7 @@ def test_vm_network_configuration():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_storage_management():
     """Test VM storage management.
 
@@ -256,6 +263,7 @@ def test_vm_storage_management():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_testing_workflows():
     """Test VM testing workflows.
 
@@ -278,6 +286,7 @@ def test_vm_testing_workflows():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_integration_with_nix():
     """Test VM integration with Nix flake outputs.
 
@@ -302,6 +311,7 @@ def test_vm_integration_with_nix():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_multiple_instances():
     """Test multiple VM instances management.
 
@@ -322,6 +332,7 @@ def test_vm_multiple_instances():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_resource_monitoring():
     """Test VM resource monitoring.
 
@@ -345,6 +356,7 @@ def test_vm_resource_monitoring():
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.vm
+@pytest.mark.with_core
 def test_vm_integration_test_suite():
     """Integration test suite for VM operations.
 

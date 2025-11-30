@@ -24,10 +24,6 @@ build-all: build-arda-cli build-ea-cli
 test-fast:
     python -m pytest -v -m "fast" --tb=short
 
-# Run all unit tests (fast + slow, but exclude system tests which need infrastructure)
-test-all:
-    python -m pytest -v -m "not system" --tb=short
-
 # Run only config-related tests (all types)
 test-config:
     python -m pytest -v -m "config" --tb=short
@@ -51,6 +47,40 @@ test-cli:
 # Run only Nix-related tests
 test-nix:
     python -m pytest -v -m "nix" --tb=short
+
+# =================
+# Two-Phase Testing (Following Clan-Core Pattern)
+# =================
+
+# Run tests WITHOUT arda-core dependencies (fast, isolated tests)
+# This mirrors clan-core's "without-core" pattern
+# These tests run without any arda-core infrastructure
+test-without-core:
+    @echo "==================================================================="
+    @echo "  Phase 1: Tests WITHOUT arda-core (Clan-Core Pattern)"
+    @echo "==================================================================="
+    @echo ""
+    python -m pytest -v -m "not service_runner and not impure and not with_core" --tb=short
+
+# Run tests WITH arda-core dependencies (comprehensive tests)
+# This mirrors clan-core's "with-core" pattern
+# These tests require arda-core infrastructure
+test-with-core:
+    @echo "==================================================================="
+    @echo "  Phase 2: Tests WITH arda-core (Clan-Core Pattern)"
+    @echo "==================================================================="
+    @echo ""
+    python -m pytest -v -m "not service_runner and not impure and with_core" --tb=short
+
+# Run both test phases sequentially (full test suite)
+test-two-phase:
+    @echo "==================================================================="
+    @echo "  Running Full Two-Phase Test Suite (Clan-Core Pattern)"
+    @echo "==================================================================="
+    @echo ""
+    just test-without-core
+    @echo ""
+    just test-with-core
 
 # Run VM integration tests using NixOS framework (no manual setup required)
 test-vm:
@@ -172,12 +202,8 @@ clear-vm-test-cache:
     @echo "Or rebuild with: nix build .#checks.x86_64-linux.arda-cli-vm-help --no-link"
 
 # =================
-# Integration Test Commands
+# Build & Watch Commands
 # =================
-
-# Run all integration tests (slower, requires full environment)
-test-integration:
-    python -m pytest -v -m "integration" --tb=short
 
 # Run arda-cli build-time tests (with Nix - includes all test types)
 test-arda-cli:
@@ -216,17 +242,15 @@ help:
     @echo ""
     @echo "Test Commands:"
     @echo "  test-fast       - Run fast unit tests (pre-commit compatible)"
-    @echo "  test-all        - Run all unit tests (fast + slow)"
     @echo "  test-config     - Run all config tests (unit + integration)"
     @echo "  test-config-unit     - Run only config unit tests"
     @echo "  test-config-integration - Run only config integration tests"
     @echo "  test-themes     - Run theme-related tests only"
     @echo "  test-cli        - Run CLI-related tests only"
     @echo "  test-nix        - Run Nix integration tests only"
-    @echo "  test-vm         - Run VM integration tests (NixOS framework)"
-    @echo "  test-vm-nixos   - Run NixOS VM tests (native framework)"
-    @echo "  test-vm-nixos-all - Run all checks (arda-cli-vm + treefmt)"
-    @echo "  test-integration - Run all integration tests (slower)"
+    @echo "  test-without-core - Run tests WITHOUT arda-core (fast, isolated)"
+    @echo "  test-with-core  - Run tests WITH arda-core (comprehensive)"
+    @echo "  test-two-phase  - Run both test phases sequentially (full test suite)"
     @echo "  test-arda-cli   - Run arda-cli build-time tests"
     @echo "  test-watch      - Run tests in watch mode (requires pytest-watch)"
     @echo "  verify-overlay  - Verify rich-click overlay is working correctly"
