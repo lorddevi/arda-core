@@ -1,5 +1,12 @@
-{ makeTest }:
-makeTest {
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
+{
+  name = "arda-cli-vm-config-priority";
+
   nodes.machine =
     {
       config,
@@ -8,16 +15,20 @@ makeTest {
       ...
     }:
     {
+      # arda-cli will be added by flake-module.nix via machine.systemPackages
       environment.systemPackages = [
-        (pkgs.callPackage ../../../arda-cli.nix { })
       ];
     };
 
   testScript = ''
+    # Start the VM
+    machine.start()
+    machine.wait_for_unit("default.target")
+
     # Test 1: Set global config
     print("=== Testing: Global config setup ===")
-    machine.succeed("arda config --global set theme solarized")
-    machine.succeed("arda config --global set output.verbose true")
+    machine.succeed("/tmp/arda-test/arda config --global set theme solarized")
+    machine.succeed("/tmp/arda-test/arda config --global set output.verbose true")
 
     # Verify global config file exists in XDG location
     machine.succeed("test -f /root/.config/arda/arda.toml")
@@ -29,8 +40,8 @@ makeTest {
 
     # Test 2: Set local config (should create project config)
     print("\n=== Testing: Local config setup ===")
-    machine.succeed("arda config --local set theme nord")
-    machine.succeed("arda config --local set output.timestamp false")
+    machine.succeed("/tmp/arda-test/arda config --local set theme nord")
+    machine.succeed("/tmp/arda-test/arda config --local set output.timestamp false")
 
     # Verify local config file exists
     machine.succeed("test -f etc/arda.toml")
@@ -45,7 +56,7 @@ makeTest {
 
     # Create a config view to see which theme is active
     # (The priority should be local > global)
-    result = machine.succeed("arda config view")
+    result = machine.succeed("/tmp/arda-test/arda config view")
     print(f"Config view output:\n{result}")
 
     # When we set theme nord locally, it should take precedence over solarized globally
@@ -64,7 +75,7 @@ makeTest {
 
     # Test 5: Update global config
     print("\n=== Testing: Update global config ===")
-    machine.succeed("arda config --global set theme forest")
+    machine.succeed("/tmp/arda-test/arda config --global set theme forest")
     result = machine.succeed("cat /root/.config/arda/arda.toml")
     assert "forest" in result
     print("✅ Global config can be updated")
@@ -77,8 +88,8 @@ makeTest {
 
     # Test 7: Multiple config operations
     print("\n=== Testing: Multiple config operations ===")
-    machine.succeed("arda config --local set output.verbose false")
-    machine.succeed("arda config --global set output.verbose true")
+    machine.succeed("/tmp/arda-test/arda config --local set output.verbose false")
+    machine.succeed("/tmp/arda-test/arda config --global set output.verbose true")
     result_local = machine.succeed("cat etc/arda.toml")
     result_global = machine.succeed("cat /root/.config/arda/arda.toml")
     assert "false" in result_local
@@ -87,7 +98,7 @@ makeTest {
 
     # Test 8: List config locations
     print("\n=== Testing: Config locations help ===")
-    result = machine.succeed("arda config --help")
+    result = machine.succeed("/tmp/arda-test/arda config --help")
     assert "--global" in result
     assert "--local" in result
     assert "XDG" in result or "config" in result

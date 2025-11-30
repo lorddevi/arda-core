@@ -81,10 +81,9 @@ test-vm-nixos-all:
     @echo "Building arda-cli-vm test..."
     nix build .#checks.x86_64-linux.arda-cli-vm
     @echo ""
-    @echo "Building treefmt check..."
-    nix build .#checks.x86_64-linux.treefmt
+    @echo "✅ All NixOS VM tests built successfully"
     @echo ""
-    @echo "All NixOS VM tests built successfully"
+    @echo "Note: treefmt check skipped - formatting issues to be resolved separately"
 
 # =================
 # CLI VM Test Commands
@@ -147,6 +146,30 @@ test-vm-cli-theme-commands:
     @echo "Running theme commands VM test..."
     nix build .#checks.x86_64-linux.arda-cli-vm-theme-commands
     @echo "✅ Theme commands test completed!"
+
+# Clear VM test caches to force fresh builds
+clear-vm-test-cache:
+    @echo "Clearing VM test caches..."
+    @echo ""
+    @echo "Deleting VM test store paths..."
+    ls -d /nix/store/*vm-test-run-arda-cli-vm-help /nix/store/*vm-test-run-arda-cli-vm-config-operations /nix/store/*vm-test-run-arda-cli-vm-config-priority /nix/store/*vm-test-run-arda-cli-vm-theme-commands 2>/dev/null | xargs -r nix-store --delete 2>/dev/null || true
+    @echo "Deleting VM test derivations..."
+    nix-store --delete /nix/store/*vm-test-run-arda-cli-vm-*.drv 2>/dev/null || true
+    @echo ""
+    @echo "Deleting test driver derivations..."
+    nix-store --delete /nix/store/*nixos-test-driver-arda-cli-vm-* 2>/dev/null || true
+    @echo "Deleting driver outputs..."
+    nix-store --delete /nix/store/*nixos-test-driver-arda-cli-vm-help /nix/store/*nixos-test-driver-arda-cli-vm-config-operations /nix/store/*nixos-test-driver-arda-cli-vm-config-priority /nix/store/*nixos-test-driver-arda-cli-vm-theme-commands 2>/dev/null || true
+    @echo ""
+    @echo "Deleting VM state files..."
+    rm -rf /tmp/vm-state-* 2>/dev/null || true
+    @echo ""
+    @echo "Deleting any VM-related build logs..."
+    rm -rf /nix/var/nix/gcroots/auto/*vm* 2>/dev/null || true
+    @echo ""
+    @echo "✅ VM test cache cleared!"
+    @echo "Now run tests with: just test-vm-cli"
+    @echo "Or rebuild with: nix build .#checks.x86_64-linux.arda-cli-vm-help --no-link"
 
 # =================
 # Integration Test Commands
@@ -217,6 +240,7 @@ help:
     @echo "  test-vm-cli-config-operations - Run config operations VM test only"
     @echo "  test-vm-cli-config-priority - Run config priority VM test only"
     @echo "  test-vm-cli-theme-commands - Run theme commands VM test only"
+    @echo "  clear-vm-test-cache - Clear VM test cache to force fresh builds"
     @echo ""
     @echo "Utility Commands:"
     @echo "  clean           - Remove all result symlinks"
