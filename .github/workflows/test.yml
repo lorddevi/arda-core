@@ -68,6 +68,7 @@ jobs:
           path: |
             result/
             test-reports/
+            coverage-*/
 
   # Run all tests (including integration, excluding VM tests)
   test-all:
@@ -165,6 +166,14 @@ jobs:
           echo "✅ Validate: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
           echo "✅ Fast Tests: ${{ needs.test-fast.result }}" >> $GITHUB_STEP_SUMMARY
           echo "✅ All Tests: ${{ needs.test-all.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Coverage Reports" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Coverage reports are available in the test-results artifact:" >> $GITHUB_STEP_SUMMARY
+          echo "- HTML reports: \`test-reports/coverage-*/index.html\`" >> $GITHUB_STEP_SUMMARY
+          echo "- XML reports: \`test-reports/coverage-*.xml\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Coverage thresholds: Phase 1=15% (unit), Phase 2=30% (integration)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [[ "${{ needs.validate.result }}" == "success" && "${{ needs.test-fast.result }}" == "success" && "${{ needs.test-all.result }}" == "success" ]]; then
             echo "🎉 All tests passed!" >> $GITHUB_STEP_SUMMARY

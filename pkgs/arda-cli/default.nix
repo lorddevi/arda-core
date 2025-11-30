@@ -8,7 +8,9 @@
   pydantic,
   rich-click,
   tomli-w,
-  nix-select,
+  # nix-select is optional - required only for nix integration features
+  # VM tests and simple CLI usage don't need this
+  nix-select ? null,
   jq,
   runCommand,
   pytest,
@@ -17,36 +19,52 @@
 }:
 
 let
-  # Create arda source with nix-select integration
+  # Create arda source with optional nix-select integration
   # This mirrors clan-cli's cliSource pattern but adapted for arda
   ardaSource =
     source:
     runCommand "arda-cli-source"
-      {
-        nativeBuildInputs = [ jq ];
-      }
-      ''
-        # Copy source to output
-        cp -r ${source} $out
-        chmod -R +w $out
+      (
+        {
+          nativeBuildInputs = [ jq ];
+        }
+        // lib.optionalAttrs (nix-select != null) {
+          # When nix-select is available, include it in nativeBuildInputs
+          # and read its hash from flake.lock
+          _nix-select = nix-select;
+        }
+      )
+      (
+        ''
+          # Copy source to output
+          cp -r ${source} $out
+          chmod -R +w $out
 
-        # Remove old symlinks if they exist
-        rm -f $out/arda_cli/select
-        rm -f $out/arda_lib/select
+          # Remove old symlinks if they exist
+          rm -f $out/arda_cli/select
+          rm -f $out/arda_lib/select
+        ''
+        + lib.optionalString (nix-select != null) ''
+          # Substitute nix-select hash into Python code
+          # This allows Python to construct correct flake references to nix-select
+          substituteInPlace $out/arda_lib/nix/nix.py \
+            --replace-fail '@nix_select_hash@' "$(jq -r '.nodes."nix-select".locked.narHash' ${../../flake.lock})"
 
-        # Substitute nix-select hash into Python code
-        # This allows Python to construct correct flake references to nix-select
-        substituteInPlace $out/arda_lib/nix/nix.py \
-          --replace-fail '@nix_select_hash@' "$(jq -r '.nodes."nix-select".locked.narHash' ${../../flake.lock})"
-
-        # Create symlink to nix-select library
-        # This makes the selector functions available in Nix expressions
-        ln -sf ${nix-select} $out/arda_lib/select
-        ln -sf ${nix-select} $out/arda_cli/select
-
-        # Ensure testing infrastructure is in place for build-time tests
-        # (Note: pytest.ini and testing/ are in the arda-cli source directory)
-      '';
+            # Create symlink to nix-select library
+            # This makes the selector functions available in Nix expressions
+            ln -sf ${nix-select} $out/arda_lib/select
+            ln -sf ${nix-select} $out/arda_cli/select
+        ''
+        + lib.optionalString (nix-select == null) ''
+          # If nix-select is not available, use a placeholder
+          substituteInPlace $out/arda_lib/nix/nix.py \
+            --replace-fail '@nix_select_hash@' "null"
+        ''
+        + ''
+          # Ensure testing infrastructure is in place for build-time tests
+          # (Note: pytest.ini and testing/ are in the arda-cli source directory)
+        ''
+      );
 in
 python.pkgs.buildPythonApplication {
   pname = "arda_cli";
@@ -103,6 +121,8 @@ python.pkgs.buildPythonApplication {
       --cov=./arda_lib \
       --cov-report=term-missing \
       --cov-report=html:test-reports/coverage-unit \
+      --cov-report=xml:test-reports/coverage-unit.xml \
+      --cov-fail-under=15 \
       --junitxml=test-reports/unit-tests.xml \
       ./arda_cli/tests/unit \
       ./arda_lib/tests
@@ -120,6 +140,8 @@ python.pkgs.buildPythonApplication {
       --cov=./arda_lib \
       --cov-report=term-missing \
       --cov-report=html:test-reports/coverage-integration \
+      --cov-report=xml:test-reports/coverage-integration.xml \
+      --cov-fail-under=30 \
       --junitxml=test-reports/integration-tests.xml \
       ./arda_cli/tests/integration
 
@@ -132,7 +154,11 @@ python.pkgs.buildPythonApplication {
     echo "  Unit tests:           test-reports/unit-tests.xml"
     echo "  Integration tests:    test-reports/integration-tests.xml"
     echo "  Coverage (unit):      test-reports/coverage-unit/index.html"
+    echo "  Coverage (unit XML):  test-reports/coverage-unit.xml"
     echo "  Coverage (integration): test-reports/coverage-integration/index.html"
+    echo "  Coverage (integration XML): test-reports/coverage-integration.xml"
+    echo ""
+    echo "Coverage thresholds: Phase 1=15% (unit), Phase 2=30% (integration) - Goal: 70%"
     echo ""
   '';
 
