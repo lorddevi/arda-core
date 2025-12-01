@@ -7,15 +7,33 @@
 
 # Build arda-cli with result symlink at ./results/arda-cli
 # Ensures results are always created in project root, never in subdirectories
+# NOTE: Run this command from the project root directory
 build-arda-cli:
-    # Change to project root directory first to ensure consistent result location
-    cd {{ justfile_directory() }} && nix build --out-link ./results/arda-cli .#arda-cli
+    #!/usr/bin/env bash
+    set -e
+    # Verify we're in the project root (contains flake.nix)
+    if [ ! -f flake.nix ]; then
+        echo "Error: build-arda-cli must be run from the project root directory"
+        echo "Current directory: $(pwd)"
+        echo "Please run: cd /home/ld/src/arda-core && just build-arda-cli"
+        exit 1
+    fi
+    nix build --out-link ./results/arda-cli .#arda-cli
 
 # Build ea-cli with result symlink at ./results/ea-cli
 # Ensures results are always created in project root, never in subdirectories
+# NOTE: Run this command from the project root directory
 build-ea-cli:
-    # Change to project root directory first to ensure consistent result location
-    cd {{ justfile_directory() }} && nix build --out-link ./results/ea-cli .#ea-cli
+    #!/usr/bin/env bash
+    set -e
+    # Verify we're in the project root (contains flake.nix)
+    if [ ! -f flake.nix ]; then
+        echo "Error: build-ea-cli must be run from the project root directory"
+        echo "Current directory: $(pwd)"
+        echo "Please run: cd /home/ld/src/arda-core && just build-ea-cli"
+        exit 1
+    fi
+    nix build --out-link ./results/ea-cli .#ea-cli
 
 # Build all CLI tools
 build-all: build-arda-cli build-ea-cli
