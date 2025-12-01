@@ -43,10 +43,65 @@ warnings.filterwarnings("ignore", message="RichClickTheme.*not found")
 # Patch click with theme configuration
 patch_rich_click()
 
-# Get default settings from config
-DEFAULT_THEME = get_theme_from_config()
-DEFAULT_VERBOSE = get_verbose_from_config()
-DEFAULT_TIMESTAMP = get_timestamp_from_config()
+
+# Module-level defaults - computed lazily to avoid test pollution
+# These values are computed on first module import and then cached.
+# In tests, they can be reset by clearing _default_config_cache.
+def _get_default_config() -> tuple[str, bool, bool]:
+    """Get default config values from config files or defaults."""
+    from arda_cli.lib.config import (
+        get_theme_from_config,
+    )
+
+    return (
+        get_theme_from_config(),
+        get_verbose_from_config(),
+        get_timestamp_from_config(),
+    )
+
+
+# Cache for default config values (None = not yet computed)
+_default_config_cache: tuple[str, bool, bool] | None = None
+
+
+def _get_default_theme() -> str:
+    """Get default theme (reads config on first call, then cached)."""
+    global _default_config_cache
+    if _default_config_cache is None:
+        _default_config_cache = _get_default_config()
+    return _default_config_cache[0]
+
+
+def _get_default_verbose() -> bool:
+    """Get default verbose setting (reads config on first call, then cached)."""
+    global _default_config_cache
+    if _default_config_cache is None:
+        _default_config_cache = _get_default_config()
+    return _default_config_cache[1]
+
+
+def _get_default_timestamp() -> bool:
+    """Get default timestamp setting (reads config on first call, then cached)."""
+    global _default_config_cache
+    if _default_config_cache is None:
+        _default_config_cache = _get_default_config()
+    return _default_config_cache[2]
+
+
+def reset_default_config_cache() -> None:
+    """Reset the cached default config values.
+
+    This is useful in tests to ensure clean state between test runs.
+    """
+    global _default_config_cache
+    _default_config_cache = None
+
+
+# Export as module-level constants for click defaults
+# These are computed on first module import
+DEFAULT_THEME = _get_default_theme()
+DEFAULT_VERBOSE = _get_default_verbose()
+DEFAULT_TIMESTAMP = _get_default_timestamp()
 
 
 def ensure_config_exists() -> None:

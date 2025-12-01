@@ -29,6 +29,49 @@ from arda_cli.lib.config import (
 )
 
 
+@pytest.fixture(autouse=True)
+def clean_config_state():
+    """Ensure clean config state before each test.
+
+    This fixture runs before every test in this file to ensure no
+    config files from previous tests pollute the test environment.
+    """
+    # Clean up any config files that might exist
+    project_config = Path.cwd() / "etc" / "arda.toml"
+    if project_config.exists():
+        project_config.unlink()
+
+    xdg_config = Path.home() / ".config" / "arda" / "arda.toml"
+    if xdg_config.exists():
+        xdg_config.unlink()
+
+    # Ensure etc directory doesn't exist if empty
+    etc_dir = Path.cwd() / "etc"
+    if etc_dir.exists() and not any(etc_dir.iterdir()):
+        etc_dir.rmdir()
+
+    # Ensure XDG config directory doesn't exist if empty
+    xdg_dir = Path.home() / ".config" / "arda"
+    if xdg_dir.exists() and not any(xdg_dir.iterdir()):
+        xdg_dir.rmdir()
+
+    # Yield to run the test
+    yield
+
+    # Clean up after test
+    if project_config.exists():
+        project_config.unlink()
+
+    if xdg_config.exists():
+        xdg_config.unlink()
+
+    if etc_dir.exists() and not any(etc_dir.iterdir()):
+        etc_dir.rmdir()
+
+    if xdg_dir.exists() and not any(xdg_dir.iterdir()):
+        xdg_dir.rmdir()
+
+
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config

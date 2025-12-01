@@ -47,7 +47,7 @@ class BaseCommandTest:
         catch_exceptions: bool = False,
         standalone_mode: bool = False,
         obj: dict[str, Any] | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Any:
         """Invoke a Click command with CliRunner.
 
@@ -93,14 +93,12 @@ class BaseCommandTest:
 
         """
         assert result.exit_code == 0, (
-            f"Command failed with exit code {result.exit_code}. "
-            f"Output: {result.output}"
+            f"Command failed with exit code {result.exit_code}. Output: {result.output}"
         )
 
         if output_contains:
             assert output_contains.lower() in result.output.lower(), (
-                f"Expected '{output_contains}' in output. "
-                f"Got: {result.output}"
+                f"Expected '{output_contains}' in output. Got: {result.output}"
             )
 
     def assert_command_failure(
@@ -119,8 +117,7 @@ class BaseCommandTest:
 
         if error_contains:
             assert error_contains.lower() in result.output.lower(), (
-                f"Expected '{error_contains}' in error output. "
-                f"Got: {result.output}"
+                f"Expected '{error_contains}' in error output. Got: {result.output}"
             )
 
     def assert_help_output(self, result: Any) -> None:

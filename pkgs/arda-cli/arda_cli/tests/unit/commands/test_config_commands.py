@@ -36,7 +36,16 @@ class TestParseConfigValue:
     def test_parse_config_value_verbose_true_variants(self):
         """Test all true boolean variants for verbose."""
         true_variants = [
-            "true", "True", "TRUE", "1", "yes", "Yes", "YES", "on", "On", "ON"
+            "true",
+            "True",
+            "TRUE",
+            "1",
+            "yes",
+            "Yes",
+            "YES",
+            "on",
+            "On",
+            "ON",
         ]
 
         for variant in true_variants:
@@ -47,7 +56,16 @@ class TestParseConfigValue:
     def test_parse_config_value_verbose_false_variants(self):
         """Test all false boolean variants for verbose."""
         false_variants = [
-            "false", "False", "FALSE", "0", "no", "No", "NO", "off", "Off", "OFF"
+            "false",
+            "False",
+            "FALSE",
+            "0",
+            "no",
+            "No",
+            "NO",
+            "off",
+            "Off",
+            "OFF",
         ]
 
         for variant in false_variants:

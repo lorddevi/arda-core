@@ -45,9 +45,7 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
 
     def test_view_no_args(self, runner):
         """Test: arda config view (show all config values)."""
-        result = self.invoke_command(
-            runner, config, ["view"], standalone_mode=False
-        )
+        result = self.invoke_command(runner, config, ["view"], standalone_mode=False)
         # Command should succeed (even with no config file)
         assert result.exit_code == 0
         # Output should show configuration or default values
@@ -74,20 +72,14 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
     def test_view_global_flag(self, runner):
         """Test: arda config --global view (use global config)."""
         result = self.invoke_command(
-            runner,
-            config,
-            ["--global", "view"],
-            standalone_mode=False
+            runner, config, ["--global", "view"], standalone_mode=False
         )
         assert result.exit_code == 0
 
     def test_view_local_flag(self, runner):
         """Test: arda config --local view (use local config)."""
         result = self.invoke_command(
-            runner,
-            config,
-            ["--local", "view"],
-            standalone_mode=False
+            runner, config, ["--local", "view"], standalone_mode=False
         )
         assert result.exit_code == 0
 
@@ -101,9 +93,7 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
             runner, config, ["set", "theme", "nord"], standalone_mode=False
         )
         assert result.exit_code == 0
-        assert (
-            "nord" in result.output.lower() or "theme" in result.output.lower()
-        )
+        assert "nord" in result.output.lower() or "theme" in result.output.lower()
 
     def test_set_verbose_true(self, runner):
         """Test: arda config set output.verbose true (full key with boolean)."""
@@ -153,12 +143,10 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
             runner,
             config,
             ["--global", "set", "theme", "forest"],
-            standalone_mode=False
+            standalone_mode=False,
         )
         assert result.exit_code == 0
-        assert (
-            "forest" in result.output.lower() or "theme" in result.output.lower()
-        )
+        assert "forest" in result.output.lower() or "theme" in result.output.lower()
 
     def test_set_local_flag(self, runner):
         """Test: arda config --local set theme solarized (write to local config)."""
@@ -166,12 +154,10 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
             runner,
             config,
             ["--local", "set", "theme", "solarized"],
-            standalone_mode=False
+            standalone_mode=False,
         )
         assert result.exit_code == 0
-        assert (
-            "solarized" in result.output.lower() or "theme" in result.output.lower()
-        )
+        assert "solarized" in result.output.lower() or "theme" in result.output.lower()
 
     # ============================================================
     # TEST INIT COMMAND
@@ -181,9 +167,9 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
         """Test: arda config init --force (creates config file)."""
         with runner.isolated_filesystem():
             # Mock tomli_w module which may not be available in test environment
-            with patch.dict('sys.modules', {'tomli_w': type(sys)('tomli_w')}) as _:
+            with patch.dict("sys.modules", {"tomli_w": type(sys)("tomli_w")}) as _:
                 # Create a minimal tomli_w module mock
-                sys.modules['tomli_w'].dump = lambda data, f: None
+                sys.modules["tomli_w"].dump = lambda data, f: None
 
                 result = self.invoke_command(
                     runner, config, ["init", "--force"], standalone_mode=False
@@ -205,15 +191,13 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
         """Test: arda config --local init --force (creates local config)."""
         with runner.isolated_filesystem():
             result = self.invoke_command(
-                runner,
-                config,
-                ["--local", "init", "--force"],
-                standalone_mode=False
+                runner, config, ["--local", "init", "--force"], standalone_mode=False
             )
             assert result.exit_code == 0
             assert (
-            "initialized" in result.output.lower() or "config" in result.output.lower()
-        )
+                "initialized" in result.output.lower()
+                or "config" in result.output.lower()
+            )
 
     # ============================================================
     # TEST HELP AND CALLBACKS
@@ -270,9 +254,7 @@ class TestConfigCommandsWithCliRunner(BaseCommandTest):
 
     def test_config_without_subcommand_shows_help(self, runner):
         """Test: arda config (no subcommand, should show help)."""
-        result = self.invoke_command(
-            runner, config, [], standalone_mode=False
-        )
+        result = self.invoke_command(runner, config, [], standalone_mode=False)
         # Command should succeed and show help
         assert result.exit_code == 0
         assert "Usage:" in result.output
