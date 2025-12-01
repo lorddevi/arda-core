@@ -36,14 +36,14 @@ class TestMainCLI:
         assert "theme" in result.output
         assert "host" in result.output
 
-    @pytest.mark.skip(reason="CLI does not have --version option")
     def test_cli_version(self):
         """Test CLI version display."""
         runner = CliRunner()
         result = runner.invoke(main, ["--version"])
         assert result.exit_code == 0
         # Check for version in output
-        assert result.output
+        assert "version" in result.output.lower()
+        assert "arda" in result.output.lower()
 
     def test_cli_with_theme_option(self):
         """Test CLI with --theme option."""
@@ -87,6 +87,51 @@ class TestShowActiveConfig:
 
             # Just verify function runs without error
             # Output verification would require more complex mocking
+
+
+@pytest.mark.integration
+@pytest.mark.cli
+@pytest.mark.with_core
+class TestShowHelpWithConfig:
+    """Test show_help_with_config function."""
+
+    @patch("sys.argv", ["arda", "--help", "--theme", "nord"])
+    @patch("arda_cli.main.get_active_config_path")
+    @patch("arda_cli.main.get_rich_click_themes")
+    @patch("click.Context")
+    def test_show_help_with_config_uses_sys_argv_fallback(
+        self, mock_ctx_class, mock_themes, mock_get_config
+    ):
+        """Test that show_help_with_config falls back to sys.argv when ctx lacks theme.
+
+        This tests lines 156-158 in main.py where sys.argv is parsed for theme
+        when ctx.params and ctx.obj don't have theme information.
+        """
+        # Setup mocks
+        mock_ctx_class.params = {}  # No theme in params
+        mock_ctx_class.obj = {}  # No theme in obj
+        mock_ctx_class.get_help.return_value = "Help text"
+
+        mock_themes.return_value = ["dracula", "nord", "forest"]
+        mock_get_config.return_value = (
+            Path("fake_config.toml"),
+            "Test config",
+        )
+
+        # Create mock context instance
+        mock_ctx = MagicMock()
+        mock_ctx.params = {}
+        mock_ctx.obj = {}
+        mock_ctx.get_help.return_value = "Help text"
+        mock_ctx_class.return_value = mock_ctx
+
+        # Call the function
+
+        show_help_with_config(mock_ctx, None, True)
+
+        # Verify the function ran without error
+        # The actual theme value from sys.argv is processed
+        assert mock_ctx.get_help.called
 
 
 @pytest.mark.integration

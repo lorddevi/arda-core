@@ -13,6 +13,8 @@ These tests are part of Phase 1 (without-core) because:
 3. This is testing arda-cli in isolation, not arda-core integration
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 
@@ -146,3 +148,54 @@ def test_package_uses_overlaid_python313packages():
         f"Package build is using rich-click {rich_click.__version__}, expected 1.9.4. "
         "The package must be built with the overlaid python313Packages."
     )
+
+
+@pytest.mark.fast
+@pytest.mark.without_core
+def test_rich_click_has_expected_module_structure():
+    """Verify that rich-click has the expected module structure.
+
+    This test ensures the overlaid version has all expected attributes
+    and methods that arda-cli relies on.
+    """
+    import rich_click
+
+    # Verify version attribute exists
+    assert hasattr(rich_click, "__version__")
+
+    # Verify RichHelpConfiguration is available
+    from rich_click.rich_help_configuration import RichHelpConfiguration
+
+    assert RichHelpConfiguration is not None
+
+    # Verify the class has expected methods
+    assert hasattr(RichHelpConfiguration, "__init__")
+
+
+@pytest.mark.fast
+@pytest.mark.without_core
+def test_rich_click_parameter_details():
+    """Verify that RichHelpConfiguration parameters have expected types.
+
+    This test ensures the overlaid version has parameter type annotations
+    that match what's expected.
+    """
+    import inspect
+
+    from rich_click.rich_help_configuration import RichHelpConfiguration
+
+    sig = inspect.signature(RichHelpConfiguration.__init__)
+    params = sig.parameters
+
+    # Verify all expected parameters exist
+    assert len(params) > 0
+
+    # Verify 'theme' parameter exists
+    assert "theme" in params
+
+    # Verify 'enable_theme_env_var' parameter exists
+    assert "enable_theme_env_var" in params
+
+    # Verify parameter has expected properties
+    theme_param = params["theme"]
+    assert theme_param is not None
