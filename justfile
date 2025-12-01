@@ -226,7 +226,7 @@ coverage:
     @echo "  Running Tests with Coverage Report"
     @echo "==================================================================="
     @echo ""
-    cd pkgs/arda-cli && python -m pytest arda_cli/tests/ --cov=arda_cli --cov-report=term-missing --maxfail=999 || true
+    cd pkgs/arda-cli && python -m pytest arda_cli/tests/ --cov arda_cli --cov arda_lib --cov-report=term-missing --maxfail=999 || true
     @echo ""
     @echo "Coverage report generated!"
 
@@ -236,7 +236,7 @@ coverage-detailed:
     @echo "  Running Tests with Detailed Coverage Analysis"
     @echo "==================================================================="
     @echo ""
-    cd pkgs/arda-cli && python -m pytest arda_cli/tests/ -v --cov=arda_cli --cov-report=term-missing --cov-report=html --maxfail=999 || true
+    cd pkgs/arda-cli && python -m pytest arda_cli/tests/ -v --cov arda_cli --cov arda_lib --cov-report=term-missing --cov-report=html --maxfail=999 || true
     @echo ""
     @echo "Coverage reports generated:"
     @echo "  - Terminal: See above"
