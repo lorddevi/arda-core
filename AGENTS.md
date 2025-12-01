@@ -66,21 +66,98 @@
 - Balanced: `tokensNum=3000-5000` (typical research)
 - Deep dive: `tokensNum=5000+` (complex topics)
 
-### mcp 'nixos' - NixOS Ecosystem
-**Use for:** NixOS packages, options, version history, flakes
+### mcp 'nixos' - Comprehensive Nix Ecosystem
+**Use for:** Complete NixOS ecosystem - packages, options, version history, Home Manager, nix-darwin, flakes
 
+**Note:** No Nix/NixOS installation required! Works on Windows, macOS, Linux.
+
+#### 🔍 Core NixOS Tools (130K+ packages, 22K+ options)
 **Best for:**
 - Finding NixOS packages (`nixos_search`)
-- Looking up configuration options (`nixos_options_by_prefix`)
-- Home Manager settings (`home_manager_info`)
-- Package version history (`nixhub_package_versions`)
-- Flake searches (`nixos_flakes_search`)
+- Looking up configuration options (`nixos_info`)
+- Package/option statistics (`nixos_stats`)
+- Available channels (`nixos_channels`)
+
+**Tools:**
+- `nixos_search(query, type, channel)` - Search packages, options, or programs
+- `nixos_info(name, type, channel)` - Get detailed info about packages/options
+- `nixos_stats(channel)` - Package and option counts
+- `nixos_channels()` - List all available channels
 
 **When to use:**
+- ✅ Finding packages for NixOS configurations
+- ✅ Looking up option documentation (services, programs, etc.)
+- ✅ Checking what's available in specific channels
+
+#### 📦 Version History Tools (via NixHub.io)
+**Best for:**
+- Package version tracking with commit hashes
+- Finding specific versions for reproducible builds
+- Historical dependency analysis
+
+**Tools:**
+- `nixhub_package_versions(package, limit)` - Get version history with commit hashes
+- `nixhub_find_version(package, version)` - Smart search for specific versions
+
+**When to use:**
+- ✅ Pinning specific package versions
+- ✅ Finding historical versions for debugging
+- ✅ Reproducible builds with exact commit references
+
+#### 🏠 Home Manager Tools (4K+ options, 131 categories)
+**Best for:**
+- User configuration options
+- Home directory management
+- Dotfiles and user services
+
+**Tools:**
+- `home_manager_search(query)` - Search user config options
+- `home_manager_info(name)` - Get option details (with suggestions!)
+- `home_manager_stats()` - See what's available
+- `home_manager_list_options()` - Browse all 131 categories
+- `home_manager_options_by_prefix(prefix)` - Explore options by prefix
+
+**When to use:**
+- ✅ User configuration (home.manager, git, ssh, etc.)
+- ✅ Dotfiles management
+- ✅ User-level services
+
+#### 🍎 nix-darwin Tools (1K+ options, 21 categories)
+**Best for:**
+- macOS system configuration via Nix
+- Darwin-specific options
+
+**Tools:**
+- `darwin_search(query)` - Search macOS options
+- `darwin_info(name)` - Get option details
+- `darwin_stats()` - macOS configuration statistics
+- `darwin_list_options()` - Browse all 21 categories
+- `darwin_options_by_prefix(prefix)` - Explore macOS options
+
+**When to use:**
+- ✅ macOS system configuration
+- ✅ Darwin-specific services and settings
+
+#### 🔥 Flake Search
+**Best for:**
+- Community packages and templates
+
+**Tools:**
+- `nixos_flakes_search(query)` - Search community flakes
+- `nixos_flakes_stats()` - Flake ecosystem statistics
+
+**When to use:**
+- ✅ Finding community flakes
+- ✅ Templates and shared configurations
+- ✅ External Nix resources
+
+**When to use NixOS MCP:**
 - ✅ Any NixOS-related work (arda-core is a NixOS orchestration system!)
 - ✅ Finding packages to include in NixOS configurations
-- ✅ Looking up configuration option details
+- ✅ Looking up configuration option details for NixOS, Home Manager, or nix-darwin
 - ✅ Checking package availability and versions
+- ✅ Version history and commit tracking for reproducibility
+- ✅ Exploring flake community resources
 
 ### mcp 'jump' - Justfile Integration
 **Use for:** Just commands and automation
@@ -108,7 +185,22 @@ Given arda-core's niche nature as a NixOS orchestration system:
 ```bash
 # Research NixOS service configuration for a feature
 exa get_code_context_exa --query "nixos service configuration systemd examples" --tokensNum 3000
+
+# Find and explore NixOS packages
 nixos_search --query "ssh configuration"
+nixos_info --name "openssh" --type "package"
+nixos_channels
+
+# Check Home Manager options for user configs
+home_manager_search --query "git"
+home_manager_info --name "programs.git.enable"
+
+# Find specific package versions for reproducibility
+nixhub_package_versions --package_name "python" --limit 10
+nixhub_find_version --package_name "ruby" --version "2.6.7"
+
+# Search community flakes
+nixos_flakes_search --query "arda"
 exa web_search_exa --query "arda-core nix orchestration patterns" --type deep
 ```
 
