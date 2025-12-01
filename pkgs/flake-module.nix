@@ -17,5 +17,17 @@
           inherit (python313Packages) pytest pytest-xdist pytest-cov;
         };
       };
+
+      apps = {
+        # Make arda-cli available via nix run
+        arda-cli = {
+          type = "app";
+          program = "${python313Packages.callPackage ./arda-cli/default.nix {
+            inherit (inputs) nix-select;
+            inherit (pkgs) jq runCommand;
+            inherit (python313Packages) pytest pytest-xdist pytest-cov;
+          }}/bin/arda";
+        };
+      };
     };
 }

@@ -89,7 +89,7 @@ You: "Yes"
 
 ---
 
-## Phase 0: Documentation (Critical First Step)
+## Documentation: Critical First Step
 
 🚨 **For brownfield projects: Always ensure adequate AI-usable documentation before planning**
 
@@ -159,7 +159,7 @@ If you have documentation but files are huge (>500 lines, 10+ level 2 sections):
 | **A**    | No documentation                           | `document-project`         | Only option - generate from scratch     |
 | **B**    | Docs exist but massive/outdated/incomplete | `document-project`         | Safer to regenerate than trust bad docs |
 | **C**    | Good docs but no structure                 | `shard-doc` → `index-docs` | Structure existing content for AI       |
-| **D**    | Confirmed AI-optimized docs with index.md  | Skip Phase 0               | Rare - only if you're 100% confident    |
+| **D**    | Confirmed AI-optimized docs with index.md  | Skip Documentation         | Rare - only if you're 100% confident    |
 
 ### Scenario A: No Documentation (Most Common)
 
@@ -231,7 +231,7 @@ If you have **good, current documentation** but it's in massive files:
 
 ### Scenario D: Confirmed AI-Optimized Documentation (Rare)
 
-**Action: Skip Phase 0**
+**Action: Skip Documentation**
 
 Only skip if ALL conditions met:
 
@@ -291,9 +291,10 @@ See the [Workflows section in BMM README](../README.md) for details.
 
 **BMad Method/Enterprise:** Use `prd` workflow
 
-- Creates PRD.md + epic breakdown
+- Creates PRD.md with FRs/NFRs only
 - References existing architecture
 - Plans integration points
+- Epics+Stories created AFTER architecture phase
 
 **Brownfield-specific:** See [Scale Adaptive System](./scale-adaptive-system.md) for complete workflow paths by track.
 
@@ -309,7 +310,8 @@ See the [Workflows section in BMM README](../README.md) for details.
 **Workflows:**
 
 - `create-architecture` - Extend architecture docs (BMad Method/Enterprise)
-- `solutioning-gate-check` - Validate before implementation (BMad Method/Enterprise)
+- `create-epics-and-stories` - Create epics and stories AFTER architecture
+- `implementation-readiness` - Validate before implementation (BMad Method/Enterprise)
 
 ### Phase 4: Implementation (All Tracks)
 
@@ -473,8 +475,8 @@ Document in tech-spec/architecture:
 
 1. **Document:** Run `document-project` (Deep scan) - Critical for understanding existing UI patterns
 2. **Analyze:** Load Analyst → `research` (if evaluating analytics libraries)
-3. **Plan:** Load PM → `prd`
-4. **Solution:** Load Architect → `create-architecture` → `solutioning-gate-check`
+3. **Plan:** Load PM → `prd` (creates FRs/NFRs)
+4. **Solution:** Load Architect → `create-architecture` → `create-epics-and-stories` → `implementation-readiness`
 5. **Implement:** Sprint-based (10-15 stories)
    - Load SM → `sprint-planning`
    - Per epic: `epic-tech-context` → stories
@@ -495,10 +497,11 @@ Document in tech-spec/architecture:
 
 1. **Document:** Run `document-project` (Exhaustive if not documented) - **Mandatory**
 2. **Analyze:** Load Analyst → `research` (WebSocket vs WebRTC vs CRDT)
-3. **Plan:** Load PM → `prd`
+3. **Plan:** Load PM → `prd` (creates FRs/NFRs)
 4. **Solution:**
    - Load Architect → `create-architecture` (extend for real-time layer)
-   - Load Architect → `solutioning-gate-check`
+   - Load Architect → `create-epics-and-stories`
+   - Load Architect → `implementation-readiness`
 5. **Implement:** Sprint-based (20-30 stories)
 
 **Time:** 3-6 weeks
@@ -518,13 +521,14 @@ Document in tech-spec/architecture:
    - `brainstorm-project` - Explore multi-tenancy approaches
    - `research` - Database sharding, tenant isolation, pricing
    - `product-brief` - Strategic document
-3. **Plan:** Load PM → `prd` (comprehensive)
+3. **Plan:** Load PM → `prd` (comprehensive FRs/NFRs)
 4. **Solution:**
    - `create-architecture` - Full system architecture
    - `integration-planning` - Phased migration strategy
    - `create-architecture` - Multi-tenancy architecture
    - `validate-architecture` - External review
-   - `solutioning-gate-check` - Executive approval
+   - `create-epics-and-stories` - Create epics and stories
+   - `implementation-readiness` - Executive approval
 5. **Implement:** Phased sprint-based (50+ stories)
 
 **Time:** 3-6 months
@@ -615,7 +619,7 @@ Document in tech-spec/architecture:
 ### Commands by Phase
 
 ```bash
-# Phase 0: Documentation (If Needed)
+# Documentation (If Needed)
 # Analyst agent:
 document-project        # Create comprehensive docs (10-30min)
 # OR load index-docs task for existing docs (2-5min)
@@ -633,15 +637,14 @@ prd                     # BMad Method/Enterprise tracks
 
 # Phase 3: Solutioning (BMad Method/Enterprise)
 # Architect agent:
-create-architecture          # Extend architecture
-solutioning-gate-check       # Final validation
+architecture                 # Create/extend architecture
+create-epics-and-stories     # Create epics and stories (after architecture)
+implementation-readiness       # Final validation
 
 # Phase 4: Implementation (All Tracks)
 # SM agent:
 sprint-planning              # Initialize tracking
-epic-tech-context            # Epic context
-create-story                 # Draft story
-story-context                # Story context
+create-story                 # Create story
 
 # DEV agent:
 dev-story                    # Implement
@@ -654,26 +657,30 @@ correct-course               # If issues
 
 ### Key Files
 
-**Phase 0 Output:**
+**Documentation Output:**
 
 - `docs/index.md` - **Master AI entry point (REQUIRED)**
 - `docs/project-overview.md`
 - `docs/architecture.md`
 - `docs/source-tree-analysis.md`
 
-**Phase 1-3 Tracking:**
+**Phase 1-4 Tracking:**
 
 - `docs/bmm-workflow-status.yaml` - Progress tracker
 
 **Phase 2 Planning:**
 
 - `docs/tech-spec.md` (Quick Flow track)
-- `docs/PRD.md` (BMad Method/Enterprise tracks)
-- Epic breakdown
+- `docs/PRD.md` (BMad Method/Enterprise tracks - FRs/NFRs only)
+
+**Phase 3 Solutioning:**
+
+- Epic breakdown (created after architecture)
 
 **Phase 3 Architecture:**
 
 - `docs/architecture.md` (BMad Method/Enterprise tracks)
+- `docs/epics.md` + epic folders (from create-epics-and-stories)
 
 **Phase 4 Implementation:**
 

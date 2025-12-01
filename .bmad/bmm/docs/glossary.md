@@ -77,7 +77,7 @@ The methodology path (Quick Flow, BMad Method, or Enterprise Method) chosen for 
 
 ### PRD (Product Requirements Document)
 
-**BMad Method/Enterprise tracks.** Product-level planning document containing vision, goals, feature requirements, epic breakdown, success criteria, and UX considerations. Replaces tech-spec for larger projects that need product planning.
+**BMad Method/Enterprise tracks.** Product-level planning document containing vision, goals, Functional Requirements (FRs), Non-Functional Requirements (NFRs), success criteria, and UX considerations. Replaces tech-spec for larger projects that need product planning. **V6 Note:** PRD focuses on WHAT to build (requirements). Epic+Stories are created separately AFTER architecture via create-epics-and-stories workflow.
 
 ### Architecture Document
 
@@ -101,10 +101,6 @@ Game development equivalent of PRD, created by Game Designer agent for game proj
 
 ## Workflow and Phases
 
-### Phase 0: Documentation (Prerequisite)
-
-**Conditional phase for brownfield projects.** Creates comprehensive codebase documentation before planning. Only required if existing documentation is insufficient for AI agents.
-
 ### Phase 1: Analysis (Optional)
 
 Discovery and research phase including brainstorming, research workflows, and product brief creation. Optional for Quick Flow, recommended for BMad Method, required for Enterprise Method.
@@ -119,7 +115,11 @@ Architecture design phase. Required for BMad Method and Enterprise Method tracks
 
 ### Phase 4: Implementation (Required)
 
-Sprint-based development through story-by-story iteration. Uses sprint-planning, epic-tech-context, create-story, story-context, dev-story, code-review, and retrospective workflows.
+Sprint-based development through story-by-story iteration. Uses sprint-planning, create-story, dev-story, code-review, and retrospective workflows.
+
+### Documentation (Prerequisite for Brownfield)
+
+**Conditional prerequisite for brownfield projects.** Creates comprehensive codebase documentation before planning. Only required if existing documentation is insufficient for AI agents. Uses the `document-project` workflow.
 
 ### Quick Spec Flow
 
@@ -263,7 +263,7 @@ Workflow that initializes Phase 4 implementation by creating sprint-status.yaml,
 
 ### Gate Check
 
-Validation workflow (solutioning-gate-check) run before Phase 4 to ensure PRD, architecture, and UX documents are cohesive with no gaps or contradictions. Required for BMad Method and Enterprise Method tracks.
+Validation workflow (implementation-readiness) run before Phase 4 to ensure PRD, architecture, and UX documents are cohesive with no gaps or contradictions. Required for BMad Method and Enterprise Method tracks.
 
 ### DoD (Definition of Done)
 

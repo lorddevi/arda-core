@@ -21,6 +21,7 @@ except ImportError:
 
 # Import commands from commands/ directory
 from arda_cli.commands.config.main import config
+from arda_cli.commands.flakes.main import flakes
 from arda_cli.commands.host.main import host
 from arda_cli.commands.roles.main import roles
 from arda_cli.commands.secrets.main import secrets
@@ -340,6 +341,7 @@ def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None
 
 # Register commands with the main group
 main.add_command(config)
+main.add_command(flakes)
 main.add_command(host)
 main.add_command(roles)
 main.add_command(secrets)

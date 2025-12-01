@@ -6,12 +6,16 @@
 # =================
 
 # Build arda-cli with result symlink at ./results/arda-cli
+# Ensures results are always created in project root, never in subdirectories
 build-arda-cli:
-    nix build --out-link ./results/arda-cli .#arda-cli
+    # Change to project root directory first to ensure consistent result location
+    cd {{ justfile_directory() }} && nix build --out-link ./results/arda-cli .#arda-cli
 
 # Build ea-cli with result symlink at ./results/ea-cli
+# Ensures results are always created in project root, never in subdirectories
 build-ea-cli:
-    nix build --out-link ./results/ea-cli .#ea-cli
+    # Change to project root directory first to ensure consistent result location
+    cd {{ justfile_directory() }} && nix build --out-link ./results/ea-cli .#ea-cli
 
 # Build all CLI tools
 build-all: build-arda-cli build-ea-cli

@@ -697,9 +697,9 @@ project-root/
 <critical>INCOMPLETE DOCUMENTATION MARKER CONVENTION:
 When a document SHOULD be generated but wasn't (due to quick scan, missing data, conditional requirements not met):
 
-- Use EXACTLY this marker: *(To be generated)*
+- Use EXACTLY this marker: _(To be generated)_
 - Place it at the end of the markdown link line
-- Example: - [API Contracts - Server](./api-contracts-server.md) *(To be generated)*
+- Example: - [API Contracts - Server](./api-contracts-server.md) _(To be generated)_
 - This allows Step 11 to detect and offer to complete these items
 - ALWAYS use this exact format for consistency and automated detection
   </critical>
@@ -784,11 +784,11 @@ When a document SHOULD be generated but wasn't (due to quick scan, missing data,
 
 - For each document that should have been generated, check if file exists on disk
 - Set existence flags: architecture_file_exists, component_inventory_exists, dev_guide_exists, etc.
-- These flags determine whether to add the *(To be generated)* marker
+- These flags determine whether to add the _(To be generated)_ marker
 - Track which files are missing in {{missing_docs_list}} for reporting
   </action>
 
-<action>IMMEDIATELY write index.md to disk with appropriate *(To be generated)* markers for missing files</action>
+<action>IMMEDIATELY write index.md to disk with appropriate _(To be generated)_ markers for missing files</action>
 <action>Validate index has all required sections and links are valid</action>
 
 <template-output>index</template-output>
@@ -813,20 +813,20 @@ Generated in {{output_folder}}/:
 
 <critical>INCOMPLETE DOCUMENTATION DETECTION:
 
-1. PRIMARY SCAN: Look for exact marker: *(To be generated)*
+1. PRIMARY SCAN: Look for exact marker: _(To be generated)_
 2. FALLBACK SCAN: Look for fuzzy patterns (in case agent was lazy):
-   - *(TBD)*
-   - *(TODO)*
-   - *(Coming soon)*
-   - *(Not yet generated)*
-   - *(Pending)*
+   - _(TBD)_
+   - _(TODO)_
+   - _(Coming soon)_
+   - _(Not yet generated)_
+   - _(Pending)_
 3. Extract document metadata from each match for user selection
    </critical>
 
 <action>Read {output_folder}/index.md</action>
 
 <action>Scan for incomplete documentation markers:
-Step 1: Search for exact pattern "*(To be generated)*" (case-sensitive)
+Step 1: Search for exact pattern "_(To be generated)_" (case-sensitive)
 Step 2: For each match found, extract the entire line
 Step 3: Parse line to extract:
 
@@ -838,7 +838,7 @@ Step 3: Parse line to extract:
   </action>
 
 <action>Fallback fuzzy scan for alternate markers:
-Search for patterns: *(TBD)*, *(TODO)*, *(Coming soon)*, *(Not yet generated)*, *(Pending)*
+Search for patterns: _(TBD)_, _(TODO)_, _(Coming soon)_, _(Not yet generated)_, _(Pending)_
 For each fuzzy match:
 
 - Extract same metadata as strict scan
@@ -994,7 +994,7 @@ Enter number(s) separated by commas (e.g., "1,3,5"), or type 'all':
 1. Read current index.md content
 2. For each item in {{newly_generated_docs}}:
    - Find the line containing the file link and marker
-   - Remove the *(To be generated)* or fuzzy marker text
+   - Remove the _(To be generated)_ or fuzzy marker text
    - Leave the markdown link intact
 3. Write updated index.md back to disk
 4. Update state file to record index.md modification

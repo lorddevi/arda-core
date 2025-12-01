@@ -150,7 +150,7 @@ cd {{root_path}}
 
 This documentation was generated specifically to enable AI agents to understand and extend this codebase.
 
-### When Planning New Features
+### When Planning New Features:
 
 **UI-only features:**
 {{#if is_multi_part}}→ Reference: `architecture-{{ui_part_id}}.md`, `component-inventory-{{ui_part_id}}.md`{{else}}→ Reference: `architecture.md`, `component-inventory.md`{{/if}}

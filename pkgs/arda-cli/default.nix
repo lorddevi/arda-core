@@ -70,11 +70,14 @@ let
 in
 python.pkgs.buildPythonApplication {
   pname = "arda_cli";
-  version = "0.1.6";
+  version = "0.1.7";
   src = ardaSource ./.;
   format = "pyproject";
 
-  nativeBuildInputs = [ setuptools ];
+  nativeBuildInputs = [
+    setuptools
+    pkgs.age
+  ];
 
   # Add pytest and testing tools for build-time testing
   checkInputs = [
@@ -90,6 +93,12 @@ python.pkgs.buildPythonApplication {
     pydantic
     rich-click
     tomli-w
+  ];
+
+  # Add age to PATH for secrets management
+  # This allows 'age-keygen' to be available in the CLI
+  makeWrapperArgs = [
+    "--prefix PATH : ${pkgs.age}/bin"
   ];
 
   # Run tests during build using clan's two-phase approach
