@@ -27,6 +27,7 @@
           pkgs.python313Packages.pydantic
           pkgs.python313Packages.rich-click
           pkgs.python313Packages.toml
+          pkgs.python313Packages.tomli-w
 
           # Testing and linting tools
           pkgs.python313Packages.pytest
