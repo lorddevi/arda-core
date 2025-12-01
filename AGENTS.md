@@ -6,6 +6,97 @@
 - Every task, bug, and feature must be filed as a beads issue
 - Always include detailed context in issue descriptions
 
+### Rich Context Files (Optional)
+
+For complex work, create detailed context files to improve discoverability and provide complete context for future developers or AI agents.
+
+**Process:**
+
+1. **Create Issue**
+   ```bash
+   bd create --title="..." --type=task|bug|feature
+   ```
+
+2. **Create Context File** (optional but recommended for complex work)
+
+   **Option A: Using helper script (recommended)**
+   ```bash
+   .beads/create-context.sh beads-XXX task
+   # Edit the generated file and fill in all {placeholders}
+   ```
+
+   **Option B: Manual template copy**
+   ```bash
+   # Copy appropriate template
+   cp .beads/templates/task.md .beads/context/{issue-id}.md
+   cp .beads/templates/bug.md .beads/context/{issue-id}.md
+   cp .beads/templates/feature.md .beads/context/{issue-id}.md
+
+   # Fill in the template
+   # - Replace {id}, {title}, {status}
+   # - Complete User Story section
+   # - List Acceptance Criteria with [ ]
+   # - Add Tasks/Subtasks with [ ]
+   # - Include Architecture Notes
+   # - Add References to code/docs
+   ```
+
+3. **Update as Work Progresses**
+   ```bash
+   # Edit .beads/context/{issue-id}.md
+   # Mark completed tasks: - [x] Task
+   # Add implementation log entries with dates
+   # Document changes in Files Changed section
+   # Commit context file with code changes
+   ```
+
+4. **Benefits**
+   - Anyone can read the context file to understand the full story
+   - References to code/docs make it easy to find related work
+   - Architecture notes preserve important decisions
+   - Implementation log shows how work evolved
+   - Files changed section documents impact
+
+**Templates available:**
+- `.beads/templates/task.md` - For tasks and fixes
+- `.beads/templates/bug.md` - For bug reports and fixes
+- `.beads/templates/feature.md` - For new features
+
+**Example:**
+```markdown
+# Issue beads-59o: Fix test pollution in arda-cli
+
+Status: closed
+
+## User Story
+
+As a developer working on arda-cli,
+I want tests to run in isolation without pollution from other tests,
+So that I can trust test results and not have flaky test failures.
+
+## Acceptance Criteria
+
+- [x] Each test starts with clean module state
+- [x] Config state is reset between tests
+- [x] Test pollution no longer causes failures
+- [x] All tests pass consistently
+
+## Tasks
+
+- [x] Identify sources of test pollution
+- [x] Implement reset_modules() fixture
+- [x] Add clean_config_state() autouse fixture
+
+## Architecture Notes
+
+**Root Cause:** Module-level config cache in main.py computed at import time...
+
+## References
+
+- [Code: pkgs/arda-cli/arda_cli/main.py](pkgs/arda-cli/arda_cli/main.py)
+- [Tests: pkgs/arda-cli/arda_cli/tests/conftest.py](pkgs/arda-cli/arda_cli/tests/conftest.py)
+```
+
 ## MCP Usage
 
 ### mcp 'Ref' - Official Documentation Lookup
