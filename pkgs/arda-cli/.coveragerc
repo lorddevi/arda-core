@@ -1,0 +1,38 @@
+[run]
+source = arda_cli
+omit =
+    */tests/*/*_template.py
+    */tests/unit/commands/test_*_template.py
+    */test_*_template.py
+    */tests/integration/*
+    */tests/vm/*
+    */tests/cli/*
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if __name__ == .__main__.:
+
+    # Don't complain about abstract methods, they aren't run:
+    @(abc\.)?abstractmethod
+    pass
+
+show_missing = True
+skip_covered = False
+precision = 2
+
+[html]
+directory = htmlcov

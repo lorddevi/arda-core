@@ -5,6 +5,7 @@ all help text and command output.
 """
 
 import warnings
+from importlib.metadata import version as get_version
 
 import click
 import rich_click as rclick
@@ -198,6 +199,26 @@ def show_help_with_config(
     ctx.exit()
 
 
+def show_version(ctx: click.Context, param: click.Parameter, value: bool) -> None:
+    """Show version and exit."""
+    if not value:
+        return
+
+    # Get the version from the package metadata
+    try:
+        package_version = get_version("arda_cli")
+    except Exception:
+        # Fallback to a default if we can't get the version
+        package_version = "unknown"
+
+    # Display version with rich formatting
+    from rich.console import Console
+
+    console = Console()
+    console.print(f"Arda CLI version: {package_version}")
+    ctx.exit(0)
+
+
 @rclick.group(invoke_without_command=True)
 @click.option(
     "--theme",
@@ -230,6 +251,14 @@ def show_help_with_config(
     expose_value=False,
     help="Show this help message and exit.",
 )
+@click.option(
+    "--version",
+    is_flag=True,
+    is_eager=True,
+    callback=show_version,
+    expose_value=False,
+    help="Show version and exit.",
+)
 @click.pass_context
 def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None:
     """Arda - minimal infrastructure management for NixOS.
@@ -252,48 +281,6 @@ def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None
     if ctx.invoked_subcommand is None:
         # Manually show help to ensure active configuration line is displayed
         show_help_with_config(ctx, None, True)
-
-
-def show_welcome(console: Console, theme: str) -> None:
-    """Show welcome message with theme styling."""
-    # Create title with rich text
-    title = "ARDA CLI"
-
-    # Show active config
-    show_active_config(console)
-
-    # Create welcome panel
-    panel = Panel(
-        f"[bold]{title}[/bold]\n\n"
-        f"Theme: [accent]{theme.upper()}[/accent]\n"
-        f"Welcome to Arda - Infrastructure Management for NixOS\n\n"
-        f"Use [command]arda --help[/command] for available commands",
-        border_style="border",
-        padding=(1, 2),
-    )
-
-    console.print(panel)
-    console.print()
-
-
-def custom_format_help(
-    ctx: click.Context, cmd: click.Command, formatter: click.HelpFormatter
-) -> None:
-    """Format custom help to show active config file."""
-    # Get the original help text
-    formatter.write(cmd.get_help(ctx))
-    formatter.write("\n")
-
-    # Get the active config file
-    _config_path, config_source = get_active_config_path()
-
-    # Show active configuration
-    from rich import get_console
-
-    console = get_console()
-    console.print(
-        f"\n[dim]Active configuration:[/dim] [white]{config_source}[/white]\n"
-    )
 
 
 # Register commands with the main group
