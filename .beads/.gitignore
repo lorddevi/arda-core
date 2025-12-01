@@ -15,12 +15,6 @@ bd.sock
 db.sqlite
 bd.db
 
-# Beads worktrees (Git integration)
-.git/beads-worktrees/
-
-# Exclusive lock file
-.exclusive-lock
-
 # Merge artifacts (temporary files from 3-way merge)
 beads.base.jsonl
 beads.base.meta.json
@@ -31,6 +25,5 @@ beads.right.meta.json
 
 # Keep JSONL exports and config (source of truth for git)
 !issues.jsonl
-!deletions.jsonl
 !metadata.json
-!config.yaml
+!config.json
