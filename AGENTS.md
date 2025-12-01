@@ -6,13 +6,111 @@
 - Always include detailed context in issue descriptions
 
 ## MCP Usage
-- When working with libraries, check the docs with the mcp 'Ref'
-- When you want to reference the master branch for this project 'arda-core' check the repo info using the mcp 'Ref', looking up the resource named 'lorddevi/arda-core'
-- When working with NixOS packages, configuration options, home-manager settings, or package version history via nixhub.io, use the mcp 'nixos'
-- When working with 'jump' and 'jumpfile' use the mcp 'jump'
-- When working with code, use the mcp 'exa' to query the web for examples and to verify understanding of the subject when appropriate
-- For any web based queries use the mcp 'exa'
-- To research subjects, find relevant information, look up stack over flow questions, or anything like that use the mcp 'exa'
+
+### mcp 'Ref' - Official Documentation Lookup
+**Use for:** API references, official documentation, library guides
+
+**Best for:**
+- Looking up React hooks, Python libraries, AWS SDKs
+- Finding official API documentation
+- Checking package references and usage patterns
+- arda-core repository reference (search: "lorddevi/arda-core")
+
+**Tools available:**
+- `ref_search_documentation` - Find documentation for libraries/frameworks
+- `ref_read_url` - Read specific documentation pages
+
+**When to use:**
+- ✅ You know the exact library/framework name
+- ✅ You need authoritative API information
+- ✅ Checking if a feature exists in official docs
+- ✅ Looking up specific function/class signatures
+
+**When NOT to use:**
+- ❌ Niche or newer libraries (not indexed)
+- ❌ Community tutorials or examples (use Exa instead)
+- ❌ GitHub repositories (use Exa instead)
+- ❌ Stack Overflow questions (use Exa instead)
+
+**Context efficiency:** Minimal - returns focused documentation
+
+### mcp 'exa' - Web Search & Code Research
+**Use for:** Everything not covered by Ref - research, examples, tutorials, repositories
+
+**Best for:**
+- Finding code examples and tutorials
+- Researching new libraries or tools
+- GitHub repositories (like beads, niche projects)
+- Stack Overflow answers and discussions
+- Blog posts and community guides
+- NixOS-specific research (arda-core is a NixOS orchestration system!)
+
+**Tools available:**
+- `exa web_search_exa` - Search the web with configurable depth (fast/auto/deep)
+- `exa get_code_context_exa` - Get code examples with controllable token limits (1000-50000)
+
+**When to use:**
+- ✅ Researching how to use a library
+- ✅ Finding GitHub repositories
+- ✅ Stack Overflow, Reddit, forums
+- ✅ NixOS packages, configurations, home-manager settings
+- ✅ Community tutorials and blog posts
+- ✅ Understanding implementation patterns
+- ✅ Verifying examples work in practice
+
+**When NOT to use:**
+- ❌ Official API reference (use Ref instead for cleaner context)
+
+**Context efficiency:** Controllable via `tokensNum` parameter
+- Low context: `tokensNum=1000-2000` (quick lookup)
+- Balanced: `tokensNum=3000-5000` (typical research)
+- Deep dive: `tokensNum=5000+` (complex topics)
+
+### mcp 'nixos' - NixOS Ecosystem
+**Use for:** NixOS packages, options, version history, flakes
+
+**Best for:**
+- Finding NixOS packages (`nixos_search`)
+- Looking up configuration options (`nixos_options_by_prefix`)
+- Home Manager settings (`home_manager_info`)
+- Package version history (`nixhub_package_versions`)
+- Flake searches (`nixos_flakes_search`)
+
+**When to use:**
+- ✅ Any NixOS-related work (arda-core is a NixOS orchestration system!)
+- ✅ Finding packages to include in NixOS configurations
+- ✅ Looking up configuration option details
+- ✅ Checking package availability and versions
+
+### mcp 'jump' - Justfile Integration
+**Use for:** Just commands and automation
+
+**Tools:**
+- `jump list_recipes` - Show available commands
+- `jump get_recipe_info` - Get details on specific commands
+- `jump run_recipe` - Execute Just commands
+
+**When to use:**
+- ✅ Checking what commands are available in the Justfile
+- ✅ Understanding what a specific command does
+- ✅ Running automation tasks
+
+### Research Workflow for arda-core (NixOS Orchestration)
+
+Given arda-core's niche nature as a NixOS orchestration system:
+
+1. **Start with Ref** for known frameworks (React, Python, etc.)
+2. **Use Exa liberally** for NixOS-specific research
+3. **Use NixOS MCP** for package/option lookups
+4. **Use Jump MCP** for project-specific commands
+
+**Example:**
+```bash
+# Research NixOS service configuration for a feature
+exa get_code_context_exa --query "nixos service configuration systemd examples" --tokensNum 3000
+nixos_search --query "ssh configuration"
+exa web_search_exa --query "arda-core nix orchestration patterns" --type deep
+```
 
 # 🚨 SESSION CLOSE PROTOCOL 🚨
 
