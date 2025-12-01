@@ -1,6 +1,0 @@
-[theme]
-default = "solarized"
-
-[output]
-verbose = false
-timestamp = true
