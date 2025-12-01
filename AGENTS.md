@@ -204,6 +204,119 @@ nixos_flakes_search --query "arda"
 exa web_search_exa --query "arda-core nix orchestration patterns" --type deep
 ```
 
+## 🔄 Beads Sync Workflow
+
+Beads uses **git worktrees** to manage issues. Understanding when to sync is critical.
+
+### How It Works:
+
+Beads creates a **separate worktree** (`beads-sync`) that shares your git database but:
+- Has **ONLY** `.beads/` directory files
+- Can be synced independently from your main code
+- Maintains its own git branch and history
+
+### When to Use Each Command:
+
+#### **`bd sync`** - Normal Bidirectional Sync
+**Use for:**
+- ✅ Long-lived branches (testing-phase-13, master, main, feature branches you keep)
+- ✅ Regular development work
+- ✅ Day-to-day issue management
+
+**What it does:**
+- Syncs between your current branch and the beads-sync worktree
+- **Bidirectional**: changes flow both ways
+- Export issues from SQLite to JSONL
+- Commit bead changes to beads-sync branch
+- Push/pull bead changes to remote
+
+**Workflow:**
+```bash
+# On testing-phase-13 (or any long-lived branch)
+bd create "New issue"          # Create issues
+bd close <id>                  # Close issues
+bd update <id> --status in_progress  # Update status
+
+# Sync your changes to beads-sync worktree
+bd sync                         # ✓ Bidirectional sync
+
+# Commit and push
+git add .beads && git commit -m "Update beads"
+git push
+```
+
+#### **`bd sync --from-main`** - One-Way from Main Branch
+**Use for:**
+- ✅ **Ephemeral branches** (short-lived feature branches)
+- ✅ Branches that **don't have bead history** yet
+- ✅ Pulling bead state from main into a new branch
+
+**What it does:**
+- **One-way sync**: Pulls bead state FROM main INTO your branch
+- Does NOT sync changes back to main
+- Designed for ephemeral branches without upstream tracking
+
+**Workflow:**
+```bash
+# Create new ephemeral branch
+git checkout -b feature-x
+
+# First time: pull bead state FROM main
+bd sync --from-main             # ✓ One-way pull from main
+
+# Work on feature
+bd create "Work on feature-x"   # Create issues
+bd sync                         # Normal sync for ongoing work
+
+# Before merging back
+bd sync                         # Final sync
+git checkout testing-phase-13
+git merge feature-x
+```
+
+### Decision Tree:
+
+```
+Are you on a long-lived branch? (testing-phase-13, master, feature branch you keep)
+├─ YES → Use: bd sync
+└─ NO (ephemeral feature branch)?
+    └─ First time on this branch?
+        ├─ YES → Use: bd sync --from-main
+        └─ NO → Use: bd sync
+```
+
+### Other Useful Flags:
+
+```bash
+# Check sync status without syncing
+bd sync --status
+
+# After git pull on main branch
+bd sync --import-only    # Just import JSONL changes
+
+# Preview sync without changes
+bd sync --dry-run
+```
+
+### For arda-core Project:
+
+**Current branch: testing-phase-13** → Use: `bd sync` (long-lived branch)
+**New feature branches** → Use: `bd sync --from-main` (first time only)
+
+### Common Mistakes:
+
+❌ **Wrong**: Using `--from-main` on long-lived branches
+```bash
+# DON'T do this on testing-phase-13!
+bd sync --from-main  # Tries to overwrite with main's bead state
+```
+
+✅ **Correct**: Using normal sync on long-lived branches
+```bash
+# DO this on testing-phase-13
+bd sync  # Bidirectional sync with beads-sync worktree
+```
+
 # 🚨 SESSION CLOSE PROTOCOL 🚨
 
 **CRITICAL**: Before saying "done" or "complete", you MUST run this checklist:
@@ -211,10 +324,10 @@ exa web_search_exa --query "arda-core nix orchestration patterns" --type deep
 ```
 [ ] 1. git status              (check what changed)
 [ ] 2. git add <files>         (stage code changes)
-[ ] 3. bd sync --from-main     (pull beads updates from main)
+[ ] 3. bd sync                 (sync beads with beads-sync worktree)
 [ ] 4. git commit -m "..."     (commit code changes)
 [ ] 5. git pull --rebase       (pull latest from remote)
-[ ] 6. bd sync                 (export issues to JSONL)
+[ ] 6. bd sync                 (sync again after pull)
 [ ] 7. git push                (PUSH TO REMOTE - MANDATORY)
 [ ] 8. git status              (verify clean state)
 ```
