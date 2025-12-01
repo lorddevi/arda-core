@@ -26,14 +26,15 @@ class TestConfigFileCreation:
             # Patch Path.home() to return the isolated temp directory
             # This prevents finding the real XDG config
             import tempfile
+
             temp_dir = Path.cwd()
 
-            with patch('pathlib.Path.home', return_value=temp_dir):
+            with patch("pathlib.Path.home", return_value=temp_dir):
                 # Run config view command (should create config)
-                result = runner.invoke(main, ['config', 'view'])
+                result = runner.invoke(main, ["config", "view"])
 
                 # Verify config was created
-                config_path = Path('etc/arda.toml')
+                config_path = Path("etc/arda.toml")
                 assert config_path.exists(), "Config file should be created"
 
                 # Verify creation message in output
@@ -43,12 +44,12 @@ class TestConfigFileCreation:
                 )
 
                 # Verify it's valid TOML
-                with open(config_path, 'rb') as f:
+                with open(config_path, "rb") as f:
                     config_data = tomllib.load(f)
 
                 # Verify config structure
-                assert 'theme' in config_data
-                assert 'output' in config_data
+                assert "theme" in config_data
+                assert "output" in config_data
 
     def test_config_not_recreated_when_exists(self):
         """Test that existing config is not overwritten."""
@@ -56,9 +57,9 @@ class TestConfigFileCreation:
 
         with runner.isolated_filesystem():
             # Pre-create config with custom content
-            config_dir = Path('etc')
+            config_dir = Path("etc")
             config_dir.mkdir(parents=True)
-            config_path = config_dir / 'arda.toml'
+            config_path = config_dir / "arda.toml"
             custom_config = """[theme]
 default = "nord"
 
@@ -69,7 +70,7 @@ timestamp = false
             config_path.write_text(custom_config)
 
             # Run config view command (config already exists)
-            result = runner.invoke(main, ['config', 'view'])
+            result = runner.invoke(main, ["config", "view"])
 
             # Verify config was NOT recreated
             assert "Created default configuration" not in result.output
@@ -84,12 +85,12 @@ timestamp = false
 
         with runner.isolated_filesystem():
             # Patch Path.home() to avoid finding XDG config
-            with patch('pathlib.Path.home', return_value=Path.cwd()):
+            with patch("pathlib.Path.home", return_value=Path.cwd()):
                 # Run config view command
-                result = runner.invoke(main, ['config', 'view'])
+                result = runner.invoke(main, ["config", "view"])
 
                 # Verify config was created
-                config_path = Path('etc/arda.toml')
+                config_path = Path("etc/arda.toml")
                 assert config_path.exists(), "Config file should be created"
 
                 # Verify message appears (may vary by output)
@@ -101,29 +102,29 @@ timestamp = false
 
         with runner.isolated_filesystem():
             # Patch Path.home() to avoid finding XDG config
-            with patch('pathlib.Path.home', return_value=Path.cwd()):
+            with patch("pathlib.Path.home", return_value=Path.cwd()):
                 # Create config by running config view
-                result = runner.invoke(main, ['config', 'view'])
+                result = runner.invoke(main, ["config", "view"])
                 assert result.exit_code == 0
 
                 # Read and parse TOML
-                config_path = Path('etc/arda.toml')
-                with open(config_path, 'rb') as f:
+                config_path = Path("etc/arda.toml")
+                with open(config_path, "rb") as f:
                     config_data = tomllib.load(f)
 
                 # Verify expected sections
-                assert 'theme' in config_data
-                assert 'output' in config_data
+                assert "theme" in config_data
+                assert "output" in config_data
 
                 # Verify theme section
-                assert 'default' in config_data['theme']
-                assert isinstance(config_data['theme']['default'], str)
+                assert "default" in config_data["theme"]
+                assert isinstance(config_data["theme"]["default"], str)
 
                 # Verify output section
-                assert 'verbose' in config_data['output']
-                assert 'timestamp' in config_data['output']
-                assert isinstance(config_data['output']['verbose'], bool)
-                assert isinstance(config_data['output']['timestamp'], bool)
+                assert "verbose" in config_data["output"]
+                assert "timestamp" in config_data["output"]
+                assert isinstance(config_data["output"]["verbose"], bool)
+                assert isinstance(config_data["output"]["timestamp"], bool)
 
     def test_config_creation_handles_tomli_dump(self):
         """Test that config creation uses tomli_w.dump()."""
@@ -131,10 +132,10 @@ timestamp = false
 
         with runner.isolated_filesystem():
             # Patch Path.home() and tomli_w
-            with patch('pathlib.Path.home', return_value=Path.cwd()):
-                with patch('arda_cli.main.tomli_w') as mock_tomli_w:
+            with patch("pathlib.Path.home", return_value=Path.cwd()):
+                with patch("arda_cli.main.tomli_w") as mock_tomli_w:
                     # Run config view to trigger config creation
-                    result = runner.invoke(main, ['config', 'view'])
+                    result = runner.invoke(main, ["config", "view"])
                     assert result.exit_code == 0
 
                     # Verify tomli_w.dump was called
@@ -152,16 +153,16 @@ class TestThemeValidation:
         """Test that valid themes pass validation."""
         # Test a sample of themes (representative subset)
         test_themes = [
-            'dracula',
-            'nord',
-            'forest',
-            'solarized',
-            'default',
-            'cargo',
-            'star',
-            'mono',
-            'red1',
-            'blue1',
+            "dracula",
+            "nord",
+            "forest",
+            "solarized",
+            "default",
+            "cargo",
+            "star",
+            "mono",
+            "red1",
+            "blue1",
         ]
 
         for theme in test_themes:
@@ -172,25 +173,25 @@ class TestThemeValidation:
         """Test that invalid themes raise SystemExit."""
         runner = CliRunner()
         invalid_themes = [
-            'nonexistent_theme',
-            'fake_theme_123',
-            'invalid',
+            "nonexistent_theme",
+            "fake_theme_123",
+            "invalid",
         ]
 
         for invalid_theme in invalid_themes:
             # Test through CLI invocation (use config view instead of --help)
             # This ensures theme validation happens before the command executes
-            result = runner.invoke(main, ['--theme', invalid_theme, 'config', 'view'])
+            result = runner.invoke(main, ["--theme", invalid_theme, "config", "view"])
             # Should fail (theme validation prevents execution)
             assert result.exit_code != 0, f"Invalid theme '{invalid_theme}' should fail"
-            assert 'not found' in result.output.lower()
+            assert "not found" in result.output.lower()
 
     def test_theme_validation_is_case_insensitive(self):
         """Test that theme validation is case-insensitive."""
         test_cases = [
-            'dracula',  # lowercase
-            'DRACULA',  # uppercase
-            'DrAcUlA',  # mixed case
+            "dracula",  # lowercase
+            "DRACULA",  # uppercase
+            "DrAcUlA",  # mixed case
         ]
 
         for input_theme in test_cases:
@@ -206,10 +207,10 @@ class TestThemeValidation:
     def test_cli_accepts_valid_themes(self):
         """Test that CLI accepts valid themes without errors."""
         runner = CliRunner()
-        test_themes = ['dracula', 'nord', 'forest', 'solarized', 'default']
+        test_themes = ["dracula", "nord", "forest", "solarized", "default"]
 
         for theme in test_themes:
-            result = runner.invoke(main, ['--theme', theme, '--help'])
+            result = runner.invoke(main, ["--theme", theme, "--help"])
             assert result.exit_code == 0, f"Theme '{theme}' should be accepted"
             assert "Usage:" in result.output
 
@@ -219,11 +220,11 @@ class TestThemeValidation:
 
         # Test with invalid theme (use config view instead of --help)
         # This ensures theme validation happens before the command executes
-        result = runner.invoke(main, ['--theme', 'invalid_theme_xyz', 'config', 'view'])
+        result = runner.invoke(main, ["--theme", "invalid_theme_xyz", "config", "view"])
 
         # Should fail with error
         assert result.exit_code != 0, "Invalid theme should fail"
-        assert 'not found' in result.output or 'error' in result.output.lower()
+        assert "not found" in result.output or "error" in result.output.lower()
 
     def test_theme_list_completeness(self):
         """Test that all themes in get_rich_click_themes() are valid."""
@@ -251,14 +252,14 @@ class TestMainCLIExtended:
     def test_main_with_verbose_flag(self):
         """Test CLI with verbose flag."""
         runner = CliRunner()
-        result = runner.invoke(main, ['--verbose', '--help'])
+        result = runner.invoke(main, ["--verbose", "--help"])
         assert result.exit_code == 0
         assert "Usage:" in result.output
 
     def test_main_with_timestamp_flag(self):
         """Test CLI with timestamp flag."""
         runner = CliRunner()
-        result = runner.invoke(main, ['--timestamp', '--help'])
+        result = runner.invoke(main, ["--timestamp", "--help"])
         assert result.exit_code == 0
         assert "Usage:" in result.output
 
@@ -267,7 +268,7 @@ class TestMainCLIExtended:
         runner = CliRunner()
         result = runner.invoke(
             main,
-            ['--theme', 'dracula', '--verbose', '--timestamp', '--help'],
+            ["--theme", "dracula", "--verbose", "--timestamp", "--help"],
         )
         assert result.exit_code == 0
         assert "Usage:" in result.output
@@ -275,20 +276,19 @@ class TestMainCLIExtended:
     def test_main_shows_active_config_in_help(self):
         """Test that help shows active configuration path."""
         runner = CliRunner()
-        result = runner.invoke(main, ['--help'])
+        result = runner.invoke(main, ["--help"])
         assert result.exit_code == 0
         assert "Active configuration" in result.output
 
     def test_unknown_command_shows_help(self):
         """Test that unknown command shows error and help."""
         runner = CliRunner()
-        result = runner.invoke(main, ['unknown_command'])
+        result = runner.invoke(main, ["unknown_command"])
         assert result.exit_code != 0
         assert (
-            'no such command' in result.output.lower()
-            or 'usage:' in result.output.lower()
+            "no such command" in result.output.lower()
+            or "usage:" in result.output.lower()
         )
-
 
 
 class TestMainErrorHandling:
@@ -298,15 +298,14 @@ class TestMainErrorHandling:
         """Test that invalid theme shows rich error panel."""
         runner = CliRunner()
 
-        result = runner.invoke(main, ['--theme', 'invalid_theme_xyz', 'config', 'view'])
+        result = runner.invoke(main, ["--theme", "invalid_theme_xyz", "config", "view"])
 
         # Should fail
         assert result.exit_code != 0
 
         # Should show error message
         assert (
-            'not found' in result.output.lower()
-            or 'invalid' in result.output.lower()
+            "not found" in result.output.lower() or "invalid" in result.output.lower()
         )
 
     def test_cli_handles_keyboard_interrupt(self):
@@ -315,7 +314,7 @@ class TestMainErrorHandling:
 
         # Simulate keyboard interrupt by passing empty input
         # (This is handled by Click's error handling)
-        result = runner.invoke(main, [], input='')
+        result = runner.invoke(main, [], input="")
 
         # Click should handle it gracefully
         assert result.exit_code != 0 or result.exit_code == 0

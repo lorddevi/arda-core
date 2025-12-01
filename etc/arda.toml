@@ -3,4 +3,4 @@ default = "solarized"
 
 [output]
 verbose = false
-timestamp = false
+timestamp = true

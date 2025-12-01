@@ -9,6 +9,7 @@ Achieve **high pytest coverage (80%+)** for the command layer by testing Click c
 ## Why CliRunner?
 
 For CLI applications, Click commands (functions with `@click.command` decorators) cannot be tested with direct function calls because they require:
+
 - Click context (`@click.pass_context`)
 - Command-line argument parsing
 - Callback execution
@@ -21,7 +22,9 @@ For CLI applications, Click commands (functions with `@click.command` decorators
 ### Base Classes
 
 #### `BaseCommandTest`
+
 Base class for all Click command tests. Provides:
+
 - `runner` fixture - CliRunner instance
 - `temp_dir` fixture - Temporary directory for file operations
 - `temp_config_dir` fixture - Temporary directory with `etc/` subdirectory
@@ -31,7 +34,9 @@ Base class for all Click command tests. Provides:
 - `assert_help_output()` - Assert output shows help text
 
 #### `CommandContextHelper`
+
 Helper for creating context objects:
+
 - `create_base_context()` - Create basic context with defaults
 - `create_config_context()` - Create context for config commands
 - `create_theme_context()` - Create context for theme commands
@@ -74,6 +79,7 @@ class TestConfigCommands(BaseCommandTest):
 ### Testing Different Scenarios
 
 #### Success Cases
+
 ```python
 def test_command_success(self, runner: CliRunner, temp_dir: Path) -> None:
     result = self.invoke_command(
@@ -83,6 +89,7 @@ def test_command_success(self, runner: CliRunner, temp_dir: Path) -> None:
 ```
 
 #### Failure Cases
+
 ```python
 def test_command_failure(self, runner: CliRunner, temp_dir: Path) -> None:
     result = self.invoke_command(
@@ -92,6 +99,7 @@ def test_command_failure(self, runner: CliRunner, temp_dir: Path) -> None:
 ```
 
 #### Help Output
+
 ```python
 def test_help(self, runner: CliRunner) -> None:
     result = self.invoke_command(runner, command, ["--help"], standalone_mode=False)
@@ -99,6 +107,7 @@ def test_help(self, runner: CliRunner) -> None:
 ```
 
 #### With Flags
+
 ```python
 def test_with_flags(self, runner: CliRunner, temp_dir: Path) -> None:
     result = self.invoke_command(
@@ -111,6 +120,7 @@ def test_with_flags(self, runner: CliRunner, temp_dir: Path) -> None:
 ## Test Coverage Strategy
 
 ### What Should Use CliRunner (Click Commands)
+
 ✅ All functions with `@click.command`, `@click.group`
 ✅ Functions with `@click.pass_context`
 ✅ Functions with Click callbacks
@@ -120,6 +130,7 @@ def test_with_flags(self, runner: CliRunner, temp_dir: Path) -> None:
 ✅ Context object management
 
 ### What Should NOT Use CliRunner (Pure Logic)
+
 ✅ Library functions without Click decorators
 ✅ Pure business logic (`parse_config_value`)
 ✅ Helper functions
@@ -128,6 +139,7 @@ def test_with_flags(self, runner: CliRunner, temp_dir: Path) -> None:
 ## Coverage Impact
 
 ### Before (Direct Function Calls Only)
+
 ```
 arda_cli/commands/config/main.py     206    147    29%
 arda_cli/commands/theme/main.py       38      5    87%
@@ -138,6 +150,7 @@ arda_cli/commands/templates/main.py   22     14    36%
 ```
 
 ### After (CliRunner Tests Added)
+
 ```
 arda_cli/commands/config/main.py     206     41    80%
 arda_cli/commands/theme/main.py       38      2    95%
@@ -147,7 +160,7 @@ arda_cli/commands/secrets/main.py     22      4    82%
 arda_cli/commands/templates/main.py   22      4    82%
 ```
 
-**Overall gain: ~50% → ~85% coverage for command layer**
+**Overall gain:** ~50% → ~85% coverage for command layer
 
 ## Benefits
 

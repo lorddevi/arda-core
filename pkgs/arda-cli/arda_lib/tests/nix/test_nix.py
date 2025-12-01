@@ -7,24 +7,24 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 # Import modules to test
 from arda_lib.nix.nix import (
-    NixError,
-    FlakeError,
     BuildError,
-    nix_command,
-    nix_eval,
-    nix_build,
-    nix_shell,
-    nix_metadata,
-    nix_config,
-    nix_store,
     Flake,
+    FlakeError,
+    NixError,
     Packages,
+    nix_build,
+    nix_command,
+    nix_config,
+    nix_eval,
+    nix_metadata,
+    nix_shell,
+    nix_store,
 )
 
 
@@ -70,8 +70,7 @@ class TestNixCommand:
     def test_nix_command_with_nix_options(self):
         """Test nix command with custom options."""
         result = nix_command(
-            ["eval", "nixpkgs#hello"],
-            nix_options=["extra-feature", "another-feature"]
+            ["eval", "nixpkgs#hello"], nix_options=["extra-feature", "another-feature"]
         )
         assert "extra-feature" in result
         assert "another-feature" in result
@@ -145,7 +144,9 @@ class TestNixBuild:
     def test_nix_build_success(self, mock_run):
         """Test successful nix build."""
         mock_result = MagicMock()
-        mock_result.stdout = "/nix/store/abc123-hello-2.12.1\n/nix/store/def456-hello-2.12.1"
+        mock_result.stdout = (
+            "/nix/store/abc123-hello-2.12.1\n/nix/store/def456-hello-2.12.1"
+        )
         mock_result.returncode = 0
         mock_run.return_value = mock_result
 
@@ -252,12 +253,9 @@ class TestNixMetadata:
     def test_nix_metadata_success(self, mock_run):
         """Test successful nix metadata fetch."""
         mock_result = MagicMock()
-        mock_result.stdout = json.dumps({
-            "flake": {
-                "locks": "test",
-                "path": "/nix/store/abc123"
-            }
-        })
+        mock_result.stdout = json.dumps(
+            {"flake": {"locks": "test", "path": "/nix/store/abc123"}}
+        )
         mock_result.returncode = 0
         mock_run.return_value = mock_result
 
@@ -287,10 +285,9 @@ class TestNixConfig:
     def test_nix_config_success(self, mock_run):
         """Test successful nix config fetch."""
         mock_result = MagicMock()
-        mock_result.stdout = json.dumps({
-            "experimental-features": ["nix-command", "flakes"],
-            "cores": "8"
-        })
+        mock_result.stdout = json.dumps(
+            {"experimental-features": ["nix-command", "flakes"], "cores": "8"}
+        )
         mock_result.returncode = 0
         mock_run.return_value = mock_result
 
@@ -319,10 +316,9 @@ class TestNixStore:
     def test_nix_store_success(self, mock_run):
         """Test successful nix store query."""
         mock_result = MagicMock()
-        mock_result.stdout = json.dumps({
-            "path": "/nix/store/abc123-hello-2.12.1",
-            "valid": True
-        })
+        mock_result.stdout = json.dumps(
+            {"path": "/nix/store/abc123-hello-2.12.1", "valid": True}
+        )
         mock_result.returncode = 0
         mock_run.return_value = mock_result
 
@@ -347,25 +343,28 @@ class TestNixStore:
 class TestFlakeClass:
     """Test Flake class."""
 
-    def test_flake_init(self):
+    def test_flake_init(self, tmp_path):
         """Test Flake initialization."""
-        flake = Flake("/tmp/test-flake")
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
 
-        assert flake.path == Path("/tmp/test-flake")
-        assert flake.flake_ref == "path:/tmp/test-flake"
+        assert flake.path == test_flake_path
+        assert flake.flake_ref == f"path:{test_flake_path}"
         assert flake.nix_options == []
         assert flake.metadata is None
         assert flake._cache == {}
 
-    def test_flake_init_with_options(self):
+    def test_flake_init_with_options(self, tmp_path):
         """Test Flake initialization with options."""
-        flake = Flake("/tmp/test-flake", nix_options=["extra-feature"])
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path, nix_options=["extra-feature"])
 
         assert flake.nix_options == ["extra-feature"]
 
-    def test_flake_get_metadata_cached(self):
+    def test_flake_get_metadata_cached(self, tmp_path):
         """Test Flake get_metadata with caching."""
-        flake = Flake("/tmp/test-flake")
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
 
         # Mock nix_metadata
         with patch("arda_lib.nix.nix.nix_metadata") as mock_metadata:
@@ -382,33 +381,31 @@ class TestFlakeClass:
             assert mock_metadata.call_count == 1  # Still 1, not called again
 
     @patch("arda_lib.nix.nix.nix_eval")
-    def test_flake_eval(self, mock_eval):
+    def test_flake_eval(self, mock_eval, tmp_path):
         """Test Flake eval method."""
-        flake = Flake("/tmp/test-flake")
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
         mock_eval.return_value = {"name": "test"}
 
         result = flake.eval("packages.hello")
 
         assert result == {"name": "test"}
         mock_eval.assert_called_once_with(
-            "path:/tmp/test-flake",
-            attribute="packages.hello",
-            nix_options=[]
+            f"path:{test_flake_path}", attribute="packages.hello", nix_options=[]
         )
 
     @patch("arda_lib.nix.nix.nix_eval")
-    def test_flake_eval_without_attribute(self, mock_eval):
+    def test_flake_eval_without_attribute(self, mock_eval, tmp_path):
         """Test Flake eval without specific attribute."""
-        flake = Flake("/tmp/test-flake")
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
         mock_eval.return_value = {"type": "flake"}
 
         result = flake.eval()
 
         assert result == {"type": "flake"}
         mock_eval.assert_called_once_with(
-            "path:/tmp/test-flake",
-            attribute=None,
-            nix_options=[]
+            f"path:{test_flake_path}", attribute=None, nix_options=[]
         )
 
     @pytest.mark.skip(reason="Complex mocking - select method tested via nix_eval")
@@ -423,9 +420,10 @@ class TestFlakeClass:
 
     @patch("os.path.exists")
     @patch("arda_lib.nix.nix.nix_eval")
-    def test_flake_select_import_error(self, mock_eval, mock_exists):
+    def test_flake_select_import_error(self, mock_eval, mock_exists, tmp_path):
         """Test Flake select with import error."""
-        flake = Flake("/tmp/test-flake")
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
         mock_exists.return_value = True
 
         with patch("builtins.__import__", side_effect=ImportError("Module not found")):
@@ -440,16 +438,26 @@ class TestFlakeClass:
         pass
 
     @patch("arda_lib.nix.nix.nix_build")
-    def test_flake_build(self, mock_build):
+    def test_flake_build(self, mock_build, tmp_path):
         """Test Flake build method."""
-        flake = Flake("/tmp/test-flake")
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
         mock_build.return_value = ["/nix/store/abc123-result"]
 
         result = flake.build(attribute="packages.hello", out_link="result")
 
+        assert result == ["/nix/store/abc123-result"]
+        mock_build.assert_called_once_with(
+            f"path:{test_flake_path}",
+            attribute="packages.hello",
+            out_link="result",
+            nix_options=[],
+        )
+
     @pytest.mark.skip(reason="Complex mocking, tested via integration tests")
     def test_flake_select_import_error_passed(self):
-        assert "gcc" in str(exc_info.value)
+        """Skipped test placeholder."""
+        pass
 
 
 class TestPackagesClass:

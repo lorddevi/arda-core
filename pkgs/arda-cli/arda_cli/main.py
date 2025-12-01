@@ -43,6 +43,7 @@ warnings.filterwarnings("ignore", message="RichClickTheme.*not found")
 # Patch click with theme configuration
 patch_rich_click()
 
+
 # Module-level defaults - computed lazily to avoid test pollution
 # These values are computed on first module import and then cached.
 # In tests, they can be reset by clearing _default_config_cache.
@@ -50,9 +51,8 @@ def _get_default_config() -> tuple[str, bool, bool]:
     """Get default config values from config files or defaults."""
     from arda_cli.lib.config import (
         get_theme_from_config,
-        get_verbose_from_config,
-        get_timestamp_from_config,
     )
+
     return (
         get_theme_from_config(),
         get_verbose_from_config(),

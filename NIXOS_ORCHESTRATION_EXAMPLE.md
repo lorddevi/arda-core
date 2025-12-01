@@ -9,6 +9,7 @@ arda-core is a NixOS orchestration system. This example shows configuration patt
 ## MCP Integration Test Results
 
 ### 1. NixOS MCP - Package Discovery
+
 ```bash
 # Found SSH packages:
 • ssh (0.3.2) - A pure-Haskell SSH server library
@@ -19,6 +20,7 @@ arda-core is a NixOS orchestration system. This example shows configuration patt
 ```
 
 ### 2. Home Manager MCP - User Configuration
+
 ```bash
 # Found Git configuration options:
 • programs.git.enable - Whether to enable Git
@@ -27,7 +29,9 @@ arda-core is a NixOS orchestration system. This example shows configuration patt
 ```
 
 ### 3. Exa MCP - Research Examples
+
 Found multiple orchestration patterns:
+
 - Multi-host configurations with `mkHost` pattern
 - AWS deployment configurations
 - Cluster configurations (Avalon example)
@@ -135,13 +139,15 @@ Using Home Manager MCP results:
 
 ## Workflow Validation
 
-### AGENTS.md Instructions Used:
+### AGENTS.md Instructions Used
+
 1. ✅ Used `nixos_search` for package discovery
 2. ✅ Used `home_manager_search` for user config
 3. ✅ Used `exa get_code_context_exa` for orchestration research
 4. ✅ Used `tokensNum=2000` for balanced context (as recommended)
 
-### Key Insights:
+### Key Insights
+
 - **NixOS MCP**: Excellent for finding specific packages and options
 - **Home Manager MCP**: Great for user-level configuration
 - **Exa MCP**: Perfect for researching real-world patterns and examples
@@ -150,6 +156,7 @@ Using Home Manager MCP results:
 ## Next Steps
 
 This test validates:
+
 1. All MCP servers are operational
 2. AGENTS.md guidance is actionable
 3. Context efficiency recommendations work

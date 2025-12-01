@@ -9,22 +9,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Import the fixtures to test
-from arda_cli.tests.conftest import (
-    temp_config_file,
-    temp_project_dir,
-    mock_config_path,
-    mock_xdg_config_dir,
-    rich_console_mock,
-    mock_theme_colors,
-    mock_path_exists,
-    mock_path_home,
-    mock_path_cwd,
-    mock_sys_argv,
-    sample_config_toml,
-    mock_themes_list,
-)
-
 
 class TestTempConfigFile:
     """Test temp_config_file fixture."""
@@ -181,6 +165,7 @@ class TestMockPathExists:
 
     def test_mock_path_exists_can_be_configured(self, mock_path_exists, monkeypatch):
         """Test that mock_path_exists can be reconfigured via monkeypatch."""
+
         # The fixture sets a default mock, but we can override it
         def custom_exists(path):
             return True
@@ -232,6 +217,7 @@ class TestMockSysArgv:
         mock_sys_argv(test_argv)
 
         import sys
+
         assert sys.argv == test_argv
 
     def test_mock_sys_argv_overrides_existing_argv(self, mock_sys_argv, monkeypatch):

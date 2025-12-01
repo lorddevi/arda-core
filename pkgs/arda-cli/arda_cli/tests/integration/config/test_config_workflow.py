@@ -72,7 +72,6 @@ def clean_config_state():
         xdg_dir.rmdir()
 
 
-
 @pytest.mark.slow
 @pytest.mark.integration
 @pytest.mark.config

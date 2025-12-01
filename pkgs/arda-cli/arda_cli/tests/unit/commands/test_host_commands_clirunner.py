@@ -47,15 +47,12 @@ class TestHostCommandsWithCliRunner(BaseCommandTest):
 
     def test_host_no_subcommand(self, runner):
         """Test: arda host (no subcommand, should show help)."""
-        result = self.invoke_command(
-            runner, arda_main, ["host"], standalone_mode=False
-        )
+        result = self.invoke_command(runner, arda_main, ["host"], standalone_mode=False)
         # Command should succeed and show help
         assert result.exit_code == 0
         # Should show help or coming soon message
         assert (
-            "Host management" in result.output
-            or "coming soon" in result.output.lower()
+            "Host management" in result.output or "coming soon" in result.output.lower()
         )
 
     def test_host_with_verbose_flag(self, runner):
@@ -67,8 +64,7 @@ class TestHostCommandsWithCliRunner(BaseCommandTest):
         assert result.exit_code == 0
         # Should show host management output
         assert (
-            "Host management" in result.output
-            or "coming soon" in result.output.lower()
+            "Host management" in result.output or "coming soon" in result.output.lower()
         )
 
     def test_host_with_timestamp_flag(self, runner):
@@ -80,8 +76,7 @@ class TestHostCommandsWithCliRunner(BaseCommandTest):
         assert result.exit_code == 0
         # Should show host management output
         assert (
-            "Host management" in result.output
-            or "coming soon" in result.output.lower()
+            "Host management" in result.output or "coming soon" in result.output.lower()
         )
 
     def test_host_with_theme_flag(self, runner):
@@ -93,8 +88,7 @@ class TestHostCommandsWithCliRunner(BaseCommandTest):
         assert result.exit_code == 0
         # Should show host management output
         assert (
-            "Host management" in result.output
-            or "coming soon" in result.output.lower()
+            "Host management" in result.output or "coming soon" in result.output.lower()
         )
 
     def test_host_with_multiple_flags(self, runner):
@@ -109,8 +103,7 @@ class TestHostCommandsWithCliRunner(BaseCommandTest):
         assert result.exit_code == 0
         # Should show host management output
         assert (
-            "Host management" in result.output
-            or "coming soon" in result.output.lower()
+            "Host management" in result.output or "coming soon" in result.output.lower()
         )
 
     def test_host_command_callback_with_help_false(self, runner):
@@ -120,9 +113,7 @@ class TestHostCommandsWithCliRunner(BaseCommandTest):
         """
         # When --help is not provided, the callback value is False
         # This should trigger the early return on line 12
-        result = self.invoke_command(
-            runner, arda_main, ["host"], standalone_mode=False
-        )
+        result = self.invoke_command(runner, arda_main, ["host"], standalone_mode=False)
         # Should succeed (the return prevents help from being shown)
         assert result.exit_code == 0
         assert "Host management" in result.output
