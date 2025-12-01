@@ -29,6 +29,9 @@
               inherit (python313Packages) pytest pytest-xdist pytest-cov;
             }
           }/bin/arda";
+          meta = {
+            description = "Arda - minimal infrastructure management for NixOS";
+          };
         };
       };
     };
