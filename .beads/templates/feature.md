@@ -27,16 +27,19 @@ So that {benefit/value}.
 ## Tasks
 
 ### Implementation
+
 - [ ] Task 1: {description} (AC: 1)
 - [ ] Task 2: {description} (AC: 2)
 - [ ] Task 3: {description} (AC: 3)
 
 ### Testing
+
 - [ ] Add unit tests
 - [ ] Add integration tests
 - [ ] Manual testing checklist
 
 ### Documentation
+
 - [ ] Update README
 - [ ] Add usage examples
 - [ ] Update API docs
@@ -53,10 +56,10 @@ So that {benefit/value}.
 
 ## References
 
-- [PRD: ]()
-- [Architecture: ]()
-- [Code: ]()
-- [Tests: ]()
+- PRD: TBD
+- Architecture: TBD
+- Code: TBD
+- Tests: TBD
 
 ## Implementation Summary
 
@@ -64,10 +67,12 @@ So that {benefit/value}.
 
 ### Files Changed
 
-**Modified:**
+#### Modified
+
 -
 
-**Created:**
+#### Created
+
 -
 
 ## Change Log

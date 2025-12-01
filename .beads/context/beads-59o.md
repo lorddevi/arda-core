@@ -41,6 +41,7 @@ So that I can trust test results and not have flaky test failures.
 The main.py module had module-level constants (DEFAULT_THEME, DEFAULT_VERBOSE, DEFAULT_TIMESTAMP) that were computed at import time. When tests imported main.py, these values were cached in the module namespace. The first test to import would set config values, and subsequent tests would inherit this polluted state.
 
 **Solution Pattern:**
+
 - Lazy-loaded defaults: Constants are computed on first access, not import
 - Global cache variable: `_default_config_cache` holds computed values
 - Reset function: `reset_default_config_cache()` clears cache between tests
@@ -90,6 +91,7 @@ The main.py module had module-level constants (DEFAULT_THEME, DEFAULT_VERBOSE, D
 ### Changes Made
 
 Implemented lazy-loaded defaults pattern to prevent test pollution:
+
 - Module-level config cache moved to lazy evaluation
 - Added reset_default_config_cache() function for test cleanup
 - Created reset_modules() fixture to clear module cache between tests
@@ -99,10 +101,12 @@ Implemented lazy-loaded defaults pattern to prevent test pollution:
 ### Files Changed
 
 **Modified:**
+
 - pkgs/arda-cli/arda_cli/main.py - Added lazy-loaded defaults and reset function
 - pkgs/arda-cli/arda_cli/tests/conftest.py - Added test isolation fixtures
 
 **Created:**
+
 - pkgs/arda-cli/arda_cli/tests/unit/test_conftest.py - 346 lines, 100% coverage
 
 ## Change Log

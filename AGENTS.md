@@ -13,6 +13,7 @@ For complex work, create detailed context files to improve discoverability and p
 **Process:**
 
 1. **Create Issue**
+
    ```bash
    bd create --title="..." --type=task|bug|feature
    ```
@@ -20,12 +21,14 @@ For complex work, create detailed context files to improve discoverability and p
 2. **Create Context File** (optional but recommended for complex work)
 
    **Option A: Using helper script (recommended)**
+
    ```bash
    .beads/create-context.sh beads-XXX task
    # Edit the generated file and fill in all {placeholders}
    ```
 
    **Option B: Manual template copy**
+
    ```bash
    # Copy appropriate template
    cp .beads/templates/task.md .beads/context/{issue-id}.md
@@ -42,6 +45,7 @@ For complex work, create detailed context files to improve discoverability and p
    ```
 
 3. **Update as Work Progresses**
+
    ```bash
    # Edit .beads/context/{issue-id}.md
    # Mark completed tasks: - [x] Task
@@ -58,11 +62,13 @@ For complex work, create detailed context files to improve discoverability and p
    - Files changed section documents impact
 
 **Templates available:**
+
 - `.beads/templates/task.md` - For tasks and fixes
 - `.beads/templates/bug.md` - For bug reports and fixes
 - `.beads/templates/feature.md` - For new features
 
 **Example:**
+
 ```markdown
 # Issue beads-59o: Fix test pollution in arda-cli
 

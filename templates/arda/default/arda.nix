@@ -1,4 +1,8 @@
-{ inputs, pkgs, lib }:
+{
+  inputs,
+  pkgs,
+  lib,
+}:
 
 {
   # Arda world configuration
@@ -56,23 +60,21 @@
 
   # Generate NixOS configurations from inventory
   # This creates the actual configurations for each host
-  nixosConfigurations = lib.mapAttrs (hostName: hostConfig:
+  nixosConfigurations = lib.mapAttrs (
+    hostName: hostConfig:
     let
       # Get role for this host
       role = hostConfig.role or "basic-host";
 
       # Get features for this role
       roleFeatures = lib.optionals (role != "basic-host") (
-        lib.optionals (lib.hasAttr role roles) (
-          (lib.attrByPath [ role "features" ] [ ] roles)
-        )
+        lib.optionals (lib.hasAttr role roles) ((lib.attrByPath [ role "features" ] [ ] roles))
       );
 
       # Get services from features
-      roleServices = lib.concatMap (feature:
-        lib.optionals (lib.hasAttr feature features) (
-          lib.attrByPath [ feature "services" ] [ ] features
-        )
+      roleServices = lib.concatMap (
+        feature:
+        lib.optionals (lib.hasAttr feature features) (lib.attrByPath [ feature "services" ] [ ] features)
       ) roleFeatures;
 
       # Merge all services for this host

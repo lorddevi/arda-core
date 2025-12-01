@@ -5,16 +5,19 @@ Welcome to your new Arda world! This directory contains your NixOS infrastructur
 ## Quick Start
 
 1. **Enter development shell** (provides `arda` CLI):
+
    ```bash
    nix develop
    ```
 
 2. **Get help**:
+
    ```bash
    arda --help
    ```
 
 3. **Add a host**:
+
    ```bash
    # Edit arda.nix to add hosts to the inventory.hosts section
    # Then build and deploy:
@@ -67,12 +70,14 @@ roles.basic-workstation = {
 Arda uses SOPS with age encryption for secrets:
 
 1. **Initialize SOPS** (done automatically on world creation):
+
    ```bash
    # Age keys are in .sops/age/
    ls -la .sops/age/keys.txt
    ```
 
 2. **Add secrets**:
+
    ```bash
    # Edit secrets
    sops arda.yaml

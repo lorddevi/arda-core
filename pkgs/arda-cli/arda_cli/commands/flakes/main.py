@@ -6,7 +6,9 @@ import rich_click as rclick
 from arda_cli.lib.output import get_output_manager, show_command_help
 
 
-def flakes_help_callback(ctx: click.Context, param: click.Parameter, value: bool) -> None:
+def flakes_help_callback(
+    ctx: click.Context, param: click.Parameter, value: bool
+) -> None:
     """Show help with active configuration."""
     if not value:
         return

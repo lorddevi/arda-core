@@ -1,5 +1,6 @@
 """Create new Arda world using flakes."""
 
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -39,7 +40,10 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
 
     # Validate world name
     if not name.replace("-", "").replace("_", "").isalnum():
-        output.error(f"Invalid world name '{name}'. Use only letters, numbers, hyphens, and underscores.")
+        output.error(
+            f"Invalid world name '{name}'. "
+            "Use only letters, numbers, hyphens, and underscores."
+        )
         sys.exit(1)
 
     # Determine target directory
@@ -62,7 +66,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
 
     if not template_path.exists():
         output.error(f"Template '{template}' not found at {template_path}")
-        output.info(f"Available templates: default")
+        output.info("Available templates: default")
         sys.exit(1)
 
     console = Console()
@@ -89,6 +93,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             # 1. Remove directory if it exists
             if target_dir.exists():
                 import shutil
+
                 shutil.rmtree(target_dir)
 
             # 2. Copy template
@@ -102,12 +107,14 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                 cwd=target_dir,
                 check=True,
                 capture_output=True,
+                shell=False,
             )
             subprocess.run(
                 ["git", "add", "."],
                 cwd=target_dir,
                 check=True,
                 capture_output=True,
+                shell=False,
             )
 
             # 4. Update flake
@@ -117,9 +124,12 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                 cwd=target_dir,
                 capture_output=True,
                 text=True,
+                shell=False,
             )
             if result.returncode != 0:
-                output.warning("Flake update had warnings (this is normal for first run)")
+                output.warning(
+                    "Flake update had warnings (this is normal for first run)"
+                )
 
             # 5. Create initial commit
             progress.update(task, description="Creating initial commit...")
@@ -128,12 +138,16 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                 cwd=target_dir,
                 check=True,
                 capture_output=True,
+                shell=False,
             )
-            subprocess.run(
-                ["git", "commit", "-m", f"Initial {name} world"],
+            # Use shlex.quote to safely escape the world name
+            safe_name = shlex.quote(name)
+            subprocess.run(  # noqa: S603
+                ["git", "commit", "-m", f"Initial {safe_name} world"],
                 cwd=target_dir,
                 check=True,
                 capture_output=True,
+                shell=False,
             )
 
             # 6. Generate age keys if needed
@@ -142,17 +156,23 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             if not age_key_path.exists():
                 (target_dir / ".sops" / "age").mkdir(parents=True, exist_ok=True)
                 try:
-                    subprocess.run(
-                        ["age-keygen", "-o", str(age_key_path)],
+                    # Validate that the path is within the target directory
+                    age_key_path_str = str(age_key_path)
+                    if not age_key_path_str.startswith(str(target_dir)):
+                        raise ValueError("Invalid age key path")
+                    subprocess.run(  # noqa: S603
+                        ["age-keygen", "-o", age_key_path_str],
                         check=True,
                         capture_output=True,
                         text=True,
+                        shell=False,
                     )
                     output.info(f"Generated age key at {age_key_path}")
                 except (subprocess.CalledProcessError, FileNotFoundError) as e:
                     output.warning(
                         f"Failed to generate age key: {e}. "
-                        "You can install 'age' package if you plan to use secrets management."
+                        "You can install 'age' package if you plan to use "
+                        "secrets management."
                     )
 
             progress.update(task, description="Done!")
@@ -181,6 +201,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
     except Exception as e:
         output.error(f"Failed to create world: {e}")
         import traceback
+
         output.debug("Full traceback:")
         output.debug(traceback.format_exc())
         sys.exit(1)

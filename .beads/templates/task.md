@@ -34,9 +34,9 @@ So that {benefit}.
 
 ## References
 
-- [Code: ]()
-- [Tests: ]()
-- [Docs: ]()
+- Code: TBD
+- Tests: TBD
+- Docs: TBD
 
 ## Implementation Summary
 
@@ -44,10 +44,12 @@ So that {benefit}.
 
 ### Files Changed
 
-**Modified:**
+#### Modified
+
 -
 
-**Created:**
+#### Created
+
 -
 
 ## Change Log

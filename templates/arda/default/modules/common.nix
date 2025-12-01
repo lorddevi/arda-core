@@ -5,7 +5,10 @@
   # You can customize this or create new modules
 
   # Enable flake module
-  nix.settings.experimental-features = [ "flakes" "nix-command" ];
+  nix.settings.experimental-features = [
+    "flakes"
+    "nix-command"
+  ];
 
   # Basic system configuration
   environment.systemPackages = with pkgs; [

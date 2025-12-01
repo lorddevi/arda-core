@@ -47,9 +47,9 @@ But got {actual behavior}.
 
 ## References
 
-- [Related Issue: ]()
-- [Code: ]()
-- [Tests: ]()
+- Related Issue: TBD
+- Code: TBD
+- Tests: TBD
 
 ## Resolution Notes
 
@@ -59,10 +59,12 @@ But got {actual behavior}.
 
 ### Files Changed
 
-**Modified:**
+#### Modified
+
 -
 
-**Created:**
+#### Created
+
 -
 
 ## Change Log
