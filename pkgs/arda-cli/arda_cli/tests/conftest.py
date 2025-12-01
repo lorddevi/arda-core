@@ -242,7 +242,7 @@ def mock_themes_list():
 
 @pytest.fixture(autouse=True)
 def reset_modules():
-    """Reset modules between tests to avoid state leakage.
+    """Reset modules and module-level cache between tests to avoid state leakage.
 
     This fixture is automatically used for all tests.
     It ensures tests don't interfere with each other.
@@ -260,3 +260,14 @@ def reset_modules():
     for module in modules_to_remove:
         if module.startswith("arda_cli"):
             del sys.modules[module]
+
+    # Reset main module's default config cache to avoid pollution
+    # This fixes issues where DEFAULT_THEME/VERBOSE/TIMESTAMP are cached
+    # from a previous test's working directory or environment
+    try:
+        from arda_cli.main import reset_default_config_cache
+
+        reset_default_config_cache()
+    except ImportError:
+        # Module might not be importable during early test collection
+        pass
