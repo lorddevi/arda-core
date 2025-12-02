@@ -127,23 +127,33 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
 
                 shutil.rmtree(target_dir)
 
-            # 2. Copy template
-            progress.update(task, description="Copying template files...")
-            copytree(str(template_path), str(target_dir))
-
-            # 3. Make target directory writable
+            # 2. Create and make target directory writable
             # Nix run creates directories with read-only permissions,
-            # which prevents git init from creating .git directory
-            # We need to make it writable before initializing git
-            progress.update(task, description="Making directory writable...")
+            # so we need to ensure the directory is writable BEFORE copying
+            progress.update(task, description="Creating directory...")
             import os
             import stat
 
-            target_dir.chmod(
-                stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
-            )
+            target_dir.mkdir(parents=True, exist_ok=True)
+            # Make directory writable for the current user
+            target_dir.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
-            # 4. Initialize git
+            # 3. Copy template
+            progress.update(task, description="Copying template files...")
+            copytree(str(template_path), str(target_dir))
+
+            # 4. Recursively make all files and directories writable
+            # This ensures that files from the Nix store can be modified/deleted
+            progress.update(task, description="Making files writable...")
+            for root, dirs, files in os.walk(target_dir):
+                for d in dirs:
+                    dir_path = Path(root) / d
+                    dir_path.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+                for f in files:
+                    file_path = Path(root) / f
+                    file_path.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+            # 5. Initialize git
             progress.update(task, description="Initializing git repository...")
             git_initialized = False
 
@@ -225,7 +235,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                     output.warning(f"Could not add files to git: {e}")
                     git_initialized = False
 
-            # 5. Update flake (only run if git was initialized)
+            # 6. Update flake (only run if git was initialized)
             if git_initialized:
                 progress.update(task, description="Updating flake...")
                 result = subprocess.run(
@@ -240,7 +250,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                         "Flake update had warnings (this is normal for first run)"
                     )
 
-            # 6. Create initial commit (only if git was initialized)
+            # 7. Create initial commit (only if git was initialized)
             if git_initialized:
                 progress.update(task, description="Creating initial commit...")
                 subprocess.run(
@@ -263,7 +273,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                         "Could not create initial commit, but files are ready"
                     )
 
-            # 7. Generate age keys if needed
+            # 8. Generate age keys if needed
             # Match clan-core's behavior: generate keys at ~/.config/sops/age/keys.txt
             # instead of inside the world directory, so git status stays clean
             progress.update(task, description="Setting up secrets...")
