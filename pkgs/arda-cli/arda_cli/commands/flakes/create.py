@@ -133,53 +133,85 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
 
             # 3. Initialize git
             progress.update(task, description="Initializing git repository...")
-            subprocess.run(
-                ["git", "init"],
-                cwd=target_dir,
-                check=True,
-                capture_output=True,
-                shell=False,
-            )
-            subprocess.run(
-                ["git", "add", "."],
-                cwd=target_dir,
-                check=True,
-                capture_output=True,
-                shell=False,
-            )
-
-            # 4. Update flake
-            progress.update(task, description="Updating flake...")
-            result = subprocess.run(
-                ["nix", "flake", "update"],
+            # Try to initialize git repository
+            # Use separate-git-dir to avoid issues when running in a subdirectory
+            # of another git repository
+            git_init_result = subprocess.run(  # noqa: S603
+                ["git", "init", "--separate-git-dir", str(target_dir / ".git")],
                 cwd=target_dir,
                 capture_output=True,
                 text=True,
                 shell=False,
             )
-            if result.returncode != 0:
-                output.warning(
-                    "Flake update had warnings (this is normal for first run)"
-                )
 
-            # 5. Create initial commit
-            progress.update(task, description="Creating initial commit...")
-            subprocess.run(
-                ["git", "add", "."],
-                cwd=target_dir,
-                check=True,
-                capture_output=True,
-                shell=False,
-            )
-            # Use shlex.quote to safely escape the world name
-            safe_name = shlex.quote(name)
-            subprocess.run(  # noqa: S603
-                ["git", "commit", "-m", f"Initial {safe_name} world"],
-                cwd=target_dir,
-                check=True,
-                capture_output=True,
-                shell=False,
-            )
+            # Check if git init succeeded or if we're in a git repository already
+            if git_init_result.returncode == 0:
+                # Git init succeeded, now add files
+                subprocess.run(
+                    ["git", "add", "."],
+                    cwd=target_dir,
+                    capture_output=True,
+                    shell=False,
+                )
+                git_initialized = True
+            else:
+                # Git init failed, check if we're already in a git repository
+                git_check = subprocess.run(
+                    ["git", "rev-parse", "--git-dir"],
+                    cwd=target_dir,
+                    capture_output=True,
+                    text=True,
+                    shell=False,
+                )
+                if git_check.returncode == 0:
+                    # Already in a git repository, skip git operations
+                    output.info("Already in a git repository, skipping git init")
+                    git_initialized = False
+                else:
+                    # Git is not available or other error, warn and continue
+                    output.warning(
+                        "Could not initialize git repository. "
+                        "You can manually run 'git init' in the created directory."
+                    )
+                    git_initialized = False
+
+            # 4. Update flake (only run if git was initialized)
+            if git_initialized:
+                progress.update(task, description="Updating flake...")
+                result = subprocess.run(
+                    ["nix", "flake", "update"],
+                    cwd=target_dir,
+                    capture_output=True,
+                    text=True,
+                    shell=False,
+                )
+                if result.returncode != 0:
+                    output.warning(
+                        "Flake update had warnings (this is normal for first run)"
+                    )
+
+            # 5. Create initial commit (only if git was initialized)
+            if git_initialized:
+                progress.update(task, description="Creating initial commit...")
+                subprocess.run(
+                    ["git", "add", "."],
+                    cwd=target_dir,
+                    capture_output=True,
+                    shell=False,
+                )
+                # Use shlex.quote to safely escape the world name
+                safe_name = shlex.quote(name)
+                commit_result = subprocess.run(  # noqa: S603
+                    ["git", "commit", "-m", f"Initial {safe_name} world"],
+                    cwd=target_dir,
+                    capture_output=True,
+                    text=True,
+                    shell=False,
+                )
+                if commit_result.returncode != 0:
+                    output.warning(
+                        "Could not create initial commit, but files are ready"
+                    )
 
             # 6. Generate age keys if needed
             progress.update(task, description="Setting up secrets...")
@@ -209,9 +241,16 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             progress.update(task, description="Done!")
 
         # Success message
+        git_status = ""
+        if not git_initialized:
+            git_status = (
+                "\n[yellow]Note:[/yellow] Git repository not initialized. "
+                "Run 'git init' manually if needed.\n"
+            )
+
         success_panel = Panel(
             f"Successfully created Arda world: [bold]{name}[/bold]\n\n"
-            f"Location: [cyan]{target_dir}[/cyan]\n\n"
+            f"Location: [cyan]{target_dir}[/cyan]{git_status}\n"
             f"Next steps:\n"
             f"  • cd {name}\n"
             f"  • nix develop\n"
