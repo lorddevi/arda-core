@@ -26,11 +26,14 @@
     in
     {
       # NixOS configurations for all hosts
-      nixosConfigurations = import ./arda.nix {
-        inherit inputs;
-        pkgs = import nixpkgs { inherit system; };
-        lib = nixpkgs.lib;
-      };
+      nixosConfigurations = forAllSystems (
+        system:
+        import ./arda.nix {
+          inherit inputs system;
+          pkgs = import nixpkgs { inherit system; };
+          lib = nixpkgs.lib;
+        }
+      );
 
       # Development shell with arda CLI
       devShells = forAllSystems (
@@ -42,8 +45,8 @@
           default = pkgs.mkShell {
             buildInputs = [
               arda-core.packages.${system}.arda-cli
-              nixpkgs # nix
-              nixpkgs # git
+              pkgs.nix
+              pkgs.git
             ];
           };
         }

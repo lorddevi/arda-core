@@ -2,6 +2,7 @@
   inputs,
   pkgs,
   lib,
+  system,
 }:
 
 {
@@ -103,7 +104,7 @@
       };
     in
     pkgs.nixosSystem {
-      inherit systemConfiguration;
+      inherit systemConfiguration system;
       modules = [
         systemConfiguration
       ];
