@@ -57,7 +57,7 @@ def get_public_age_key_from_file(key_file_path: Path) -> str:
 
 
 @click.command()
-@click.argument("name")
+@click.argument("name", required=False)
 @click.option(
     "--template",
     default="default",
@@ -69,14 +69,34 @@ def get_public_age_key_from_file(key_file_path: Path) -> str:
     help="Force creation even if directory exists",
 )
 @click.pass_context
-def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
-    """Create a new Arda world.
+def create(ctx: click.Context, name: str | None, template: str, force: bool) -> None:
+    """Create a new Arda world from a template.
+
+    Creates a new flake-based Arda installation in a new directory named NAME.
+    If NAME is not provided, you will be prompted to enter it.
 
     This creates a new flake-based Arda installation in a new directory.
 
-    NAME is the name of the world to create.
+    NAME is the name of the world to create. If not provided,
+    you will be prompted to enter a name.
     """
     output = get_output_manager(ctx)
+
+    # If name is not provided, prompt the user
+    if name is None:
+        from rich.prompt import Prompt
+
+        console = Console()
+        name = Prompt.ask(
+            "Enter the name of the world to create",
+            console=console,
+            default="ardatest1" if not force else None,
+        ).strip()
+
+        # Validate that the user provided a name
+        if not name:
+            output.error("World name is required")
+            sys.exit(1)
 
     # Validate world name
     if not name.replace("-", "").replace("_", "").isalnum():

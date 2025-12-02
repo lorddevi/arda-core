@@ -35,41 +35,31 @@ def clean_config_state():
 
     This fixture runs before every test in this file to ensure no
     config files from previous tests pollute the test environment.
+
+    NOTE: Tests in this file use temporary directories for isolation,
+    so this fixture only cleans up project-level configs in the cwd.
+    It NEVER touches real user files in $HOME.
     """
-    # Clean up any config files that might exist
+    # Clean up any project-level config files in cwd
+    # (Tests use temp dirs, so this is usually a temp path)
     project_config = Path.cwd() / "etc" / "arda.toml"
     if project_config.exists():
         project_config.unlink()
-
-    xdg_config = Path.home() / ".config" / "arda" / "arda.toml"
-    if xdg_config.exists():
-        xdg_config.unlink()
 
     # Ensure etc directory doesn't exist if empty
     etc_dir = Path.cwd() / "etc"
     if etc_dir.exists() and not any(etc_dir.iterdir()):
         etc_dir.rmdir()
 
-    # Ensure XDG config directory doesn't exist if empty
-    xdg_dir = Path.home() / ".config" / "arda"
-    if xdg_dir.exists() and not any(xdg_dir.iterdir()):
-        xdg_dir.rmdir()
-
     # Yield to run the test
     yield
 
-    # Clean up after test
+    # Clean up after test - only project config
     if project_config.exists():
         project_config.unlink()
 
-    if xdg_config.exists():
-        xdg_config.unlink()
-
     if etc_dir.exists() and not any(etc_dir.iterdir()):
         etc_dir.rmdir()
-
-    if xdg_dir.exists() and not any(xdg_dir.iterdir()):
-        xdg_dir.rmdir()
 
 
 @pytest.mark.slow
@@ -271,8 +261,16 @@ def test_config_default_values_when_no_file():
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
 
-        # Mock cwd to point to empty directory
-        with patch("pathlib.Path.cwd", return_value=temp_path):
+        # Create a fake home directory that also has no config
+        fake_home = temp_path / "fake_home"
+        fake_home.mkdir()
+
+        # Mock both cwd and home to point to empty directories
+        # This ensures complete isolation from any real config files
+        with (
+            patch("pathlib.Path.cwd", return_value=temp_path),
+            patch("pathlib.Path.home", return_value=fake_home),
+        ):
             # Should return default config
             theme = get_theme_from_config()
             verbose = get_verbose_from_config()

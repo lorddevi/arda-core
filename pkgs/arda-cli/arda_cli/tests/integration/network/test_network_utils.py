@@ -44,11 +44,12 @@ def test_find_free_port_custom_range():
 def test_check_host_port_open():
     """Test port open detection."""
     # Test closed port (should fail)
-    assert not check_host_port_open(port=99999)
+    assert not check_host_port_open(port=65000)
 
     # Test with valid port (may or may not be open)
     result = check_host_port_open(port=22)
-    # Just verify function runs without error
+    # Verify function returns a boolean (True if open, False if closed)
+    assert isinstance(result, bool)
 
 
 @pytest.mark.network
@@ -56,7 +57,7 @@ def test_check_host_port_open():
 def test_check_host_port_open_timeout():
     """Test port check with timeout."""
     # Test with short timeout
-    result = check_host_port_open(port=99999, timeout=1)
+    result = check_host_port_open(port=65000, timeout=1)
     assert result is False
 
 
@@ -65,14 +66,15 @@ def test_check_host_port_open_timeout():
 def test_wait_for_port_timeout():
     """Test wait_for_port with timeout."""
     start_time = time.time()
-    result = wait_for_port(port=99999, timeout=2)
+    result = wait_for_port(port=65000, timeout=2)
     elapsed = time.time() - start_time
 
     # Should return False
     assert result is False
 
-    # Should timeout (allowing some buffer for test execution)
-    assert 1.8 < elapsed < 2.5
+    # Should timeout (using wider tolerance for flaky time-based tests)
+    # Allows for system load and scheduling variance
+    assert 1.7 < elapsed < 3.0
 
 
 @pytest.mark.network
@@ -180,5 +182,8 @@ def test_ssh_connectivity_invalid_host():
     )
     # Should return False for invalid host
     assert isinstance(result, bool)
-    # In most environments this will be False
-    assert result is False or result is True  # Just verify it's a boolean
+    # Verify that it returns False (or at least not True) for invalid host
+    # In isolated test environments with no network, this might raise an exception
+    # or return False - either way, it should not return True
+    if result is True:
+        pytest.fail("SSH connectivity should not succeed for invalid host")

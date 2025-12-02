@@ -76,8 +76,8 @@ class TestHelpColorConsistency:
         normalized_help = ANSI_ESCAPE_PATTERN.sub("", result_help.output)
 
         # Remove config file warning lines (which may differ between invocations)
-        # The first invocation may create a config file;
-        # this is not relevant to the color consistency test
+        # The first invocation may create a config file, but this is not what we're
+        # testing
         import re as re_module
 
         # Match the warning line and the following path line

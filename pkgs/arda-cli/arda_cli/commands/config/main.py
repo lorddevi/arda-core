@@ -120,15 +120,6 @@ def config(ctx: click.Context, force_global: bool, force_local: bool) -> None:
     Use --global to force using the XDG config location.
     Use --local to force using the project config location.
 
-
-
-    Examples:
-        arda config view              # View all settings
-        arda config view theme.default  # View specific setting
-        arda config set theme.default nord  # Set a value
-        arda config --local set theme nord  # Set in project config
-        arda config --global set theme nord  # Set in XDG config
-
     """
     # Store the force flags in context
     ctx.ensure_object(dict)

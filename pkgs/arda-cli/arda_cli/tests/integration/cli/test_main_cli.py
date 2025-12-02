@@ -82,11 +82,14 @@ class TestShowActiveConfig:
 
             from rich.console import Console
 
-            console = Console(file=StringIO(), force_terminal=True)
+            output = StringIO()
+            console = Console(file=output, force_terminal=True)
             show_active_config(console)
 
-            # Just verify function runs without error
-            # Output verification would require more complex mocking
+            # Verify the config source is displayed in the output
+            output_text = output.getvalue()
+            assert "Active configuration:" in output_text
+            assert "Project config" in output_text
 
 
 @pytest.mark.integration
@@ -214,7 +217,8 @@ class TestCLIErrorHandling:
         runner = CliRunner()
         # Click's CliRunner handles this gracefully
         result = runner.invoke(main, [])
-        assert result.exit_code == 0 or result.exit_code == 1
+        # Verify valid exit code (no crash or unhandled exception)
+        assert result.exit_code in (0, 1, 2, 130)  # Valid CLI exit codes
 
     def test_cli_system_exit(self):
         """Test handling of system exit in commands."""

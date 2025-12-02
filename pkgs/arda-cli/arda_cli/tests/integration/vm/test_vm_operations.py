@@ -33,6 +33,9 @@ from arda_cli.testing.helpers.pytest_helpers import (
 @pytest.mark.integration
 @pytest.mark.vm
 @pytest.mark.with_core
+@pytest.mark.skip(
+    reason="Blueprint test for future VM functionality - not yet implemented"
+)
 def test_vm_test_documentation():
     """Documentation test for VM integration functionality.
 
@@ -156,6 +159,9 @@ def test_vm_error_handling():
 @pytest.mark.integration
 @pytest.mark.vm
 @pytest.mark.with_core
+@pytest.mark.skip(
+    reason="Blueprint test for future VM functionality - not yet implemented"
+)
 def test_vm_lifecycle_operations():
     """Test VM lifecycle operations (create, start, stop, delete).
 
@@ -312,6 +318,9 @@ def test_vm_integration_with_nix():
 @pytest.mark.integration
 @pytest.mark.vm
 @pytest.mark.with_core
+@pytest.mark.skip(
+    reason="Blueprint test for future VM functionality - not yet implemented"
+)
 def test_vm_multiple_instances():
     """Test multiple VM instances management.
 

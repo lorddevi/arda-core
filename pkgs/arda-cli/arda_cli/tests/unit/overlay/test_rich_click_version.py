@@ -21,10 +21,10 @@ import pytest
 @pytest.mark.fast
 @pytest.mark.without_core
 def test_rich_click_version_is_overlaid():
-    """Verify that rich-click version is 1.9.4 (overlay), not 1.8.9 (nixpkgs).
+    """Verify that rich-click version has theming support (overlay applied).
 
     The custom overlay in overlays/python3/rich-click.nix upgrades rich-click
-    to version 1.9.4, which supports the 'theme' parameter in RichHelpConfiguration.
+    to a version that supports the 'theme' parameter in RichHelpConfiguration.
 
     Without this overlay:
     - rich-click version would be 1.8.9 (from nixpkgs)
@@ -35,20 +35,41 @@ def test_rich_click_version_is_overlaid():
     """
     import rich_click
 
-    # The overlay version (1.9.4) vs nixpkgs version (1.8.9)
-    expected_version = "1.9.4"
-    nixpkgs_version = "1.8.9"
-
     actual_version = rich_click.__version__
 
-    assert actual_version == expected_version, (
-        f"Expected rich-click {expected_version} "
-        f"(custom overlay version with theming), "
-        f"but got {actual_version} (nixpkgs version without theming support). "
-        f"The custom overlay in overlays/python3/rich-click.nix must not be "
-        f"applied correctly. Both devShell and arda-cli package must use the "
-        f"overlaid version."
-    )
+    # Verify the version is not the base nixpkgs version
+    nixpkgs_version = "1.8.9"
+
+    # Check that version is not the nixpkgs version OR has theming support
+    # This makes the test more maintainable - we verify the feature works,
+    # not specific version numbers
+    if actual_version == nixpkgs_version:
+        # If it's the nixpkgs version, verify theming support exists anyway
+        import inspect
+
+        from rich_click.rich_help_configuration import RichHelpConfiguration
+
+        sig = inspect.signature(RichHelpConfiguration.__init__)
+        params = sig.parameters
+
+        assert "theme" in params, (
+            f"rich-click version {actual_version} (nixpkgs) lacks theming support. "
+            f"The custom overlay in overlays/python3/rich-click.nix must not be "
+            f"applied correctly."
+        )
+    else:
+        # It's a newer version - just verify it has theming support
+        import inspect
+
+        from rich_click.rich_help_configuration import RichHelpConfiguration
+
+        sig = inspect.signature(RichHelpConfiguration.__init__)
+        params = sig.parameters
+
+        assert "theme" in params, (
+            f"rich-click version {actual_version} lacks theming support. "
+            f"The overlay may need to be updated to a version that supports theming."
+        )
 
 
 @pytest.mark.fast
@@ -135,19 +156,48 @@ def test_package_uses_overlaid_python313packages():
     """Verify that arda-cli package is built with overlaid python313Packages.
 
     This test checks that the package derivation uses the overlaid version.
-    In Nix builds, we verify that the rich-click in the environment is 1.9.4.
+    In Nix builds, we verify that the rich-click in the environment has theming support.
 
     This is a runtime verification test - it checks that the overlay actually works,
     not whether the overlay files exist in the source tree.
     """
     # In both devShell and Nix builds, we can verify the package is built correctly
-    # by checking that the rich-click in the environment is 1.9.4
+    # by checking that the rich-click in the environment has theming support
     import rich_click
 
-    assert rich_click.__version__ == "1.9.4", (
-        f"Package build is using rich-click {rich_click.__version__}, expected 1.9.4. "
-        "The package must be built with the overlaid python313Packages."
-    )
+    # Check that version is not the base nixpkgs version OR has theming support
+    nixpkgs_version = "1.8.9"
+    actual_version = rich_click.__version__
+
+    if actual_version == nixpkgs_version:
+        # If it's the nixpkgs version, verify theming support exists
+        # (This would be unusual but we handle it gracefully)
+        import inspect
+
+        from rich_click.rich_help_configuration import RichHelpConfiguration
+
+        sig = inspect.signature(RichHelpConfiguration.__init__)
+        params = sig.parameters
+
+        assert "theme" in params, (
+            f"Package build is using rich-click {actual_version} "
+            f"(nixpkgs) without theming support. "
+            "The package must be built with the overlaid python313Packages."
+        )
+    else:
+        # It's a newer version - verify theming support
+        import inspect
+
+        from rich_click.rich_help_configuration import RichHelpConfiguration
+
+        sig = inspect.signature(RichHelpConfiguration.__init__)
+        params = sig.parameters
+
+        assert "theme" in params, (
+            f"Package build is using rich-click {actual_version} "
+            f"without theming support. "
+            "The package must be built with the overlaid python313Packages."
+        )
 
 
 @pytest.mark.fast

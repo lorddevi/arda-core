@@ -53,7 +53,7 @@ class TestFindFreePort:
         mock_socket.side_effect = OSError("All ports in use")
 
         with pytest.raises(RuntimeError, match="No available port found in range"):
-            find_free_port(start=99990, end=99999)
+            find_free_port(start=65000, end=65009)
 
     @pytest.mark.unit
     def test_find_free_port_skips_used_port(self):
@@ -86,7 +86,7 @@ class TestCheckHostPortOpen:
     def test_check_host_port_open_false(self):
         """Test check_host_port_open returns False for closed port."""
         # Use unlikely port number
-        result = check_host_port_open(host="localhost", port=99999, timeout=1)
+        result = check_host_port_open(host="localhost", port=65000, timeout=1)
         assert result is False
 
     @pytest.mark.unit
@@ -109,7 +109,7 @@ class TestCheckHostPortOpen:
         """Test check_host_port_open handles OSError gracefully."""
         mock_socket.side_effect = OSError("Connection refused")
 
-        result = check_host_port_open(host="localhost", port=99999, timeout=1)
+        result = check_host_port_open(host="localhost", port=65000, timeout=1)
 
         assert result is False
 
@@ -119,7 +119,7 @@ class TestCheckHostPortOpen:
         """Test check_host_port_open handles generic exceptions."""
         mock_socket.side_effect = Exception("Unexpected error")
 
-        result = check_host_port_open(host="localhost", port=99999, timeout=1)
+        result = check_host_port_open(host="localhost", port=65000, timeout=1)
 
         assert result is False
 
@@ -136,7 +136,7 @@ class TestWaitForPort:
         mock_check.return_value = False
 
         result = wait_for_port(
-            host="localhost", port=99999, timeout=1, check_interval=0.1
+            host="localhost", port=65000, timeout=1, check_interval=0.1
         )
 
         assert result is False
@@ -185,7 +185,7 @@ class TestWaitForPort:
         start_time = 1000.0
         with patch("time.time", side_effect=[start_time, start_time + 5]):
             result = wait_for_port(
-                host="localhost", port=99999, timeout=5, check_interval=0.1
+                host="localhost", port=65000, timeout=5, check_interval=0.1
             )
 
             assert result is False

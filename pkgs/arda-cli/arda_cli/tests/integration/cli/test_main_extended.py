@@ -316,5 +316,6 @@ class TestMainErrorHandling:
         # (This is handled by Click's error handling)
         result = runner.invoke(main, [], input="")
 
-        # Click should handle it gracefully
-        assert result.exit_code != 0 or result.exit_code == 0
+        # Click should handle it - verify exit code is valid (0 or non-zero)
+        # The key is that it doesn't crash or raise unhandled exceptions
+        assert result.exit_code in (0, 1, 2, 130)  # Valid exit codes for CLI usage
