@@ -140,16 +140,30 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             import stat
 
             # Make target directory writable FIRST
-            target_dir.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+            # Use 755 (rwxr-xr-x) for directories: owner full access, others
+            # read/execute
+            target_dir.chmod(
+                stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+            )
 
             # Then recursively chmod all files and subdirectories
             for root, dirs, files in os.walk(target_dir):
                 for d in dirs:
                     dir_path = Path(root) / d
-                    dir_path.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+                    # Directories: 755 (rwxr-xr-x)
+                    dir_path.chmod(
+                        stat.S_IRWXU
+                        | stat.S_IRGRP
+                        | stat.S_IXGRP
+                        | stat.S_IROTH
+                        | stat.S_IXOTH
+                    )
                 for f in files:
                     file_path = Path(root) / f
-                    file_path.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+                    # Files: 644 (rw-r--r--)
+                    file_path.chmod(
+                        stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
+                    )
 
             # 4. Initialize git
             progress.update(task, description="Initializing git repository...")
