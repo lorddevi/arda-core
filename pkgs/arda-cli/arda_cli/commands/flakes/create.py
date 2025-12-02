@@ -68,11 +68,11 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
     dev_templates_dir = arda_core_root / "templates" / "arda"
 
     # Package-relative path (installed via pip/nix - setuptools puts data in
-    # lib/python*/data/)
+    # lib/python*/site-packages/arda_cli/data/)
     if hasattr(sys, "executable"):
         # We're running from an installed package
         site_packages = site.getsitepackages()[0]
-        installed_templates_dir = Path(site_packages).parent / "data" / "arda"
+        installed_templates_dir = Path(site_packages) / "arda_cli" / "data" / "arda"
     else:
         # Fallback - calculate from current file location
         package_root = Path(__file__).parent.parent.parent.parent.parent
