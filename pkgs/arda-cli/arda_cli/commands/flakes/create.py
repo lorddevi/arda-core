@@ -131,7 +131,19 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             progress.update(task, description="Copying template files...")
             copytree(str(template_path), str(target_dir))
 
-            # 3. Initialize git
+            # 3. Make target directory writable
+            # Nix run creates directories with read-only permissions,
+            # which prevents git init from creating .git directory
+            # We need to make it writable before initializing git
+            progress.update(task, description="Making directory writable...")
+            import os
+            import stat
+
+            target_dir.chmod(
+                stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+            )
+
+            # 4. Initialize git
             progress.update(task, description="Initializing git repository...")
             git_initialized = False
 
@@ -213,7 +225,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                     output.warning(f"Could not add files to git: {e}")
                     git_initialized = False
 
-            # 4. Update flake (only run if git was initialized)
+            # 5. Update flake (only run if git was initialized)
             if git_initialized:
                 progress.update(task, description="Updating flake...")
                 result = subprocess.run(
@@ -228,7 +240,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                         "Flake update had warnings (this is normal for first run)"
                     )
 
-            # 5. Create initial commit (only if git was initialized)
+            # 6. Create initial commit (only if git was initialized)
             if git_initialized:
                 progress.update(task, description="Creating initial commit...")
                 subprocess.run(
@@ -251,7 +263,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                         "Could not create initial commit, but files are ready"
                     )
 
-            # 6. Generate age keys if needed
+            # 7. Generate age keys if needed
             progress.update(task, description="Setting up secrets...")
             age_key_path = target_dir / ".sops" / "age" / "keys.txt"
             if not age_key_path.exists():
