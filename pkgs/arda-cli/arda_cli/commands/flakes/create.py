@@ -159,33 +159,32 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                 shell=False,
             )
 
-            if git_init_result.returncode == 0:
-                # Git init succeeded
-                git_initialized = True
-                output.debug("Git repository initialized successfully")
-            else:
-                # Git init failed, log the error and try to understand why
-                error_msg = git_init_result.stderr.strip()
+            # Try to verify that git actually works by running rev-parse
+            # This tells us if the repository was initialized successfully
+            git_check = subprocess.run(
+                ["git", "rev-parse", "--git-dir"],
+                cwd=target_dir,
+                capture_output=True,
+                text=True,
+                shell=False,
+            )
 
-                # Check if the error is because we're in a git repository
-                # In this case, git might have succeeded despite the error
-                git_check = subprocess.run(
-                    ["git", "rev-parse", "--git-dir"],
-                    cwd=target_dir,
-                    capture_output=True,
-                    text=True,
-                    shell=False,
-                )
-                if git_check.returncode == 0:
-                    # We can use git commands, so initialization probably worked
-                    git_initialized = True
-                    output.debug("Git repository initialized (despite warning)")
+            if git_check.returncode == 0:
+                # Git commands work, so repository is initialized
+                git_initialized = True
+                if git_init_result.returncode == 0:
+                    output.debug("Git repository initialized successfully")
                 else:
-                    # Git truly failed, report the error
-                    output.warning(
-                        f"Could not initialize git repository. Error: {error_msg}"
+                    output.debug(
+                        "Git repository initialized (git had warnings but works)"
                     )
-                    git_initialized = False
+            else:
+                # Git doesn't work, initialization failed
+                git_initialized = False
+                error_msg = git_init_result.stderr.strip()
+                output.warning(
+                    f"Could not initialize git repository. Error: {error_msg}"
+                )
 
             # If git was initialized, add files
             if git_initialized:
