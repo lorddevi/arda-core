@@ -1,7 +1,6 @@
 """Create new Arda world using flakes."""
 
 import shlex
-import site
 import subprocess
 import sys
 from pathlib import Path
@@ -58,27 +57,24 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
         )
         sys.exit(1)
 
-    # Get template path - templates are in lib/python3.13/data/arda/ (setuptools)
-    # Try multiple locations for compatibility:
-    # 1. Development: templates in arda-core root templates/
-    # 2. Installed: templates in lib/python3.13/data/arda/ (via MANIFEST.in)
+    # Get template path - templates are in arda-core/templates/arda/
+    # Following clan-core's pattern: templates are copied into the package
+    # at arda_core_templates/arda during the Nix build process
 
-    # Development path (running from source)
+    # Try development path first (running from source)
     arda_core_root = Path(__file__).parent.parent.parent.parent.parent.parent
     dev_templates_dir = arda_core_root / "templates" / "arda"
 
-    # Package-relative path (installed via pip/nix - setuptools puts data in
-    # lib/python*/site-packages/arda_cli/data/)
-    if hasattr(sys, "executable"):
-        # We're running from an installed package
-        site_packages = site.getsitepackages()[0]
-        installed_templates_dir = Path(site_packages) / "arda_cli" / "data" / "arda"
-    else:
-        # Fallback - calculate from current file location
-        package_root = Path(__file__).parent.parent.parent.parent.parent
-        installed_templates_dir = package_root / "data" / "arda"
+    # Try installed package path (templates copied into package)
+    # Use site.getsitepackages() to find the correct site-packages location
+    import site
 
-    # Try each location in order
+    site_packages = site.getsitepackages()[0]
+    installed_templates_dir = (
+        Path(site_packages) / "arda_cli" / "arda_core_templates" / "arda"
+    )
+
+    # Choose the right templates directory
     if dev_templates_dir.exists():
         templates_dir = dev_templates_dir
     elif installed_templates_dir.exists():

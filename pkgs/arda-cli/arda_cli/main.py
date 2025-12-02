@@ -25,7 +25,6 @@ from arda_cli.commands.flakes.main import flakes
 from arda_cli.commands.host.main import host
 from arda_cli.commands.roles.main import roles
 from arda_cli.commands.secrets.main import secrets
-from arda_cli.commands.templates.main import templates
 from arda_cli.commands.theme.main import theme
 from arda_cli.lib.config import (
     get_active_config_path,
@@ -345,7 +344,6 @@ main.add_command(flakes)
 main.add_command(host)
 main.add_command(roles)
 main.add_command(secrets)
-main.add_command(templates)
 main.add_command(theme)
 
 

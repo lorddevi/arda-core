@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arda_cli"
-version = "0.1.6"
+version = "0.1.7"
 description = "Arda - minimal infrastructure management for NixOS"
 license = {text = "MIT"}
 authors = [
@@ -45,7 +45,6 @@ include = ["arda_cli*", "arda_lib*", "arda_cli.testing*", "arda_lib.testing*"]
 arda_cli = [
     "py.typed",
     "arda.toml",
-    "data/**/*",
 ]
 
 [tool.ruff]

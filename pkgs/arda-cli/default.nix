@@ -45,6 +45,11 @@ let
           # Remove old symlinks if they exist
           rm -f $out/arda_cli/select
           rm -f $out/arda_lib/select
+
+          # Copy templates into the package (following clan-core pattern)
+          # ${../../templates} goes up from pkgs/arda-cli/ to arda-core root, then to templates/
+          mkdir -p $out/arda_cli/arda_core_templates
+          cp -r ${../../templates}/arda $out/arda_cli/arda_core_templates/
         ''
         + lib.optionalString (nix-select != null) ''
           # Substitute nix-select hash into Python code
