@@ -182,9 +182,22 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                 # Git doesn't work, initialization failed
                 git_initialized = False
                 error_msg = git_init_result.stderr.strip()
-                output.warning(
-                    f"Could not initialize git repository. Error: {error_msg}"
-                )
+
+                # Check if this is due to Nix sandbox restrictions
+                if "Permission denied" in error_msg:
+                    output.warning(
+                        "Git repository not initialized due to Nix sandbox "
+                        "restrictions. After the world is created, you can "
+                        "manually run:\n"
+                        f"  cd {name}\n"
+                        f"  git init\n"
+                        f"  git add .\n"
+                        f"  git commit -m 'Initial {name} world'"
+                    )
+                else:
+                    output.warning(
+                        f"Could not initialize git repository. Error: {error_msg}"
+                    )
 
             # If git was initialized, add files
             if git_initialized:
