@@ -135,18 +135,24 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             progress.update(task, description="Initializing git repository...")
             git_initialized = False
 
-            # Clean up any existing .git file that might be left from failed init
+            # Clean up any existing .git file or directory
+            # that might be left from failed init
             git_dir = target_dir / ".git"
-            if git_dir.exists() and not git_dir.is_dir():
+            if git_dir.exists():
                 try:
-                    git_dir.unlink()
+                    if git_dir.is_dir():
+                        import shutil
+
+                        shutil.rmtree(git_dir)
+                    else:
+                        git_dir.unlink()
                 except Exception:
                     pass
 
-            # Try to initialize git repository
-            # First try with --separate-git-dir
-            git_init_result = subprocess.run(  # noqa: S603
-                ["git", "init", "--separate-git-dir", str(git_dir)],
+            # Try to initialize git repository with regular init
+            # This works even when running in a subdirectory of another git repo
+            git_init_result = subprocess.run(
+                ["git", "init"],
                 cwd=target_dir,
                 capture_output=True,
                 text=True,
@@ -154,28 +160,30 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             )
 
             if git_init_result.returncode == 0:
-                # Git init with --separate-git-dir succeeded
+                # Git init succeeded
                 git_initialized = True
-                output.debug("Git repository initialized with --separate-git-dir")
+                output.debug("Git repository initialized successfully")
             else:
-                # Try regular git init as fallback
-                git_init_regular = subprocess.run(
-                    ["git", "init"],
+                # Git init failed, log the error and try to understand why
+                error_msg = git_init_result.stderr.strip()
+
+                # Check if the error is because we're in a git repository
+                # In this case, git might have succeeded despite the error
+                git_check = subprocess.run(
+                    ["git", "rev-parse", "--git-dir"],
                     cwd=target_dir,
                     capture_output=True,
                     text=True,
                     shell=False,
                 )
-
-                if git_init_regular.returncode == 0:
-                    # Regular git init succeeded
+                if git_check.returncode == 0:
+                    # We can use git commands, so initialization probably worked
                     git_initialized = True
-                    output.debug("Git repository initialized with regular init")
+                    output.debug("Git repository initialized (despite warning)")
                 else:
-                    # Both methods failed, log the error
+                    # Git truly failed, report the error
                     output.warning(
-                        f"Could not initialize git repository. "
-                        f"Error: {git_init_regular.stderr.strip()}"
+                        f"Could not initialize git repository. Error: {error_msg}"
                     )
                     git_initialized = False
 
