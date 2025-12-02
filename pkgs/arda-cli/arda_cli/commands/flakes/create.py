@@ -257,10 +257,15 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                     text=True,
                     shell=False,
                 )
+                # Complete progress before logging, so logs appear on new line
+                progress.stop()
                 if result.returncode != 0:
                     output.warning(
                         "Flake update had warnings (this is normal for first run)"
                     )
+                # Restart progress for next task
+                progress.start()
+                progress.update(task, description="Creating initial commit...")
 
             # 6. Create initial commit (only if git was initialized)
             if git_initialized:
@@ -306,18 +311,30 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                             text=True,
                             shell=False,
                         )
+                        # Complete progress before logging, so logs appear on new line
+                        progress.stop()
                         output.info(f"Generated age key at {age_key_path}")
+                        # Restart progress for next task
+                        progress.start()
                     except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                        # Complete progress before logging, so logs appear on new line
+                        progress.stop()
                         output.warning(
                             f"Failed to generate age key: {e}. "
                             "You can install 'age' package if you plan to use "
                             "secrets management."
                         )
+                        # Restart progress for next task
+                        progress.start()
                 except (PermissionError, OSError) as e:
+                    # Complete progress before logging, so logs appear on new line
+                    progress.stop()
                     output.warning(
                         f"Could not create sops config directory: {e}. "
                         "Skipping age key generation."
                     )
+                    # Restart progress for next task
+                    progress.start()
 
             progress.update(task, description="Done!")
 
