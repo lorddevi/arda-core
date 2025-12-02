@@ -133,10 +133,16 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
 
             # 3. Recursively make all files and directories writable
             # This ensures that files from the Nix store can be modified/deleted
+            # CRITICAL: This must happen BEFORE git init, otherwise git can't
+            # create .git directory
             progress.update(task, description="Making files writable...")
             import os
             import stat
 
+            # Make target directory writable FIRST
+            target_dir.chmod(stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+            # Then recursively chmod all files and subdirectories
             for root, dirs, files in os.walk(target_dir):
                 for d in dirs:
                     dir_path = Path(root) / d
