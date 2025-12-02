@@ -1,5 +1,9 @@
 """Create new Arda world using flakes."""
 
+import getpass
+import json
+import os
+import re
 import shlex
 import subprocess
 import sys
@@ -14,6 +18,42 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm
 
 from arda_cli.lib.output import get_output_manager
+
+
+def get_public_age_key_from_file(key_file_path: Path) -> str:
+    """Extract the public key from an age key file.
+
+    Args:
+        key_file_path: Path to the age key file
+
+    Returns:
+        The public key as a string
+
+    Raises:
+        ValueError: If no public key is found in the file
+
+    """
+    try:
+        content = key_file_path.read_text().strip()
+
+        # Look for the public key line: # public key: age1...
+        public_key_match = re.search(r"# public key:\s*(age1[^\s]+)", content)
+        if public_key_match:
+            return public_key_match.group(1)
+
+        # If not found as a comment, try to extract from the secret key
+        # Run age-keygen -y to get the public key
+        result = subprocess.run(
+            ["age-keygen", "-y"],
+            input=content,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+
+    except (FileNotFoundError, PermissionError) as e:
+        raise ValueError(f"Could not read age key file: {e}") from e
 
 
 @click.command()
@@ -335,6 +375,70 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                     )
                     # Restart progress for next task
                     progress.start()
+
+            # 8. Create sops user directory and deploy age key
+            # This matches clan-core's behavior: extract public key from age key
+            # and store it in sops/users/<username>/key.json for secrets management
+            progress.update(task, description="Setting up sops user...")
+            try:
+                # Get the current username
+                username = getpass.getuser()
+
+                # Extract public key from age key file
+                if age_key_path.exists():
+                    try:
+                        public_key = get_public_age_key_from_file(age_key_path)
+
+                        # Create sops/users/<username> directory
+                        sops_users_dir = target_dir / "sops" / "users" / username
+                        sops_users_dir.mkdir(parents=True, exist_ok=True)
+
+                        # Write key.json with the public key
+                        key_json_path = sops_users_dir / "key.json"
+                        key_data = [
+                            {
+                                "publickey": public_key,
+                                "type": "age",
+                            }
+                        ]
+                        key_json_path.write_text(json.dumps(key_data, indent=2))
+
+                        # Complete progress before logging, so logs appear on new line
+                        progress.stop()
+                        output.info(
+                            f"Deployed age key for user '{username}' to {key_json_path}"
+                        )
+                        # Restart progress for next task
+                        progress.start()
+
+                    except Exception as e:
+                        progress.stop()
+                        output.warning(
+                            f"Failed to deploy age key to sops user directory: {e}"
+                        )
+                        # Restart progress for next task
+                        progress.start()
+            except Exception as e:
+                progress.stop()
+                output.warning(
+                    f"Failed to set up sops user directory: {e}. "
+                    "Skipping sops user setup."
+                )
+                # Restart progress for next task
+                progress.start()
+
+            # 9. Add sops directory to git if git was initialized
+            if git_initialized:
+                try:
+                    subprocess.run(
+                        ["git", "add", "."],
+                        cwd=target_dir,
+                        capture_output=True,
+                        shell=False,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as e:
+                    output.warning(f"Could not add sops directory to git: {e}")
 
             progress.update(task, description="Done!")
 
