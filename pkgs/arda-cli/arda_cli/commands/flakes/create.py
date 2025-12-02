@@ -66,12 +66,19 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
     dev_templates_dir = arda_core_root / "templates" / "arda"
 
     # Try installed package path (templates copied into package)
-    # Use site.getsitepackages() to find the correct site-packages location
-    import site
-
-    site_packages = site.getsitepackages()[0]
+    # In Nix-built packages, templates are copied to:
+    #   $out/lib/python3.13/site-packages/arda_cli/arda_core_templates
+    # Navigate from this module to find templates in the Nix store
+    # __file__ = .../site-packages/arda_cli/commands/flakes/create.py
+    # Go up 7 levels to package root, then down to templates
     installed_templates_dir = (
-        Path(site_packages) / "arda_cli" / "arda_core_templates" / "arda"
+        Path(__file__).parent.parent.parent.parent.parent.parent.parent
+        / "lib"
+        / "python3.13"
+        / "site-packages"
+        / "arda_cli"
+        / "arda_core_templates"
+        / "arda"
     )
 
     # Choose the right templates directory
