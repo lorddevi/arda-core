@@ -133,46 +133,64 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
 
             # 3. Initialize git
             progress.update(task, description="Initializing git repository...")
+            git_initialized = False
+
+            # Clean up any existing .git file that might be left from failed init
+            git_dir = target_dir / ".git"
+            if git_dir.exists() and not git_dir.is_dir():
+                try:
+                    git_dir.unlink()
+                except Exception:
+                    pass
+
             # Try to initialize git repository
-            # Use separate-git-dir to avoid issues when running in a subdirectory
-            # of another git repository
+            # First try with --separate-git-dir
             git_init_result = subprocess.run(  # noqa: S603
-                ["git", "init", "--separate-git-dir", str(target_dir / ".git")],
+                ["git", "init", "--separate-git-dir", str(git_dir)],
                 cwd=target_dir,
                 capture_output=True,
                 text=True,
                 shell=False,
             )
 
-            # Check if git init succeeded or if we're in a git repository already
             if git_init_result.returncode == 0:
-                # Git init succeeded, now add files
-                subprocess.run(
-                    ["git", "add", "."],
-                    cwd=target_dir,
-                    capture_output=True,
-                    shell=False,
-                )
+                # Git init with --separate-git-dir succeeded
                 git_initialized = True
+                output.debug("Git repository initialized with --separate-git-dir")
             else:
-                # Git init failed, check if we're already in a git repository
-                git_check = subprocess.run(
-                    ["git", "rev-parse", "--git-dir"],
+                # Try regular git init as fallback
+                git_init_regular = subprocess.run(
+                    ["git", "init"],
                     cwd=target_dir,
                     capture_output=True,
                     text=True,
                     shell=False,
                 )
-                if git_check.returncode == 0:
-                    # Already in a git repository, skip git operations
-                    output.info("Already in a git repository, skipping git init")
-                    git_initialized = False
+
+                if git_init_regular.returncode == 0:
+                    # Regular git init succeeded
+                    git_initialized = True
+                    output.debug("Git repository initialized with regular init")
                 else:
-                    # Git is not available or other error, warn and continue
+                    # Both methods failed, log the error
                     output.warning(
-                        "Could not initialize git repository. "
-                        "You can manually run 'git init' in the created directory."
+                        f"Could not initialize git repository. "
+                        f"Error: {git_init_regular.stderr.strip()}"
                     )
+                    git_initialized = False
+
+            # If git was initialized, add files
+            if git_initialized:
+                try:
+                    subprocess.run(
+                        ["git", "add", "."],
+                        cwd=target_dir,
+                        capture_output=True,
+                        shell=False,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as e:
+                    output.warning(f"Could not add files to git: {e}")
                     git_initialized = False
 
             # 4. Update flake (only run if git was initialized)
