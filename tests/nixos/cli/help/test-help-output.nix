@@ -27,13 +27,17 @@
 
     # Test 1: Main arda --help command
     print("=== Testing: arda --help ===")
-    result = machine.succeed("/tmp/arda-test/arda --help")
+    machine.succeed("/tmp/arda-test/arda --help > /tmp/arda-help.txt 2>&1")
+    result = machine.succeed("cat /tmp/arda-help.txt")
+    print("=== ACTUAL OUTPUT ===")
+    print(result)
+    print("=== END OUTPUT ===")
     assert "Arda - minimal infrastructure management" in result
     assert "config" in result
     assert "host" in result
     assert "roles" in result
     assert "secrets" in result
-    assert "templates" in result
+    assert "flakes" in result
     assert "theme" in result
     print("✅ arda --help displays correctly")
 
@@ -74,11 +78,11 @@
     assert "secret" in result.lower()
     print("✅ arda secrets --help displays correctly")
 
-    # Test 7: arda templates --help
-    print("\n=== Testing: arda templates --help ===")
-    result = machine.succeed("/tmp/arda-test/arda templates --help")
-    assert "template" in result.lower()
-    print("✅ arda templates --help displays correctly")
+    # Test 7: arda flakes --help
+    print("\n=== Testing: arda flakes --help ===")
+    result = machine.succeed("/tmp/arda-test/arda flakes --help")
+    assert "flake" in result.lower()
+    print("✅ arda flakes --help displays correctly")
 
     # Test 8: Verify Active configuration line appears
     print("\n=== Testing: Active configuration line ===")
