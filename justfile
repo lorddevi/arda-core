@@ -55,9 +55,9 @@ test-without-core:
     @echo "  Phase 1: Tests WITHOUT arda-core (Clan-Core Pattern)"
     @echo "==================================================================="
     @echo ""
-    # Use -q (quiet) for cleaner output in CI/automation
-    # Use DEBUG=1 just test-without-core for verbose output during development
-    python -m pytest -q -m "not service_runner and not impure and not with_core" --tb=short
+    # Use -v for detailed output (one line per test)
+    # Use -q for quieter output in CI/automation if needed
+    python -m pytest -v -m "not service_runner and not impure and not with_core" --tb=short
 
 # Run tests WITH arda-core dependencies (comprehensive tests)
 # This mirrors clan-core's "with-core" pattern
@@ -67,9 +67,9 @@ test-with-core:
     @echo "  Phase 2: Tests WITH arda-core (Clan-Core Pattern)"
     @echo "==================================================================="
     @echo ""
-    # Use -q (quiet) for cleaner output in CI/automation
-    # Use DEBUG=1 just test-with-core for verbose output during development
-    python -m pytest -q -m "not service_runner and not impure and with_core" --tb=short
+    # Use -v for detailed output (one line per test)
+    # Use -q for quieter output in CI/automation if needed
+    python -m pytest -v -m "not service_runner and not impure and with_core" --tb=short
 
 # Run both test phases sequentially (full test suite)
 test-two-phase:
