@@ -264,18 +264,21 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                     )
 
             # 7. Generate age keys if needed
+            # Match clan-core's behavior: generate keys at ~/.config/sops/age/keys.txt
+            # instead of inside the world directory, so git status stays clean
             progress.update(task, description="Setting up secrets...")
-            age_key_path = target_dir / ".sops" / "age" / "keys.txt"
+            xdg_config_home = os.getenv(
+                "XDG_CONFIG_HOME", os.path.expanduser("~/.config")
+            )
+            age_key_path = Path(xdg_config_home) / "sops" / "age" / "keys.txt"
+
             if not age_key_path.exists():
                 try:
-                    (target_dir / ".sops" / "age").mkdir(parents=True, exist_ok=True)
+                    # Create the sops/age directory in user's config home
+                    age_key_path.parent.mkdir(parents=True, exist_ok=True)
                     try:
-                        # Validate that the path is within the target directory
-                        age_key_path_str = str(age_key_path)
-                        if not age_key_path_str.startswith(str(target_dir)):
-                            raise ValueError("Invalid age key path")
                         subprocess.run(  # noqa: S603
-                            ["age-keygen", "-o", age_key_path_str],
+                            ["age-keygen", "-o", str(age_key_path)],
                             check=True,
                             capture_output=True,
                             text=True,
@@ -290,7 +293,7 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
                         )
                 except (PermissionError, OSError) as e:
                     output.warning(
-                        f"Could not create .sops directory: {e}. "
+                        f"Could not create sops config directory: {e}. "
                         "Skipping age key generation."
                     )
 
