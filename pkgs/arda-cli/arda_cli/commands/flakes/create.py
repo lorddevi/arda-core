@@ -140,7 +140,10 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
 
             # 3. Copy template
             progress.update(task, description="Copying template files...")
-            copytree(str(template_path), str(target_dir))
+            # Use shutil.copy_tree instead of copytree because target_dir already exists
+            import shutil
+
+            shutil.copy_tree(str(template_path), str(target_dir))
 
             # 4. Recursively make all files and directories writable
             # This ensures that files from the Nix store can be modified/deleted
