@@ -217,25 +217,31 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
             progress.update(task, description="Setting up secrets...")
             age_key_path = target_dir / ".sops" / "age" / "keys.txt"
             if not age_key_path.exists():
-                (target_dir / ".sops" / "age").mkdir(parents=True, exist_ok=True)
                 try:
-                    # Validate that the path is within the target directory
-                    age_key_path_str = str(age_key_path)
-                    if not age_key_path_str.startswith(str(target_dir)):
-                        raise ValueError("Invalid age key path")
-                    subprocess.run(  # noqa: S603
-                        ["age-keygen", "-o", age_key_path_str],
-                        check=True,
-                        capture_output=True,
-                        text=True,
-                        shell=False,
-                    )
-                    output.info(f"Generated age key at {age_key_path}")
-                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                    (target_dir / ".sops" / "age").mkdir(parents=True, exist_ok=True)
+                    try:
+                        # Validate that the path is within the target directory
+                        age_key_path_str = str(age_key_path)
+                        if not age_key_path_str.startswith(str(target_dir)):
+                            raise ValueError("Invalid age key path")
+                        subprocess.run(  # noqa: S603
+                            ["age-keygen", "-o", age_key_path_str],
+                            check=True,
+                            capture_output=True,
+                            text=True,
+                            shell=False,
+                        )
+                        output.info(f"Generated age key at {age_key_path}")
+                    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                        output.warning(
+                            f"Failed to generate age key: {e}. "
+                            "You can install 'age' package if you plan to use "
+                            "secrets management."
+                        )
+                except (PermissionError, OSError) as e:
                     output.warning(
-                        f"Failed to generate age key: {e}. "
-                        "You can install 'age' package if you plan to use "
-                        "secrets management."
+                        f"Could not create .sops directory: {e}. "
+                        "Skipping age key generation."
                     )
 
             progress.update(task, description="Done!")
