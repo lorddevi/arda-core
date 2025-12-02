@@ -1,6 +1,7 @@
 """Create new Arda world using flakes."""
 
 import shlex
+import site
 import subprocess
 import sys
 from pathlib import Path
@@ -57,11 +58,38 @@ def create(ctx: click.Context, name: str, template: str, force: bool) -> None:
         )
         sys.exit(1)
 
-    # Get template path - templates are in the root arda-core directory
-    # __file__ is .../arda-cli/arda_cli/commands/flakes/create.py
-    # We need to go up to arda-core root
+    # Get template path - templates are in lib/python3.13/data/arda/ (setuptools)
+    # Try multiple locations for compatibility:
+    # 1. Development: templates in arda-core root templates/
+    # 2. Installed: templates in lib/python3.13/data/arda/ (via MANIFEST.in)
+
+    # Development path (running from source)
     arda_core_root = Path(__file__).parent.parent.parent.parent.parent.parent
-    templates_dir = arda_core_root / "templates" / "arda"
+    dev_templates_dir = arda_core_root / "templates" / "arda"
+
+    # Package-relative path (installed via pip/nix - setuptools puts data in
+    # lib/python*/data/)
+    if hasattr(sys, "executable"):
+        # We're running from an installed package
+        site_packages = site.getsitepackages()[0]
+        installed_templates_dir = Path(site_packages).parent / "data" / "arda"
+    else:
+        # Fallback - calculate from current file location
+        package_root = Path(__file__).parent.parent.parent.parent.parent
+        installed_templates_dir = package_root / "data" / "arda"
+
+    # Try each location in order
+    if dev_templates_dir.exists():
+        templates_dir = dev_templates_dir
+    elif installed_templates_dir.exists():
+        templates_dir = installed_templates_dir
+    else:
+        output.error(
+            f"Template directory not found. "
+            f"Checked: {dev_templates_dir} and {installed_templates_dir}"
+        )
+        sys.exit(1)
+
     template_path = templates_dir / template
 
     if not template_path.exists():

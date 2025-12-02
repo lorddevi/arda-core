@@ -45,6 +45,7 @@ include = ["arda_cli*", "arda_lib*", "arda_cli.testing*", "arda_lib.testing*"]
 arda_cli = [
     "py.typed",
     "arda.toml",
+    "data/**/*",
 ]
 
 [tool.ruff]

@@ -11,6 +11,11 @@ include arda_cli/arda.toml
 # Include package metadata
 include arda_cli/py.typed
 
+# Include templates for flakes create command
+include arda_cli/commands/templates/arda/default/*.nix
+include arda_cli/commands/templates/arda/default/*.md
+recursive-include arda_cli/commands/templates arda *
+
 # Include all subdirectories
 recursive-include arda_cli *
 
