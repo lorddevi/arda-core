@@ -198,7 +198,7 @@ def show_help_with_config(
 
     # Get theme from command-line arguments (before context is populated)
     # Since this is eager, we need to get theme from params
-    theme = "dracula"  # default
+    theme = None
     if ctx.params and "theme" in ctx.params and ctx.params["theme"]:
         theme = ctx.params["theme"]
     elif ctx.obj and "theme" in ctx.obj:
@@ -211,6 +211,11 @@ def show_help_with_config(
             theme_idx = sys.argv.index("--theme")
             if theme_idx + 1 < len(sys.argv):
                 theme = sys.argv[theme_idx + 1]
+
+    # If theme not found anywhere, read from config file
+    # This ensures consistency between 'arda' and 'arda --help'
+    if theme is None:
+        theme = get_theme_from_config()
 
     # Validate theme before showing help
     available_themes = get_rich_click_themes()
@@ -335,6 +340,16 @@ def main(ctx: click.Context, theme: str, verbose: bool, timestamp: bool) -> None
     # Show help when no subcommand is provided (matching no_args_is_help behavior)
     if ctx.invoked_subcommand is None:
         # Manually show help to ensure active configuration line is displayed
+        # Ensure theme is properly set in context before showing help
+        # (This is needed for consistency with --help flag behavior)
+        import sys
+
+        if "--theme" in sys.argv:
+            theme_idx = sys.argv.index("--theme")
+            if theme_idx + 1 < len(sys.argv):
+                # Override theme from command line if specified
+                ctx.obj["theme"] = sys.argv[theme_idx + 1].lower()
+
         show_help_with_config(ctx, None, True)
 
 
