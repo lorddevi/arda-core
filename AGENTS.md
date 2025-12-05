@@ -1,5 +1,7 @@
 # MCP Usage Policies
 
+This project has several MCP servers configured to enhance AI-assisted development. Each server serves a specific purpose:
+
 ## 1. Documentation vs. Research (The "Ref vs. Exa" Rule)
 
 * **mcp__Ref__ (Official Docs):**
@@ -8,8 +10,7 @@
 * **mcp__exa__ (Web/Research):**
   * **TRIGGER:** Use this for **NixOS research**, community tutorials, finding new GitHub repos, or specific error debugging.
   * **TOKEN GUIDE:**
-    * Use `tokensNum=1000` for quick fact checks.
-    * Use `tokensNum=5000` for deep dives into `arda-core` architectural patterns or complex Nix derivations.
+    * Use `tokensNum="dynamic"` (recommended) - automatically adjusts token usage for optimal results.
 
 ## 2. NixOS Ecosystem (mcp__nixos__)
 
@@ -40,13 +41,39 @@
 * **CONSTRAINT:** Complement, don't replace traditional grep - use grep for exact matches, regex, and symbol tracing
 * **Note:** Requires authentication via Mixedbread account. Run `mgrep login` or configure API key for full functionality
 
+## 6. IDE-Like Code Analysis & Editing (Serena)
+
+* **Scope:** Serena transforms you into an IDE-capable agent with semantic code understanding and precise editing abilities. It uses Language Server Protocol (LSP) for symbol-level code operations across 30+ languages.
+* **TRIGGER:** Use Serena FIRST for any code analysis or editing task, especially:
+  * **Understanding code relationships** - Find references, callers, dependencies with `find_referencing_symbols()`
+  * **Targeted reading** - Get symbol overviews with `get_symbols_overview()` before reading files
+  * **Precise edits** - Replace specific function/class bodies with `replace_symbol_body()`
+  * **Symbol operations** - Rename, insert before/after specific symbols with LSP accuracy
+  * **Large codebases** - Navigate complex projects without reading entire files (massive token savings!)
+* **CONSTRAINT:**
+  * Only useful for code that exists - not for writing from scratch
+  * Minimal benefit on tiny files or simple tasks
+  * Still use `grep`/`find` for regex patterns or when you need exact string matching
+* **TOKEN EFFICIENCY:** Serena can reduce token usage by 80-90% compared to reading entire files. Always try symbolic operations first.
+* **CRITICAL WORKFLOW:**
+  1. **Check onboarding**: `check_onboarding_performed()` - Run this before working on any new project!
+  2. **Symbol search**: Find what you need with `find_symbol()` before reading files
+  3. **Understand relationships**: Use `find_referencing_symbols()` to see full context
+  4. **Think before editing**: Use `think_about_collected_information()` to verify understanding
+  5. **Make precise edits**: Use symbol-based editing tools, never string replacement
+* **POWER TOOLS:**
+  * `read_memory()` / `write_memory()` - Persist important project knowledge
+  * `replace_symbol_body()` - Perfect for refactoring functions/classes
+  * `rename_symbol()` - Safe refactoring with LSP guarantees
+
 ## Recommended Research Workflow
 
-1. **Check Internal:** Use `mcp__just__help()` to see if a task is already automated.
-2. **Check Codebase:** Use `mcp__mgrep__*` for semantic search across the local codebase when exploring unfamiliar code or finding implementation details.
-3. **Check Official:** Use `mcp__Ref__*` if standard library syntax is needed.
-4. **Check Nix:** Use `mcp__nixos__*` to verify package availability/options.
-5. **Check External:** Use `mcp__exa__*` (deep mode) for architectural research or error hunting.
+1. **Analyze Codebase:** Use `mcp__serena__*` tools for semantic code understanding, symbol search, and precise editing (80-90% token savings!). Run `mcp__serena__check_onboarding_performed()` first for new projects.
+2. **Check Internal:** Use `mcp__just__help()` to see if a task is already automated.
+3. **Check Codebase:** Use `mcp__mgrep__*` for semantic search across the local codebase when exploring unfamiliar code or finding implementation details.
+4. **Check Official:** Use `mcp__Ref__*` if standard library syntax is needed.
+5. **Check Nix:** Use `mcp__nixos__*` to verify package availability/options.
+6. **Check External:** Use `mcp__exa__*` (deep mode) for architectural research or error hunting.
 
 ## Example Usage
 
