@@ -5,8 +5,15 @@ This module provides Nix command wrappers and utilities.
 
 from .nix import (
     Flake,
+    FlakeCache,
+    FlakeCacheEntry,
+    FlakeError,
     NixError,
     Packages,
+    SelectError,
+    find_store_references,
+    get_physical_store_path,
+    nix_add_to_gcroots,
     nix_build,
     nix_command,
     nix_config,
@@ -18,8 +25,15 @@ from .nix import (
 
 __all__ = [
     "Flake",
+    "FlakeCache",
+    "FlakeCacheEntry",
+    "FlakeError",
     "NixError",
     "Packages",
+    "SelectError",
+    "find_store_references",
+    "get_physical_store_path",
+    "nix_add_to_gcroots",
     "nix_build",
     "nix_command",
     "nix_config",
