@@ -1,548 +1,250 @@
-# AI Agent Instructions
+# MCP Usage Policies
 
-## Work Tracking
+## 1. Documentation vs. Research (The "Ref vs. Exa" Rule)
 
-- Use the 'bd' tool for all issue tracking - NO markdown TODOs
-- Every task, bug, and feature must be filed as a beads issue
-- Always include detailed context in issue descriptions
+* **mcp__Ref__ (Official Docs):**
+  * **TRIGGER:** Use this FIRST when you need authoritative syntax, API signatures, or standard library usage for known frameworks (React, Python, AWS).
+  * **CONSTRAINT:** Do NOT use for niche libraries, tutorials, or debugging discussions.
+* **mcp__exa__ (Web/Research):**
+  * **TRIGGER:** Use this for **NixOS research**, community tutorials, finding new GitHub repos, or specific error debugging.
+  * **TOKEN GUIDE:**
+    * Use `tokensNum=1000` for quick fact checks.
+    * Use `tokensNum=5000` for deep dives into `arda-core` architectural patterns or complex Nix derivations.
 
-### Rich Context Files (Optional)
+## 2. NixOS Ecosystem (mcp__nixos__)
 
-For complex work, create detailed context files to improve discoverability and provide complete context for future developers or AI agents.
+* **Scope:** This server is the **Source of Truth** for all things Nix. It covers NixOS, Home Manager, Darwin, and Flakes.
+* **CRITICAL RULE:** Do not hallucinate package names. **Always** use `nixos_search` or `home_manager_search` to verify a package exists before suggesting it in code.
+* **Version Pinning:** If reproducibility is required, you must use `nixhub_package_versions` to find the exact commit hash.
+* **Context:** `arda-core` is an orchestration system; prefer NixOS-native solutions found here over generic Linux solutions found via web search.
 
-**Process:**
+## 3. Project Automation (mcp__just__)
 
-1. **Create Issue**
+* **Usage:** Use this to explore and execute the project's `Justfile`.
+* **Workflow:** Before suggesting a user run a manual terminal command, check `mcp__just__help()` to see what automation shortcuts already exist.
 
-   ```bash
-   bd create --title="..." --type=task|bug|feature
-   ```
+## 4. Issue Tracking (mcp__beads__)
 
-2. **Create Context File** (optional but recommended for complex work)
+* **Usage:** For creating, updating, and managing project issues. Alternative to CLI `bd` commands.
+* **Workflow:** See "Issue Tracking with bd (beads)" section below for detailed usage patterns.
+* **Note:** The MCP interface provides the same functionality as `bd` CLI commands - use whichever is convenient for your workflow.
 
-   **Option A: Using helper script (recommended)**
+## 5. Semantic Code Search (mgrep)
 
-   ```bash
-   .beads/create-context.sh beads-XXX task
-   # Edit the generated file and fill in all {placeholders}
-   ```
+* **Usage:** Use this for natural-language code search and codebase exploration. mgrep understands intent and meaning, not just exact string matches.
+* **WHEN TO USE:**
+  * Exploring unfamiliar codebases - find functionality by describing what you want, not what it's called
+  * Discovering features or implementations across large repositories
+  * Semantic code search when grep's exact matching isn't finding what you need
+  * Enhancing AI agent workflows with intent-based code discovery
+* **CONSTRAINT:** Complement, don't replace traditional grep - use grep for exact matches, regex, and symbol tracing
+* **Note:** Requires authentication via Mixedbread account. Run `mgrep login` or configure API key for full functionality
 
-   **Option B: Manual template copy**
+## Recommended Research Workflow
 
-   ```bash
-   # Copy appropriate template
-   cp .beads/templates/task.md .beads/context/{issue-id}.md
-   cp .beads/templates/bug.md .beads/context/{issue-id}.md
-   cp .beads/templates/feature.md .beads/context/{issue-id}.md
+1. **Check Internal:** Use `mcp__just__help()` to see if a task is already automated.
+2. **Check Codebase:** Use `mcp__mgrep__*` for semantic search across the local codebase when exploring unfamiliar code or finding implementation details.
+3. **Check Official:** Use `mcp__Ref__*` if standard library syntax is needed.
+4. **Check Nix:** Use `mcp__nixos__*` to verify package availability/options.
+5. **Check External:** Use `mcp__exa__*` (deep mode) for architectural research or error hunting.
 
-   # Fill in the template
-   # - Replace {id}, {title}, {status}
-   # - Complete User Story section
-   # - List Acceptance Criteria with [ ]
-   # - Add Tasks/Subtasks with [ ]
-   # - Include Architecture Notes
-   # - Add References to code/docs
-   ```
+## Example Usage
 
-3. **Update as Work Progresses**
+**Quick fact check:**
 
-   ```bash
-   # Edit .beads/context/{issue-id}.md
-   # Mark completed tasks: - [x] Task
-   # Add implementation log entries with dates
-   # Document changes in Files Changed section
-   # Commit context file with code changes
-   ```
-
-4. **Benefits**
-   - Anyone can read the context file to understand the full story
-   - References to code/docs make it easy to find related work
-   - Architecture notes preserve important decisions
-   - Implementation log shows how work evolved
-   - Files changed section documents impact
-
-**Templates available:**
-
-- `.beads/templates/task.md` - For tasks and fixes
-- `.beads/templates/bug.md` - For bug reports and fixes
-- `.beads/templates/feature.md` - For new features
-
-**Example:**
-
-```markdown
-# Issue beads-59o: Fix test pollution in arda-cli
-
-Status: closed
-
-## User Story
-
-As a developer working on arda-cli,
-I want tests to run in isolation without pollution from other tests,
-So that I can trust test results and not have flaky test failures.
-
-## Acceptance Criteria
-
-- [x] Each test starts with clean module state
-- [x] Config state is reset between tests
-- [x] Test pollution no longer causes failures
-- [x] All tests pass consistently
-
-## Tasks
-
-- [x] Identify sources of test pollution
-- [x] Implement reset_modules() fixture
-- [x] Add clean_config_state() autouse fixture
-
-## Architecture Notes
-
-**Root Cause:** Module-level config cache in main.py computed at import time...
-
-## References
-
-- [Code: pkgs/arda-cli/arda_cli/main.py](pkgs/arda-cli/arda_cli/main.py)
-- [Tests: pkgs/arda-cli/arda_cli/tests/conftest.py](pkgs/arda-cli/arda_cli/tests/conftest.py)
+```
+mcp__exa__web_search_exa(query="python async await best practices", numResults=5, tokensNum=1000)
 ```
 
-## MCP Usage
+**Verify package availability:**
 
-### mcp 'Ref' - Official Documentation Lookup
+```
+mcp__nixos__nixos_search(query="python311", search_type="packages")
+```
 
-**Use for:** API references, official documentation, library guides
+**Check project automation:**
 
-**Best for:**
+```
+mcp__just__help()
+```
 
-- Looking up React hooks, Python libraries, AWS SDKs
-- Finding official API documentation
-- Checking package references and usage patterns
-- arda-core repository reference (search: "lorddevi/arda-core")
+**Get official documentation:**
 
-**Tools available:**
+```
+mcp__Ref__ref_search_documentation(query="React useState hook TypeScript")
+```
 
-- `ref_search_documentation` - Find documentation for libraries/frameworks
-- `ref_read_url` - Read specific documentation pages
+## Issue Tracking with bd (beads)
 
-**When to use:**
+**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
 
-- ✅ You know the exact library/framework name
-- ✅ You need authoritative API information
-- ✅ Checking if a feature exists in official docs
-- ✅ Looking up specific function/class signatures
+## Why bd?
 
-**When NOT to use:**
+* Dependency-aware: Track blockers and relationships between issues
+* Git-friendly: Auto-syncs to JSONL for version control
+* Agent-optimized: JSON output, ready work detection, discovered-from links
+* Prevents duplicate tracking systems and confusion
 
-- ❌ Niche or newer libraries (not indexed)
-- ❌ Community tutorials or examples (use Exa instead)
-- ❌ GitHub repositories (use Exa instead)
-- ❌ Stack Overflow questions (use Exa instead)
+## Quick Start
 
-**Context efficiency:** Minimal - returns focused documentation
-
-### mcp 'exa' - Web Search & Code Research
-
-**Use for:** Everything not covered by Ref - research, examples, tutorials, repositories
-
-**Best for:**
-
-- Finding code examples and tutorials
-- Researching new libraries or tools
-- GitHub repositories (like beads, niche projects)
-- Stack Overflow answers and discussions
-- Blog posts and community guides
-- NixOS-specific research (arda-core is a NixOS orchestration system!)
-
-**Tools available:**
-
-- `exa web_search_exa` - Search the web with configurable depth (fast/auto/deep)
-- `exa get_code_context_exa` - Get code examples with controllable token limits (1000-50000)
-
-**When to use:**
-
-- ✅ Researching how to use a library
-- ✅ Finding GitHub repositories
-- ✅ Stack Overflow, Reddit, forums
-- ✅ NixOS packages, configurations, home-manager settings
-- ✅ Community tutorials and blog posts
-- ✅ Understanding implementation patterns
-- ✅ Verifying examples work in practice
-
-**When NOT to use:**
-
-- ❌ Official API reference (use Ref instead for cleaner context)
-
-**Context efficiency:** Controllable via `tokensNum` parameter
-
-- Low context: `tokensNum=1000-2000` (quick lookup)
-- Balanced: `tokensNum=3000-5000` (typical research)
-- Deep dive: `tokensNum=5000+` (complex topics)
-
-### mcp 'nixos' - Comprehensive Nix Ecosystem
-
-**Use for:** Complete NixOS ecosystem - packages, options, version history, Home Manager, nix-darwin, flakes
-
-**Note:** No Nix/NixOS installation required! Works on Windows, macOS, Linux.
-
-#### 🔍 Core NixOS Tools (130K+ packages, 22K+ options)
-
-**Best for:**
-
-- Finding NixOS packages (`nixos_search`)
-- Looking up configuration options (`nixos_info`)
-- Package/option statistics (`nixos_stats`)
-- Available channels (`nixos_channels`)
-
-**Tools:**
-
-- `nixos_search(query, type, channel)` - Search packages, options, or programs
-- `nixos_info(name, type, channel)` - Get detailed info about packages/options
-- `nixos_stats(channel)` - Package and option counts
-- `nixos_channels()` - List all available channels
-
-**When to use:**
-
-- ✅ Finding packages for NixOS configurations
-- ✅ Looking up option documentation (services, programs, etc.)
-- ✅ Checking what's available in specific channels
-
-#### 📦 Version History Tools (via NixHub.io)
-
-**Best for:**
-
-- Package version tracking with commit hashes
-- Finding specific versions for reproducible builds
-- Historical dependency analysis
-
-**Tools:**
-
-- `nixhub_package_versions(package, limit)` - Get version history with commit hashes
-- `nixhub_find_version(package, version)` - Smart search for specific versions
-
-**When to use:**
-
-- ✅ Pinning specific package versions
-- ✅ Finding historical versions for debugging
-- ✅ Reproducible builds with exact commit references
-
-#### 🏠 Home Manager Tools (4K+ options, 131 categories)
-
-**Best for:**
-
-- User configuration options
-- Home directory management
-- Dotfiles and user services
-
-**Tools:**
-
-- `home_manager_search(query)` - Search user config options
-- `home_manager_info(name)` - Get option details (with suggestions!)
-- `home_manager_stats()` - See what's available
-- `home_manager_list_options()` - Browse all 131 categories
-- `home_manager_options_by_prefix(prefix)` - Explore options by prefix
-
-**When to use:**
-
-- ✅ User configuration (home.manager, git, ssh, etc.)
-- ✅ Dotfiles management
-- ✅ User-level services
-
-#### 🍎 nix-darwin Tools (1K+ options, 21 categories)
-
-**Best for:**
-
-- macOS system configuration via Nix
-- Darwin-specific options
-
-**Tools:**
-
-- `darwin_search(query)` - Search macOS options
-- `darwin_info(name)` - Get option details
-- `darwin_stats()` - macOS configuration statistics
-- `darwin_list_options()` - Browse all 21 categories
-- `darwin_options_by_prefix(prefix)` - Explore macOS options
-
-**When to use:**
-
-- ✅ macOS system configuration
-- ✅ Darwin-specific services and settings
-
-#### 🔥 Flake Search
-
-**Best for:**
-
-- Community packages and templates
-
-**Tools:**
-
-- `nixos_flakes_search(query)` - Search community flakes
-- `nixos_flakes_stats()` - Flake ecosystem statistics
-
-**When to use:**
-
-- ✅ Finding community flakes
-- ✅ Templates and shared configurations
-- ✅ External Nix resources
-
-**When to use NixOS MCP:**
-
-- ✅ Any NixOS-related work (arda-core is a NixOS orchestration system!)
-- ✅ Finding packages to include in NixOS configurations
-- ✅ Looking up configuration option details for NixOS, Home Manager, or nix-darwin
-- ✅ Checking package availability and versions
-- ✅ Version history and commit tracking for reproducibility
-- ✅ Exploring flake community resources
-
-### mcp 'jump' - Justfile Integration
-
-**Use for:** Just commands and automation
-
-**Tools:**
-
-- `jump list_recipes` - Show available commands
-- `jump get_recipe_info` - Get details on specific commands
-- `jump run_recipe` - Execute Just commands
-
-**When to use:**
-
-- ✅ Checking what commands are available in the Justfile
-- ✅ Understanding what a specific command does
-- ✅ Running automation tasks
-
-### Research Workflow for arda-core (NixOS Orchestration)
-
-Given arda-core's niche nature as a NixOS orchestration system:
-
-1. **Start with Ref** for known frameworks (React, Python, etc.)
-2. **Use Exa liberally** for NixOS-specific research
-3. **Use NixOS MCP** for package/option lookups
-4. **Use Jump MCP** for project-specific commands
-
-**Example:**
+**Check for ready work:**
 
 ```bash
-## Research NixOS service configuration for a feature
-exa get_code_context_exa --query "nixos service configuration systemd examples" --tokensNum 3000
-
-## Find and explore NixOS packages
-nixos_search --query "ssh configuration"
-nixos_info --name "openssh" --type "package"
-nixos_channels
-
-## Check Home Manager options for user configs
-home_manager_search --query "git"
-home_manager_info --name "programs.git.enable"
-
-## Find specific package versions for reproducibility
-nixhub_package_versions --package_name "python" --limit 10
-nixhub_find_version --package_name "ruby" --version "2.6.7"
-
-## Search community flakes
-nixos_flakes_search --query "arda"
-exa web_search_exa --query "arda-core nix orchestration patterns" --type deep
+bd ready --json
 ```
 
-## 🔄 Beads Sync Workflow
-
-Beads uses **git worktrees** to manage issues. Understanding when to sync is critical.
-
-### How It Works
-
-Beads creates a **separate worktree** (`beads-sync`) that shares your git database but:
-
-- Has **ONLY** `.beads/` directory files
-- Can be synced independently from your main code
-- Maintains its own git branch and history
-
-### When to Use Each Command
-
-#### **`bd sync`** - Normal Bidirectional Sync
-
-**Use for:**
-
-- ✅ Long-lived branches (testing-phase-13, master, main, feature branches you keep)
-- ✅ Regular development work
-- ✅ Day-to-day issue management
-
-**What it does:**
-
-- Syncs between your current branch and the beads-sync worktree
-- **Bidirectional**: changes flow both ways
-- Export issues from SQLite to JSONL
-- Commit bead changes to beads-sync branch
-- Push/pull bead changes to remote
-
-**Workflow:**
+**Create new issues:**
 
 ```bash
-## On testing-phase-13 (or any long-lived branch)
-bd create "New issue"          # Create issues
-bd close <id>                  # Close issues
-bd update <id> --status in_progress  # Update status
-
-## Sync your changes to beads-sync worktree
-bd sync                         # ✓ Bidirectional sync
-
-## Commit and push
-git add .beads && git commit -m "Update beads"
-git push
+bd create "Issue title" -t bug|feature|task -p 0-4 --json
+bd create "Issue title" -p 1 --deps discovered-from:bd-123 --json
+bd create "Subtask" --parent <epic-id> --json  # Hierarchical subtask (gets ID like epic-id.1)
 ```
 
-#### **`bd sync --from-main`** - One-Way from Main Branch
-
-**Use for:**
-
-- ✅ **Ephemeral branches** (short-lived feature branches)
-- ✅ Branches that **don't have bead history** yet
-- ✅ Pulling bead state from main into a new branch
-
-**What it does:**
-
-- **One-way sync**: Pulls bead state FROM main INTO your branch
-- Does NOT sync changes back to main
-- Designed for ephemeral branches without upstream tracking
-
-**Workflow:**
+**Claim and update:**
 
 ```bash
-## Create new ephemeral branch
-git checkout -b feature-x
-
-## First time: pull bead state FROM main
-bd sync --from-main             # ✓ One-way pull from main
-
-## Work on feature
-bd create "Work on feature-x"   # Create issues
-bd sync                         # Normal sync for ongoing work
-
-## Before merging back
-bd sync                         # Final sync
-git checkout testing-phase-13
-git merge feature-x
+bd update bd-42 --status in_progress --json
+bd update bd-42 --priority 1 --json
 ```
 
-### Decision Tree
-
-```
-Are you on a long-lived branch? (testing-phase-13, master, feature branch you keep)
-├─ YES → Use: bd sync
-└─ NO (ephemeral feature branch)?
-    └─ First time on this branch?
-        ├─ YES → Use: bd sync --from-main
-        └─ NO → Use: bd sync
-```
-
-### Other Useful Flags
+**Complete work:**
 
 ```bash
-## Check sync status without syncing
-bd sync --status
-
-## After git pull on main branch
-bd sync --import-only    # Just import JSONL changes
-
-## Preview sync without changes
-bd sync --dry-run
+bd close bd-42 --reason "Completed" --json
 ```
 
-### For arda-core Project
+## Issue Types
 
-**Current branch: testing-phase-13** → Use: `bd sync` (long-lived branch)
-**New feature branches** → Use: `bd sync --from-main` (first time only)
+* `bug` - Something broken
+* `feature` - New functionality
+* `task` - Work item (tests, docs, refactoring)
+* `epic` - Large feature with subtasks
+* `chore` - Maintenance (dependencies, tooling)
 
-### Common Mistakes
+## Priorities
 
-❌ **Wrong**: Using `--from-main` on long-lived branches
+* `0` - Critical (security, data loss, broken builds)
+* `1` - High (major features, important bugs)
+* `2` - Medium (default, nice-to-have)
+* `3` - Low (polish, optimization)
+* `4` - Backlog (future ideas)
 
-```bash
-## DON'T do this on testing-phase-13!
-bd sync --from-main  # Tries to overwrite with main's bead state
+## Workflow for AI Agents
+
+1. **Check ready work**: `bd ready` shows unblocked issues
+2. **Claim your task**: `bd update <id> --status in_progress`
+3. **Work on it**: Implement, test, document
+4. **Discover new work?** Create linked issue:
+   * `bd create "Found bug" -p 1 --deps discovered-from:<parent-id>`
+5. **Complete**: `bd close <id> --reason "Done"`
+6. **Commit together**: Always commit the `.beads/issues.jsonl` file together with the code changes so issue state stays in sync with code state
+
+## Auto-Sync
+
+bd automatically syncs with git:
+
+* Exports to `.beads/issues.jsonl` after changes (5s debounce)
+* Imports from JSONL when newer (e.g., after `git pull`)
+* No manual export/import needed!
+
+## MCP Server (Recommended)
+
+Use `mcp__beads__*` functions instead of CLI commands.
+
+## Managing AI-Generated Planning Documents
+
+AI assistants often create planning and design documents during development:
+
+* PLAN.md, IMPLEMENTATION.md, ARCHITECTURE.md
+* DESIGN.md, CODEBASE_SUMMARY.md, INTEGRATION_PLAN.md
+* TESTING_GUIDE.md, TECHNICAL_DESIGN.md, and similar files
+
+### Best Practice: Use a dedicated directory for these ephemeral files
+
+**Recommended approach:**
+
+* Create a `history/` directory in the project root
+* Store ALL AI-generated planning/design docs in `history/`
+* Keep the repository root clean and focused on permanent project files
+* Only access `history/` when explicitly asked to review past planning
+
+**Example .gitignore entry (optional):**
+
+```
+# AI planning documents (ephemeral)
+history/
 ```
 
-✅ **Correct**: Using normal sync on long-lived branches
+**Benefits:**
 
-```bash
-## DO this on testing-phase-13
-bd sync  # Bidirectional sync with beads-sync worktree
-```
+* ✅ Clean repository root
+* ✅ Clear separation between ephemeral and permanent documentation
+* ✅ Easy to exclude from version control if desired
+* ✅ Preserves planning history for archeological research
+* ✅ Reduces noise when browsing the project
 
-## 🚨 SESSION CLOSE PROTOCOL 🚨
+## CLI Help
 
-**CRITICAL**: Before saying "done" or "complete", you MUST run this checklist:
+Run `bd <command> --help` to see all available flags for any command.
+For example: `bd create --help` shows `--parent`, `--deps`, `--assignee`, etc.
 
-```
-[ ] 1. git status              (check what changed)
-[ ] 2. git add <files>         (stage code changes)
-[ ] 3. bd sync                 (sync beads with beads-sync worktree)
-[ ] 4. git commit -m "..."     (commit code changes)
-[ ] 5. git pull --rebase       (pull latest from remote)
-[ ] 6. bd sync                 (sync again after pull)
-[ ] 7. git push                (PUSH TO REMOTE - MANDATORY)
-[ ] 8. git status              (verify clean state)
-```
+## Important Rules
 
-**The plane has NOT landed until `git push` succeeds.**
+* ✅ Use bd for ALL task tracking
+* ✅ Always use `--json` flag for programmatic use
+* ✅ Link discovered work with `discovered-from` dependencies
+* ✅ Check `bd ready` before asking "what should I work on?"
+* ✅ Store AI planning docs in `history/` directory
+* ✅ Run `bd <cmd> --help` to discover available flags
+* ❌ Do NOT create markdown TODO lists
+* ❌ Do NOT use external issue trackers
+* ❌ Do NOT duplicate tracking systems
+* ❌ Do NOT clutter repo root with planning documents
 
-## Core Rules
+For more details, see README.md and QUICKSTART.md.
 
-- Track ALL work in beads (no TodoWrite tool, no markdown TODOs)
-- Use `bd create` to create issues, not TodoWrite tool
-- Git workflow: hooks auto-sync, run `bd sync` at session end
-- Session management: check `bd ready` for available work
+## Agent Coding Guidelines for Arda
 
-## Essential Commands
+## Build/Test Commands
 
-### Finding Work
+* **Single test**: `pytest pkgs/arda-cli/arda_cli/tests/unit/commands/test_<module>.py::test_<name>` (add `-v` for verbose)
+* **Phase 1 tests** (fast, isolated): `just test-without-core`
+* **Phase 2 tests** (with core): `just test-with-core`
+* **All pytest tests**: `just test-two-phase`
+* **CLI VM tests**: `just test-vm-cli`
+* **Coverage report**: `just coverage`
+* **Build CLI**: `just build-arda-cli`
+* **Full test suite**: `just test-all`
 
-- `bd ready` - Show issues ready to work (no blockers)
-- `bd list --status=open` - All open issues
-- `bd list --status=in_progress` - Your active work
-- `bd show <id>` - Detailed issue view with dependencies
+## Code Style
 
-### Creating & Updating
+* **Linting/Formatting**: Use `ruff` (configured in pyproject.toml) - `ruff check . && ruff format .`
+* **Type checking**: `mypy` with strict settings (disallow_untyped_defs=true)
+* **Line length**: 88 characters (Black-compatible)
+* **Python version**: >=3.11, target py311
+* **Formatting**: Double quotes, space indentation, comma preservation
+* **Security**: `bandit` for security linting (excludes tests)
 
-- `bd create --title="..." --type=task|bug|feature` - New issue
-- `bd update <id> --status=in_progress` - Claim work
-- `bd update <id> --assignee=username` - Assign to someone
-- `bd close <id>` - Mark complete
-- `bd close <id> --reason="explanation"` - Close with reason
+## Python Conventions
 
-### Dependencies & Blocking
+* **Framework**: Click + rich-click for CLI, Pydantic for config
+* **Type hints**: Required everywhere (strict MyPy)
+* **Imports**: Use absolute imports, group by standard library/third-party/local
+* **Naming**: snake_case functions/variables, PascalCase classes
+* **Error handling**: Use Pydantic validation, rich error panels for CLI
+* **Tests**: Use pytest markers (fast, slow, unit, integration, cli, vm, with_core, without_core)
 
-- `bd dep add <issue> <depends-on>` - Add dependency (issue depends on depends-on)
-- `bd blocked` - Show all blocked issues
-- `bd show <id>` - See what's blocking/blocked by this issue
+## Development Workflow
 
-### Sync & Collaboration
+* **Issue tracking**: Use `bd` (beads) commands, never TodoWrite tool
+* **Session end**: Run `bd sync && git add . && git commit -m "..." && git push`
+* **Pre-commit**: Runs automatically (ruff, treefmt, build, pytest)
+* **Nix environment**: Use `nix develop` for all development
 
-- `bd sync --from-main` - Pull beads updates from main (for ephemeral branches)
-- `bd sync --status` - Check sync status without syncing
+## Critical Rules
 
-### Project Health
-
-- `bd stats` - Project statistics (open/closed/blocked counts)
-- `bd doctor` - Check for issues (sync problems, missing hooks)
-
-## Common Workflows
-
-**Starting work:**
-
-```bash
-bd ready           # Find available work
-bd show <id>       # Review issue details
-bd update <id> --status in_progress  # Claim it
-```
-
-**Completing work:**
-
-```bash
-bd close <id>           # Mark done
-bd sync --from-main     # Pull latest beads from main
-git add . && git commit -m "..."  # Commit your changes
-## Merge to main when ready (local merge, not push)
-```
-
-**Creating dependent work:**
-
-```bash
-bd create --title="Implement feature X" --type=feature
-bd create --title="Write tests for X" --type=task
-bd dep add beads-yyy beads-xxx  # Tests depend on Feature (Feature blocks tests)
-```
+* Tests run in isolation - module state is reset between tests
+* Use existing patterns from codebase (rich-click theming, Pydantic config)
+* Never commit secrets (detected by pre-commit hooks)
+* Follow the Service/Feature/Role hierarchy for NixOS modules

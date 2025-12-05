@@ -1,0 +1,26 @@
+# Resources
+
+- <https://github.com/nix-community/nixos-anywhere/blob/ff87db6a952191648ffaea97ec5559784c7223c6/docs%2Fhowtos%2Fsecrets.md>
+  - nixos-anywhere secret examples.
+- <https://github.com/p3t33/nixos_flake/tree/master>
+  - Example nixos config making use of sops-nix.
+- <https://kobimedrish.com/posts/keeping_nix_secrets_with_sops_integratoin_and_applictions/>
+  - Article on sops nix usage.
+- <https://github.com/EmergentMind/nix-config/tree/dev>
+  - Also: <https://github.com/EmergentMind/nix-secrets-reference>
+  - Example nixos config utilizing sops-nix.
+  - Has primary config repo (1st above), and a secrets repo (2nd above).
+- <https://github.com/Mic92/sops-nix>
+  - Sops-nix github repo.
+- <https://michael.stapelberg.ch/posts/2025-08-24-secret-management-with-sops-nix/>
+  - Article on sops-nix.
+- <https://0xda.de/blog/2024/07/framework-and-nixos-sops-nix-secrets-management/>
+  - Article on sops-nix.
+- <https://discourse.nixos.org/t/sops-nix-managed-secrets/36868>
+  - Discussion on sops-nix.
+- <https://www.thenegation.com/posts/sops/>
+  - Article on sops-nix.
+  - Also on custom tool author made called 'opsops'.
+- <https://github.com/nixos-cn/flakes/tree/main/modules/sops>
+  - Interesting sops-nix extension.
+  - In foreign asian language.  May still be useful.
