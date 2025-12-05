@@ -2176,6 +2176,307 @@ class TestFlakeCacheIntegration:
         assert new_cache.select("new_selector") == {"new": "data"}
 
 
+class TestFlakeCacheCoreFunctionality:
+    """Additional high-priority tests for core caching functionality coverage."""
+
+    def test_get_from_nix_with_nix_config_fallback(self, tmp_path):
+        """Test get_from_nix() when nix_config fails and uses fallback system."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        # Create build output file
+        build_output_file = tmp_path / "result"
+        with open(build_output_file, "w") as f:
+            json.dump(["test-package"], f)
+
+        # Mock nix_config to raise NixError (forcing fallback to x86_64-linux)
+        with patch("arda_lib.nix.nix.nix_config") as mock_config:
+            mock_config.side_effect = NixError("Config fetch failed")
+
+            with patch("arda_lib.nix.nix.subprocess.run") as mock_run:
+                mock_result = MagicMock()
+                mock_result.stdout = str(build_output_file) + "\n"
+                mock_run.return_value = mock_result
+
+                with patch(
+                    "arda_lib.nix.nix.tempfile.mkdtemp", return_value=str(tmp_path)
+                ):
+                    # Mock save_to_file
+                    with patch.object(flake._cache, "save_to_file"):
+                        # Call get_from_nix - should use fallback system
+                        flake.get_from_nix(["packages.hello"])
+
+                        # Verify cache was populated
+                        assert flake._cache.is_cached("packages.hello")
+                        result = flake._cache.select("packages.hello")
+                        assert result == "test-package"
+
+                        # Verify nix_config was called (even though it failed)
+                        mock_config.assert_called_once()
+
+                        # Verify the system used fallback "x86_64-linux"
+                        # The build command should have been constructed
+                        assert mock_run.called
+
+    def test_get_from_nix_with_file_not_found_error(self, tmp_path):
+        """Test get_from_nix() when subprocess fails with FileNotFoundError."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        # Mock nix_config to succeed
+        with patch("arda_lib.nix.nix.nix_config") as mock_config:
+            mock_config.return_value = {"system": "x86_64-linux"}
+
+            # Mock subprocess.run to raise FileNotFoundError
+            # (e.g., nix command not found)
+            with patch("arda_lib.nix.nix.subprocess.run") as mock_run:
+                mock_run.side_effect = FileNotFoundError("nix command not found")
+
+                # Call get_from_nix should raise SelectError
+                with pytest.raises(SelectError) as exc_info:
+                    flake.get_from_nix(["packages.hello"])
+
+                assert "Failed to select attributes from flake" in str(exc_info.value)
+
+    def test_precache_cache_miss_recording_integration(self, tmp_path):
+        """Test precache() correctly records cache misses for uncached selectors."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        # Set cache path
+        cache_file = tmp_path / "test_cache.json"
+        flake._cache_path = cache_file
+
+        # Create build output for the uncached selector
+        build_output_file = tmp_path / "result"
+        with open(build_output_file, "w") as f:
+            json.dump(["new-package"], f)
+
+        # Clear any existing cache misses
+        flake._cache_miss_stack_traces.clear()
+
+        # Mock nix_config and subprocess
+        with patch("arda_lib.nix.nix.nix_config") as mock_config:
+            mock_config.return_value = {"system": "x86_64-linux"}
+
+            with patch("arda_lib.nix.nix.subprocess.run") as mock_run:
+                mock_result = MagicMock()
+                mock_result.stdout = str(build_output_file) + "\n"
+                mock_run.return_value = mock_result
+
+                with patch(
+                    "arda_lib.nix.nix.tempfile.mkdtemp", return_value=str(tmp_path)
+                ):
+                    with patch.object(flake._cache, "save_to_file"):
+                        # Call precache with uncached selector
+                        flake.precache(["packages.uncached"])
+
+                        # Verify cache miss was recorded with selector info
+                        assert flake.cache_misses == 1
+                        recorded = flake._cache_miss_stack_traces[0]
+                        assert "packages.uncached" in recorded
+                        assert "Cache miss for selectors" in recorded
+
+    def test_select_cache_miss_recording_integration(self, tmp_path):
+        """Test select() correctly records cache misses for uncached selectors."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        # Set cache path
+        cache_file = tmp_path / "test_cache.json"
+        flake._cache_path = cache_file
+
+        # Create build output file
+        build_output_file = tmp_path / "result"
+        with open(build_output_file, "w") as f:
+            json.dump(["selected-value"], f)
+
+        # Clear any existing cache misses
+        flake._cache_miss_stack_traces.clear()
+
+        # Mock nix_config and subprocess
+        with patch("arda_lib.nix.nix.nix_config") as mock_config:
+            mock_config.return_value = {"system": "x86_64-linux"}
+
+            with patch("arda_lib.nix.nix.subprocess.run") as mock_run:
+                mock_result = MagicMock()
+                mock_result.stdout = str(build_output_file) + "\n"
+                mock_run.return_value = mock_result
+
+                with patch(
+                    "arda_lib.nix.nix.tempfile.mkdtemp", return_value=str(tmp_path)
+                ):
+                    with patch.object(flake._cache, "save_to_file"):
+                        # Call select on uncached selector
+                        result = flake.select("packages.test")
+
+                        # Verify correct value is returned
+                        assert result == "selected-value"
+
+                        # Verify cache miss was recorded with selector info
+                        assert flake.cache_misses == 1
+                        recorded = flake._cache_miss_stack_traces[0]
+                        assert "packages.test" in recorded
+                        assert "Cache miss for selector" in recorded
+
+
+class TestFlakeCacheErrorHandling:
+    """Medium-priority tests for error handling and edge cases."""
+
+    def test_get_from_nix_malformed_output(self, tmp_path):
+        """Test get_from_nix() handles missing build output file gracefully."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        # Set cache path
+        cache_file = tmp_path / "test_cache.json"
+        flake._cache_path = cache_file
+
+        # Mock nix_config
+        with patch("arda_lib.nix.nix.nix_config") as mock_config:
+            mock_config.return_value = {"system": "x86_64-linux"}
+
+            # Mock subprocess to return path to non-existent output file
+            nonexistent_output = tmp_path / "nonexistent_output"
+            with patch("arda_lib.nix.nix.subprocess.run") as mock_run:
+                mock_result = MagicMock()
+                mock_result.stdout = (
+                    str(nonexistent_output) + "\n"
+                )  # Return path that doesn't exist
+                mock_run.return_value = mock_result
+
+                # Mock tempfile.mkdtemp to use tmp_path
+                with patch(
+                    "arda_lib.nix.nix.tempfile.mkdtemp", return_value=str(tmp_path)
+                ):
+                    # Call get_from_nix should raise SelectError
+                    with pytest.raises(SelectError) as exc_info:
+                        flake.get_from_nix(["packages.test"])
+
+                    assert "Build output path does not exist" in str(exc_info.value)
+                    assert str(nonexistent_output) in str(exc_info.value)
+
+    def test_select_error_with_select_error_propagation(self, tmp_path):
+        """Test select() propagates SelectError from cache.select()."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        # Set cache path
+        cache_file = tmp_path / "test_cache.json"
+        flake._cache_path = cache_file
+
+        # Pre-populate cache with data
+        flake._cache.insert({"exists": "value"}, "packages.exists")
+
+        # Mock get_from_nix (should not be called)
+        with patch.object(flake, "get_from_nix") as mock_get_from_nix:
+            with patch.object(flake, "_record_cache_miss"):
+                # Call select on non-existent selector
+                with pytest.raises(SelectError) as exc_info:
+                    flake.select("packages.nonexistent")
+
+                # Verify error message includes the selector
+                assert "Attribute 'packages.nonexistent' not found in flake" in str(
+                    exc_info.value
+                )
+
+                # Verify get_from_nix was called (since cache miss)
+                mock_get_from_nix.assert_called_once()
+
+
+class TestFlakeCacheEdgeCases:
+    """Low-priority tests for edge cases and performance validation."""
+
+    def test_cache_performance_with_large_dataset(self, tmp_path):
+        """Test cache performance with large number of entries."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        # Create large dataset with many entries
+        import time
+
+        # Benchmark inserting many entries
+        start = time.perf_counter()
+        for i in range(500):
+            data = {
+                "id": i,
+                "name": f"package_{i}",
+                "version": "1.0.0",
+                "metadata": {
+                    "description": f"Package number {i}",
+                    "dependencies": [f"dep_{j}" for j in range(10)],
+                },
+            }
+            flake._cache.insert(data, f"packages.package_{i}")
+        insert_time = time.perf_counter() - start
+
+        # Benchmark selecting entries
+        start = time.perf_counter()
+        for i in range(0, 500, 10):  # Select every 10th package
+            result = flake._cache.select(f"packages.package_{i}")
+            assert result["id"] == i
+        select_time = time.perf_counter() - start
+
+        # Performance assertions (operations should be fast)
+        assert insert_time < 1.0  # Insert should complete in reasonable time
+        assert select_time < 0.1  # Select should be very fast
+
+        # Verify a specific entry
+        result = flake._cache.select("packages.package_250")
+        assert result["id"] == 250
+        assert result["name"] == "package_250"
+
+    def test_cache_memory_and_concurrent_patterns(self, tmp_path):
+        """Test cache behavior with memory-heavy and simulated concurrent access."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        flake.invalidate_cache()
+
+        import time
+
+        # Simulate workload with mixed operations
+        for i in range(30):
+            # Insert operation
+            data = {"id": i, "value": f"data_{i}"}
+            flake._cache.insert(data, f"packages.data_{i}")
+
+            time.sleep(0.0001)  # Small delay to simulate real-world timing
+
+        # Read operations (simulate concurrent reads)
+        for _iteration in range(2):
+            for i in range(30):
+                result = flake._cache.select(f"packages.data_{i}")
+                assert result["id"] == i
+
+            time.sleep(0.0001)
+
+        # Verify cache integrity
+        assert flake._cache.is_cached("packages.data_15")
+        assert flake._cache.select("packages.data_15")["id"] == 15
+
+        # Verify no cache misses for repeated reads
+        initial_misses = flake.cache_misses
+        flake._cache.select("packages.data_5")
+        flake._cache.select("packages.data_10")
+        # Should not increase misses for cached data
+        assert flake.cache_misses == initial_misses
+
+
 class TestFlakeCachePerformance:
     """Performance tests for flake cache system."""
 
