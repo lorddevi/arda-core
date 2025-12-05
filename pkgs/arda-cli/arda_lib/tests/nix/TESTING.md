@@ -43,6 +43,7 @@ The majority of tests use `unittest.mock.patch` to mock Nix commands, providing:
 - **Control**: Precise control over command outputs and errors
 
 Example pattern:
+
 ```python
 @patch('subprocess.run')
 def test_nix_operation(mock_run):
@@ -59,6 +60,7 @@ Some tests execute actual Nix commands when safe to do so:
 - **Explicit Opt-In**: Tests decorated with `@pytest.mark.skipif` for conditional execution
 
 Example:
+
 ```python
 @pytest.mark.skipif(not select_source().exists(), reason="nix-select library not built")
 def test_real_nix_operation():
@@ -70,6 +72,7 @@ def test_real_nix_operation():
 ### 1. Nix-Select Integration Testing (`TestSelectorParsing`)
 
 Tests validate:
+
 - Simple selector parsing (`packages.flake`): Basic dot-notation paths
 - Wildcard selectors (`packages.*`): Pattern matching across attributes
 - Set selectors (`{alt1,alt2,alt3}`): Multiple alternative paths
@@ -79,6 +82,7 @@ Tests validate:
 ### 2. Test Store Isolation Testing (`TestNixTestStore`)
 
 Tests validate:
+
 - **ARDA_TEST_STORE environment variable**: Correct store path usage
 - **IN_NIX_SANDBOX behavior**: Sandboxed execution in temporary stores
 - **Concurrent test execution**: Thread-safe access to isolated stores
@@ -87,6 +91,7 @@ Tests validate:
 ### 3. Gcroot Management Testing (`TestGcrootManagement`)
 
 Tests validate:
+
 - **nix_add_to_gcroots()**: Adding store paths to garbage collection roots
 - **Store path references**: Finding all Nix store references in strings
 - **Physical path resolution**: Following symlinks to actual store paths
@@ -98,18 +103,21 @@ Tests validate:
 Tests validate the complete caching lifecycle:
 
 **Cache Operations**:
+
 - Cache hit/miss behavior: Fast lookups vs. Nix evaluation
 - Cache persistence: Saving/loading cache to/from disk
 - Selective invalidation: Removing specific entries while preserving others
 - Atomic writes: Safe cache updates without corruption
 
 **Performance Characteristics**:
+
 - Cache hit performance: Sub-millisecond lookups
 - Memory usage: Bounded cache growth with LRU eviction
 - Disk I/O: Efficient JSON serialization/deserialization
 - Concurrent access: Thread-safe operations under load
 
 **Edge Cases**:
+
 - Special characters: Unicode, quotes, brackets in selectors
 - Long selectors: Strings exceeding 100 characters
 - Duplicate selectors: Handling repeated selections
@@ -134,6 +142,7 @@ Arda's testing framework implements clan-core's sophisticated testing patterns w
 Arda implements clan-core's two-phase testing approach for optimal resource management:
 
 #### Phase 1: Tests WITHOUT arda-core (Fast)
+
 - **Marker**: `@pytest.mark.without_core`
 - **Isolation**: Complete Nix store isolation
 - **Coverage**: ~180 tests, ~30 seconds
@@ -145,6 +154,7 @@ pytest -m "not service_runner and not impure and not with_core"
 ```
 
 #### Phase 2: Tests WITH arda-core (Comprehensive)
+
 - **Marker**: `@pytest.mark.with_core`
 - **Isolation**: Complete Nix store isolation
 - **Coverage**: ~45 tests, ~1-2 minutes
@@ -271,11 +281,13 @@ vmPrebuild = pkgs.closureInfo {
 #### Performance Benefits
 
 **Without Pre-Building**:
+
 - Each VM test builds from scratch
 - 15-20 seconds per test
 - Repeated compilation
 
 **With Pre-Building**:
+
 - VM images cached and reused
 - 5-10 seconds per test
 - No repeated compilation
@@ -336,6 +348,7 @@ test_ssh_connectivity(host="localhost", port=22)
 #### Test Coverage
 
 Network utilities have 13 comprehensive integration tests:
+
 - 7 port management tests
 - 6 SSH connection tests
 
@@ -467,6 +480,7 @@ pytest -m "not service_runner and not impure"
 ### Uncovered Line Categories
 
 Most uncovered lines are intentional:
+
 - **Error handlers**: Rare error conditions difficult to trigger
 - **Debug code**: Development-only paths
 - **Platform-specific code**: OS-dependent functionality
@@ -494,6 +508,7 @@ pytest -m "slow" pkgs/arda-cli/arda_lib/tests/nix/test_nix.py
 ### CI/CD Integration
 
 Tests run automatically on:
+
 - **Pull requests**: Full test suite with coverage
 - **Main branch**: All tests including real Nix operations
 - **Pre-commit hooks**: Fast subset with formatting and linting
@@ -501,26 +516,31 @@ Tests run automatically on:
 ## Testing Best Practices
 
 ### 1. Test Organization
+
 - Group related tests in dedicated test classes
 - Use descriptive test method names: `test_operation_scenario_expected_result`
 - Follow AAA pattern: Arrange, Act, Assert
 
 ### 2. Mock Management
+
 - Patch at the highest level (module boundary)
 - Reset mocks between tests
 - Use context managers for cleanup
 
 ### 3. Test Data
+
 - Use factories for complex objects
 - Avoid magic numbers
 - Use fixtures for shared setup
 
 ### 4. Assertion Strategy
+
 - Test one behavior per test
 - Use specific assertions (not generic `assertTrue`)
 - Validate both positive and negative cases
 
 ### 5. Documentation
+
 - Document complex test scenarios
 - Explain non-obvious test choices
 - Reference relevant issues/commits
@@ -528,12 +548,14 @@ Tests run automatically on:
 ## Continuous Improvement
 
 ### Test Metrics Tracked
+
 - Test count over time
 - Coverage trends
 - Flaky test detection
 - Execution time monitoring
 
 ### Regular Reviews
+
 - **Weekly**: Test execution times, flaky tests
 - **Monthly**: Coverage analysis, missing edge cases
 - **Quarterly**: Testing strategy review and updates
@@ -541,12 +563,14 @@ Tests run automatically on:
 ## References
 
 ### Test Suite Implementation
+
 - **Nix Operations**: `pkgs/arda-cli/arda_lib/nix/nix.py`
 - **Nix Tests**: `pkgs/arda-cli/arda_lib/tests/nix/test_nix.py` (153 tests, 17 classes)
 - **Integration Tests**: `pkgs/arda-cli/arda_lib/tests/integration/`
 - **Coverage Reports**: Generated with `pytest --cov`
 
 ### Testing Framework Infrastructure
+
 - **Nix Store Isolation**: `pkgs/testing/nix_isolation.nix`
 - **Python Nix Utilities**: `pkgs/testing/nixos_test_lib/nix_setup.py`
 - **VM Pre-Building**: `pkgs/testing/vm-prebuild.nix`
@@ -557,12 +581,14 @@ Tests run automatically on:
 - **VM Tests**: `tests/nixos/cli/` (4 VM test scenarios)
 
 ### Documentation
+
 - **Testing Strategy**: This document
 - **Testing Changes**: `history/testing-changes.md` (Phases 8-11)
 - **Clan-Core Research**: `history/research-testing-framework-clan.md`
 - **CI/CD Integration**: `.github/CI.md`
 
 ### Historical Implementation
+
 - **Nov 27, 2025**: Research document created analyzing clan-core's testing framework
 - **Nov 30, 2025**: Implemented Phases 8-11 (two-phase, isolation, VM pre-building, network)
 - **Dec 5, 2025**: This comprehensive TESTING.md document created (updated with full framework)
@@ -594,16 +620,19 @@ Arda not only implements clan-core's patterns but adds significant improvements:
 ### Performance Characteristics
 
 **Two-Phase Testing**:
+
 - Phase 1: ~180 tests, ~30 seconds
 - Phase 2: ~45 tests, ~1-2 minutes
 - Combined: Full test suite in under 3 minutes
 
 **VM Testing**:
+
 - Without pre-building: 15-20 seconds per test
 - With pre-building: 5-10 seconds per test
 - Improvement: 50%+ faster execution
 
 **Coverage**:
+
 - nix.py: 81% coverage
 - test_nix.py: 94% coverage
 - Overall: 90% coverage
@@ -611,6 +640,7 @@ Arda not only implements clan-core's patterns but adds significant improvements:
 ## Conclusion
 
 This testing strategy ensures:
+
 - **Reliability**: All Nix operations thoroughly validated (153 tests across 17 test classes)
 - **Maintainability**: Tests serve as executable documentation
 - **Performance**: Cache operations meet SLAs, VM tests optimized with pre-building
