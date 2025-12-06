@@ -89,6 +89,7 @@ Comprehensive test suite includes:
 import fcntl
 import hashlib
 import json
+import logging
 import os
 import shlex
 import subprocess
@@ -103,6 +104,9 @@ from tempfile import NamedTemporaryFile
 from typing import Any, ClassVar
 
 from platformdirs import user_cache_dir
+
+# Set up logging
+log = logging.getLogger(__name__)
 
 # Allow subprocess calls and string formatting in error messages
 
@@ -451,6 +455,26 @@ def nix_command(
 
     cmd.extend(args)
     return cmd
+
+
+def nix_flake_show(flake_url: str | Path) -> list[str]:
+    """Build a nix flake show command.
+
+    Args:
+        flake_url: Flake reference (URL or path)
+
+    Returns:
+        Full command list for subprocess
+
+    """
+    return nix_command(
+        [
+            "flake",
+            "show",
+            "--json",
+            str(flake_url),
+        ],
+    )
 
 
 def nix_eval(
@@ -1333,6 +1357,9 @@ class Flake:
         cache instance. The cache will be reloaded on next access.
 
         """
+        if os.environ.get("CLAN_DEBUG_NIX_PREFETCH"):
+            log.info(f"Invalidating cache for flake: {self.flake_ref}")
+
         self._cache = FlakeCache()
         self._cache_miss_stack_traces.clear()
 
@@ -1382,6 +1409,9 @@ class Flake:
             NixError: If the Nix command fails
 
         """
+        if os.environ.get("CLAN_DEBUG_NIX_PREFETCH"):
+            log.info(f"Fetching from Nix: selectors={selectors}")
+
         if self._cache is None:
             self.invalidate_cache()
         if self._cache is None:
@@ -1490,9 +1520,13 @@ class Flake:
 
             # Cache the results
             if self._cache_path:
+                if os.environ.get("CLAN_DEBUG_NIX_PREFETCH"):
+                    log.info(f"Saving cache to file: {self._cache_path}")
                 self._cache.save_to_file(self._cache_path)
 
             for i, selector in enumerate(selectors):
+                if os.environ.get("CLAN_DEBUG_NIX_SELECTORS"):
+                    log.info(f"Caching selector: {selector}")
                 self._cache.insert(outputs[i], selector)
 
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -1552,6 +1586,10 @@ class Flake:
             raise NixError("Cache cannot be None after invalidation")
         if self._cache_path is None:
             raise NixError("Cache path cannot be None")
+
+        # Debug logging for selector operations
+        if os.environ.get("CLAN_DEBUG_NIX_SELECTORS"):
+            log.info(f"Selecting selector: {selector}")
 
         # Check if selector is cached
         if not self._cache.is_cached(selector):

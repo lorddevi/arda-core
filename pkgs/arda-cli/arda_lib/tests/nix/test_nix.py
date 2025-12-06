@@ -33,6 +33,7 @@ from arda_lib.nix.nix import (
     nix_command,
     nix_config,
     nix_eval,
+    nix_flake_show,
     nix_metadata,
     nix_shell,
     nix_store,
@@ -94,6 +95,34 @@ class TestNixCommand:
         # Just verify it doesn't raise
         result = nix_command(["eval"], timeout=10)
         assert result[0] == "nix"
+
+    @patch("arda_lib.nix.nix.nix_command")
+    def test_nix_flake_show_basic(self, mock_nix_command):
+        """Test nix_flake_show builds correct command."""
+        mock_nix_command.return_value = [
+            "nix",
+            "--extra-experimental-features",
+            "nix-command flakes",
+            "flake",
+            "show",
+            "--json",
+            "/path/to/flake",
+        ]
+
+        result = nix_flake_show("/path/to/flake")
+
+        assert result == [
+            "nix",
+            "--extra-experimental-features",
+            "nix-command flakes",
+            "flake",
+            "show",
+            "--json",
+            "/path/to/flake",
+        ]
+        mock_nix_command.assert_called_once_with(
+            ["flake", "show", "--json", "/path/to/flake"]
+        )
 
 
 class TestNixEval:
@@ -1221,6 +1250,38 @@ class TestFlakeCacheIntegration:
 
         test_package = flake._cache.select("packages.test-package")
         assert test_package == "test_package_data"
+
+    def test_debug_environment_variables(self, tmp_path, monkeypatch):
+        """Test that debug environment variables trigger debug logging."""
+        test_flake_path = tmp_path / "test-flake"
+        flake = Flake(test_flake_path)
+
+        # Mock the logger
+        with patch("arda_lib.nix.nix.log") as mock_log:
+            # Test CLAN_DEBUG_NIX_PREFETCH with invalidate_cache
+            monkeypatch.setenv("CLAN_DEBUG_NIX_PREFETCH", "1")
+            flake.invalidate_cache()
+            # Check that info was called (don't check exact message due to path: prefix)
+            assert mock_log.info.called
+            assert "Invalidating cache for flake:" in mock_log.info.call_args[0][0]
+
+        with patch("arda_lib.nix.nix.log") as mock_log:
+            # Test CLAN_DEBUG_NIX_SELECTORS with select
+            monkeypatch.delenv("CLAN_DEBUG_NIX_PREFETCH", raising=False)
+            monkeypatch.setenv("CLAN_DEBUG_NIX_SELECTORS", "1")
+
+            # Initialize cache first
+            flake.invalidate_cache()
+
+            # Mock the cache to avoid actual Nix operations
+            flake._cache = MagicMock()
+            flake._cache.is_cached.return_value = True
+            flake._cache.select.return_value = "test_value"
+
+            flake.select("test.selector")
+
+            # Check that debug logging was called
+            assert mock_log.info.called
 
     def test_flake_cache_save_and_load_persistence(self, tmp_path):
         """Test that cache persists across save and load."""
