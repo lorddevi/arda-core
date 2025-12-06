@@ -169,7 +169,7 @@ arda_lib/
 
 ### 1. Advanced Flake Caching System
 
-**What clan has**: Basic flake metadata caching  
+**What clan has**: Basic flake metadata caching
 **What arda has**: Advanced caching system with:
 
 - **Persistent cache**: Survives application restarts
@@ -196,14 +196,14 @@ Many arda functions accept additional parameters (kwargs, nix_options) for flexi
 
 ### 1. nix_flake_show()
 
-**What it does**: Simple wrapper for `nix flake show --json`  
-**Arda status**: Not present (5-minute fix)  
+**What it does**: Simple wrapper for `nix flake show --json`
+**Arda status**: Not present (5-minute fix)
 **Impact**: Low - rarely used, can be added if needed
 
 ### 2. locked_open()
 
-**What it does**: File locking for concurrent access  
-**Arda status**: Not present in nix.py  
+**What it does**: File locking for concurrent access
+**Arda status**: Not present in nix.py
 **Impact**: Low - may exist elsewhere or be integrated later
 
 ---
@@ -216,11 +216,12 @@ Unknown exact coverage - no recent data found
 
 ### Arda Testing
 
-**nix.py coverage**: 81% (620 lines total, 116 uncovered)  
-**test_nix.py coverage**: 94% (1,765 lines total, 113 uncovered)  
+**nix.py coverage**: 81% (620 lines total, 116 uncovered)
+**test_nix.py coverage**: 94% (1,765 lines total, 113 uncovered)
 **Total tests**: 153 tests across 17 test classes
 
 **Test categories**:
+
 - Unit tests (command builders, utilities)
 - Integration tests (cache/Flake integration)
 - Performance tests (cache hit/miss benchmarks)
@@ -237,6 +238,7 @@ Unknown exact coverage - no recent data found
 ### Clan CLI Patterns
 
 Clan implements extensive CLI for:
+
 - Machine lifecycle (install, update, delete, etc.)
 - Flake attribute selection
 - System deployment via nixos-anywhere
@@ -298,15 +300,15 @@ Arda is still in "scaffolding" phase - core Nix helpers are complete, but high-l
 
 ### Final Assessment
 
-**"Are we DONE with nix helpers, or are there gaps?"**
+#### "Are we DONE with nix helpers, or are there gaps?"
 
-**ANSWER: We are DONE with core nix helpers. The library is complete and exceeds clan-core's capabilities.**
+#### ANSWER: We are DONE with core nix helpers. The library is complete and exceeds clan-core's capabilities
 
 The only missing items are minor convenience functions that don't impact core functionality. The advanced caching system is a significant enhancement that clan doesn't have, making arda's nix interactions more robust and performant.
 
 ### Recommendation
 
-**Proceed to next phase**: Implement high-level CLI commands using these complete nix helpers. The foundation is solid.
+#### Proceed to next phase: Implement high-level CLI commands using these complete nix helpers. The foundation is solid
 
 ---
 
@@ -316,4 +318,3 @@ The only missing items are minor convenience functions that don't impact core fu
 - **Clan comparison**: `/home/ld/src/clan-core/pkgs/clan-cli/clan_lib/nix/__init__.py` (180 lines)
 - **Research document**: `/home/ld/src/arda-core/history/research-clan-nix-interactions.md` (1,240 lines)
 - **Test suite**: `/home/ld/src/arda-core/pkgs/arda-cli/arda_lib/tests/nix/test_nix.py` (153 tests)
-
