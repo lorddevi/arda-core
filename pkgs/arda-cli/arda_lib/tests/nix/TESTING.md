@@ -622,6 +622,7 @@ Arda's Nix helper library now has **complete feature parity** with clan-core:
 ✅ **Selector System**: Custom selector parsing with nix-select integration
 
 **Minor Gaps Filled (Dec 5, 2025)**:
+
 - `nix_flake_show()`: Simple wrapper for `nix flake show --json` (arda-ubh)
 - `locked_open()`: File locking utility - already existed with direct fcntl.flock() approach (arda-7o9)
 - Debug Environment Variables: CLAN_DEBUG_NIX_PREFETCH and CLAN_DEBUG_NIX_SELECTORS (arda-euy)
